@@ -1,14 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { MarketItem, SubIndicator, FearGreedData, MarketSummary } from '../types';
-import {
-  mockIndices,
-  mockForex,
-  mockCommodities,
-  mockCrypto,
-  mockSubIndicators,
-  mockFearGreed,
-  mockMarketSummary,
-} from '../services/mockData';
+import { fetchAllMarketData } from '../services/marketDataProvider';
+import { useSettings } from './useSettings';
 
 interface MarketData {
   indices: MarketItem[];
@@ -19,11 +12,14 @@ interface MarketData {
   fearGreed: FearGreedData;
   marketSummary: MarketSummary;
   isLoading: boolean;
+  lastUpdated: string;
 }
 
 export function useMarketData(): MarketData {
+  const { settings } = useSettings();
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<Omit<MarketData, 'isLoading'>>({
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [data, setData] = useState<Omit<MarketData, 'isLoading' | 'lastUpdated'>>({
     indices: [],
     forex: [],
     commodities: [],
@@ -33,22 +29,31 @@ export function useMarketData(): MarketData {
     marketSummary: { text: '', timestamp: '' },
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  const fetchData = useCallback(async () => {
+    try {
+      const result = await fetchAllMarketData(settings.dataSource);
       setData({
-        indices: mockIndices,
-        forex: mockForex,
-        commodities: mockCommodities,
-        crypto: mockCrypto,
-        subIndicators: mockSubIndicators,
-        fearGreed: mockFearGreed,
-        marketSummary: mockMarketSummary,
+        indices: result.indices,
+        forex: result.forex,
+        commodities: result.commodities,
+        crypto: result.crypto,
+        subIndicators: result.subIndicators,
+        fearGreed: result.fearGreed,
+        marketSummary: result.marketSummary,
       });
+      setLastUpdated(result.lastUpdated);
+    } catch {
+      // Keep existing data on error
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
+  }, [settings.dataSource]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, settings.autoRefreshInterval * 1000);
+    return () => clearInterval(interval);
+  }, [fetchData, settings.autoRefreshInterval]);
 
-  return { ...data, isLoading };
+  return { ...data, isLoading, lastUpdated };
 }
