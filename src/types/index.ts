@@ -101,12 +101,18 @@ export interface JournalEntry {
   id: string;
   date: string;
   marketOutlook: string;
-  healthRating: number;
-  mentalRating: number;
+  conditionRating: number;    // 体調+メンタル
+  disciplineRating: number;   // 規律性
+  volatilityRating: number;   // ボラティリティ
+  fearRating: number;         // 恐怖心
+  asExpectedRating: number;   // 想定通りだったか
   notes: string;
   images?: string[];
   createdAt: string;
   updatedAt: string;
+  // Legacy fields for backward compatibility
+  healthRating?: number;
+  mentalRating?: number;
 }
 
 export interface TradeRecord {

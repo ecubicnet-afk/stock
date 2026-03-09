@@ -41,7 +41,7 @@ export function JournalPage() {
 
   const journalRef = useRef<HTMLDivElement>(null);
 
-  const { entries, getEntryByDate, saveEntry } = useJournal();
+  const { entries, getEntryByDate, saveEntry, deleteEntry } = useJournal();
   const { trades, addTrade, deleteTrade, getTradesByDate } = useTrades();
 
   // Read CSV trade data from localStorage (shared with TradeAnalysisContent)
@@ -146,6 +146,7 @@ export function JournalPage() {
               date={selectedDate}
               entry={currentEntry}
               onSave={saveEntry}
+              onDelete={deleteEntry}
             />
 
             {/* CSV Trades for selected date */}
