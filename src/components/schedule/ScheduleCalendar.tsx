@@ -96,7 +96,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
           const dayEvents = eventsByDate.get(cell.dateStr) || [];
           const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
           const overflow = dayEvents.length - MAX_VISIBLE_EVENTS;
-          const dow = (startDow + i) % 7; // 0=Mon..6=Sun
+          const dow = i % 7; // 0=Mon..6=Sun
 
           return (
             <button
