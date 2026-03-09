@@ -4,6 +4,20 @@ import type { ScheduleEvent } from '../types';
 // 重要度: high=米雇用統計/CPI/GDP/FOMC/日本GDP/日銀, medium=PCE/PPI/小売/日本CPI/短観, low=家計調査/労働力調査/鉱工業生産
 
 export const DEFAULT_ECONOMIC_EVENTS: ScheduleEvent[] = [
+  // ===== SQ（先物・オプション特別清算指数） =====
+  // メジャーSQ: 3月・6月・9月・12月の第2金曜日（high）
+  // 通常SQ: その他の月の第2金曜日（medium）
+  { id: 'econ-0313-sq', title: 'メジャーSQ（3月限）', date: '2026-03-13', time: '09:00', importance: 'high' },
+  { id: 'econ-0410-sq', title: 'SQ（4月限）', date: '2026-04-10', time: '09:00', importance: 'medium' },
+  { id: 'econ-0508-sq', title: 'SQ（5月限）', date: '2026-05-08', time: '09:00', importance: 'medium' },
+  { id: 'econ-0612-sq', title: 'メジャーSQ（6月限）', date: '2026-06-12', time: '09:00', importance: 'high' },
+  { id: 'econ-0710-sq', title: 'SQ（7月限）', date: '2026-07-10', time: '09:00', importance: 'medium' },
+  { id: 'econ-0814-sq', title: 'SQ（8月限）', date: '2026-08-14', time: '09:00', importance: 'medium' },
+  { id: 'econ-0911-sq', title: 'メジャーSQ（9月限）', date: '2026-09-11', time: '09:00', importance: 'high' },
+  { id: 'econ-1009-sq', title: 'SQ（10月限）', date: '2026-10-09', time: '09:00', importance: 'medium' },
+  { id: 'econ-1113-sq', title: 'SQ（11月限）', date: '2026-11-13', time: '09:00', importance: 'medium' },
+  { id: 'econ-1211-sq', title: 'メジャーSQ（12月限）', date: '2026-12-11', time: '09:00', importance: 'high' },
+
   // ===== 3月 =====
   { id: 'econ-0306-nfp', title: '米雇用統計（2月分）', date: '2026-03-06', time: '22:30', importance: 'high' },
   { id: 'econ-0310-household', title: '家計調査（1月分）', date: '2026-03-10', time: '08:30', importance: 'low' },
