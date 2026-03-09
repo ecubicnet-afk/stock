@@ -1,14 +1,13 @@
 import { useCallback } from 'react';
-import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing } from '../types';
+import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing, ScenarioDescription } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 
 const DEFAULT_STRATEGY: StrategyData = {
   scenarios: [
-    { id: 'bullish', name: '楽観シナリオ（順張り）', type: 'bullish', notes: [], connections: [], summary: '' },
-    { id: 'bearish', name: '悲観シナリオ（調整）', type: 'bearish', notes: [], connections: [], summary: '' },
-    { id: 'crisis', name: '最悪シナリオ（破産回避）', type: 'crisis', notes: [], connections: [], summary: '' },
+    { id: 'main', name: '想定シナリオ', type: 'main', notes: [], connections: [], summary: '' },
   ],
   positionSizing: { capital: 1000000, riskPercent: 2, entryPrice: 38000, stopLossPrice: 37500 },
+  scenarioDescription: { text: '', urls: [] },
 };
 
 export function useStrategy() {
@@ -87,5 +86,21 @@ export function useStrategy() {
     [setData]
   );
 
-  return { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updatePositionSizing };
+  const updateScenarioDescription = useCallback(
+    (updates: Partial<ScenarioDescription>) => {
+      setData((prev) => ({
+        ...prev,
+        scenarioDescription: { ...(prev.scenarioDescription || { text: '', urls: [] }), ...updates },
+      }));
+    },
+    [setData]
+  );
+
+  // Backward compat: ensure scenarioDescription exists
+  const safeData: StrategyData = {
+    ...data,
+    scenarioDescription: data.scenarioDescription || { text: '', urls: [] },
+  };
+
+  return { data: safeData, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updatePositionSizing, updateScenarioDescription };
 }
