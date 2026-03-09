@@ -95,10 +95,10 @@ function parseCSVData(text: string, fileName: string): Trade[] {
     (h) => h.includes('銘柄コード') || h === 'コード' || h.includes('ティッカー')
   );
   const quantityIdx = detectedHeaders.findIndex(
-    (h) => h === '数量' || h.includes('約定数量') || h.includes('株数')
+    (h) => h.includes('数量')
   );
   const priceIdx = detectedHeaders.findIndex(
-    (h) => h.includes('約定単価') || h === '単価' || h.includes('約定価格')
+    (h) => h.includes('決済単価') || h.includes('約定単価') || (h.includes('売却') && h.includes('単価'))
   );
   const finalProfitIdx = profitIdx !== -1 ? profitIdx : 11;
   const finalNameIdx = nameIdx !== -1 ? nameIdx : finalProfitIdx > 2 ? 1 : 0;
