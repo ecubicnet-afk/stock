@@ -68,6 +68,61 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 Financial Modeling Prepの無料APIキーで株価指数・コモディティも自動取得可能
               </p>
             </div>
+
+            <div className="pt-3 border-t border-border">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">資産管理 設定</h3>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">Gemini APIキー（任意）</label>
+                  <input
+                    type="password"
+                    value={settings.geminiApiKey}
+                    onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+                    placeholder="セクター分析・指数比較に使用"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">Firebase Project ID（任意）</label>
+                  <input
+                    type="text"
+                    value={settings.firebaseProjectId}
+                    onChange={(e) => updateSettings({ firebaseProjectId: e.target.value })}
+                    placeholder="日次スナップショット保存に使用"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">Firebase APIキー（任意）</label>
+                  <input
+                    type="password"
+                    value={settings.firebaseApiKey}
+                    onChange={(e) => updateSettings({ firebaseApiKey: e.target.value })}
+                    placeholder="Firebase Web APIキー"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-text-secondary mb-1">Firebase App ID（任意）</label>
+                  <input
+                    type="text"
+                    value={settings.firebaseAppId}
+                    onChange={(e) => updateSettings({ firebaseAppId: e.target.value })}
+                    placeholder="Firebase App ID"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                  />
+                </div>
+
+                <p className="text-xs text-text-secondary/60">
+                  Firebase設定を入力すると日次スナップショット保存機能が有効になります。
+                  Gemini APIキーを入力するとセクター分析・指数比較が利用可能です。
+                </p>
+              </div>
+            </div>
           </div>
 
           <button

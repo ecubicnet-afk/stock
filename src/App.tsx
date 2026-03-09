@@ -6,6 +6,8 @@ import { MemoPage } from './pages/MemoPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { JournalPage } from './pages/JournalPage';
 import { WatchlistPage } from './pages/WatchlistPage';
+import { TradeAnalysisPage } from './pages/TradeAnalysisPage';
+import { PortfolioPage } from './pages/PortfolioPage';
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
+          <Route path="/trade-analysis" element={<TradeAnalysisPage />} />
+          <Route path="/portfolio" element={<PortfolioPage />} />
         </Route>
       </Routes>
     </HashRouter>
