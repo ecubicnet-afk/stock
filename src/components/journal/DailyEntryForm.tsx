@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { LinkifiedText } from '../common/LinkifiedText';
 import type { JournalEntry } from '../../types';
 
 interface SaveData {
@@ -100,7 +101,9 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [images, setImages] = useState<string[]>([]);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setConditionRating(entry?.conditionRating ?? 5);
@@ -111,6 +114,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     setNotes(mergeNotes(entry));
     setImages(entry?.images ?? []);
     setCurrentImageIdx(0);
+    setIsEditingNotes(false);
   }, [entry, date]);
 
   const handleSave = () => {
@@ -281,12 +285,31 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
 
         {/* Right: Text input + ratings */}
         <div className="space-y-2">
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full min-h-[6rem] bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-y focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
-            placeholder="相場観 / 所感 / 反省点 / 改善..."
-          />
+          {isEditingNotes ? (
+            <textarea
+              ref={textareaRef}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              onBlur={() => setIsEditingNotes(false)}
+              className="w-full min-h-[6rem] bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-y focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
+              placeholder="相場観 / 所感 / 反省点 / 改善..."
+              autoFocus
+            />
+          ) : (
+            <div
+              onClick={() => {
+                setIsEditingNotes(true);
+                setTimeout(() => textareaRef.current?.focus(), 0);
+              }}
+              className="w-full min-h-[6rem] bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary cursor-text whitespace-pre-wrap"
+            >
+              {notes ? (
+                <LinkifiedText text={notes} />
+              ) : (
+                <span className="text-text-secondary/50">相場観 / 所感 / 反省点 / 改善...</span>
+              )}
+            </div>
+          )}
 
           {/* Ratings */}
           <div className="space-y-1">
