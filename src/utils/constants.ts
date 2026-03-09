@@ -3,8 +3,7 @@ import type { NavItem } from '../types';
 export const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', labelJa: 'ダッシュボード', icon: 'dashboard' },
   { path: '/chart', label: 'Chart', labelJa: 'チャート', icon: 'chart' },
-  { path: '/memo', label: 'Memo', labelJa: 'メモ', icon: 'memo' },
-  { path: '/schedule', label: 'Schedule', labelJa: 'スケジュール', icon: 'schedule' },
+  { path: '/memo', label: 'Notes & Schedule', labelJa: 'メモ & スケジュール', icon: 'memo' },
   { path: '/watchlist', label: 'Watchlist', labelJa: 'ウォッチリスト', icon: 'watchlist' },
 ];
 

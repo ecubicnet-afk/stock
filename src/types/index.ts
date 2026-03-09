@@ -52,3 +52,30 @@ export interface NavItem {
   labelJa: string;
   icon: string;
 }
+
+// OHLC data for candlestick charts
+export interface OHLCDataPoint {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+// Memo & Schedule
+export interface MemoEntry {
+  id: string;
+  text: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScheduleEvent {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  importance: 'high' | 'medium' | 'low';
+  description?: string;
+}
