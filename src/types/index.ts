@@ -80,6 +80,7 @@ export interface ScheduleEvent {
   time: string;
   importance: 'high' | 'medium' | 'low';
   description?: string;
+  region?: 'JP' | 'US' | 'other';
 }
 
 // Settings
