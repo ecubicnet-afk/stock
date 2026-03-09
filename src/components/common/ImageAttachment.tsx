@@ -76,18 +76,19 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
     <>
       <div className="space-y-2">
         {images.length > 0 && (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             {images.map((img, i) => (
-              <div key={i} className="relative group w-[72px] h-[72px] rounded-lg overflow-hidden border border-border">
+              <div key={i} className="relative group" style={{ width: 48, height: 48 }}>
                 <img
                   src={img}
                   alt={`添付${i + 1}`}
-                  className="w-full h-full object-cover cursor-pointer"
+                  style={{ width: 48, height: 48 }}
+                  className="rounded object-cover cursor-pointer border border-border"
                   onClick={() => setLightboxIdx(i)}
                 />
                 <button
                   onClick={() => handleRemove(i)}
-                  className="absolute top-0 right-0 w-4 h-4 bg-black/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-0 right-0 w-4 h-4 bg-black/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-bl"
                 >
                   ×
                 </button>

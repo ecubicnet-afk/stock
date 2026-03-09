@@ -118,39 +118,40 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
         )}
       </div>
 
-      {/* Main content: compact images left, text right */}
-      <div className="flex gap-3">
-        {/* Left: images column (compact vertical strip) */}
-        <div className="shrink-0 w-[76px]">
+      {/* Main content: small images left, text right */}
+      <div className="flex gap-2">
+        {/* Left: tiny image thumbnails */}
+        <div style={{ width: 52, minWidth: 52, maxWidth: 52 }}>
           <ImageAttachment images={images} onChange={setImages} maxImages={5} />
         </div>
 
-        {/* Right: single text input */}
-        <div className="flex-1 min-w-0">
+        {/* Right: text input + ratings */}
+        <div className="flex-1 min-w-0 space-y-2">
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full min-h-[6rem] bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-y focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
             placeholder="相場観 / 所感 / 反省点 / 改善..."
           />
+
+          {/* Ratings inline */}
+          <div className="space-y-1">
+            <RatingSelector label="コンディション" value={conditionRating} onChange={setConditionRating} color="bg-accent-cyan" />
+            <RatingSelector label="規律性" value={disciplineRating} onChange={setDisciplineRating} color="bg-up" />
+            <RatingSelector label="ボラティリティ" value={volatilityRating} onChange={setVolatilityRating} color="bg-amber-500" />
+            <RatingSelector label="恐怖心" value={fearRating} onChange={setFearRating} color="bg-down" />
+            <RatingSelector label="想定通り" value={asExpectedRating} onChange={setAsExpectedRating} color="bg-accent-gold" />
+          </div>
+
+          <button
+            onClick={handleSave}
+            className="px-4 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 transition-colors"
+          >
+            保存
+          </button>
         </div>
       </div>
 
-      {/* Ratings - 10 point scale */}
-      <div className="space-y-1.5 pt-1">
-        <RatingSelector label="コンディション" value={conditionRating} onChange={setConditionRating} color="bg-accent-cyan" />
-        <RatingSelector label="規律性" value={disciplineRating} onChange={setDisciplineRating} color="bg-up" />
-        <RatingSelector label="ボラティリティ" value={volatilityRating} onChange={setVolatilityRating} color="bg-amber-500" />
-        <RatingSelector label="恐怖心" value={fearRating} onChange={setFearRating} color="bg-down" />
-        <RatingSelector label="想定通り" value={asExpectedRating} onChange={setAsExpectedRating} color="bg-accent-gold" />
-      </div>
-
-      <button
-        onClick={handleSave}
-        className="px-4 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 transition-colors"
-      >
-        保存
-      </button>
     </div>
   );
 }
