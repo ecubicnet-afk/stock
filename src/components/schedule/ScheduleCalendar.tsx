@@ -57,19 +57,19 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
       {/* Header: Month nav + Legend */}
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <span className="text-sm font-semibold text-text-primary">{monthLabel}</span>
+        <span className="text-base font-semibold text-text-primary">{monthLabel}</span>
         <button onClick={() => onChangeMonth(1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 px-1 text-[10px] text-text-secondary/70">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />重要（高）</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />注目（中）</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-400" />参考（低）</span>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 px-1 text-xs text-text-secondary/80">
+        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" />重要（高）</span>
+        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" />注目（中）</span>
+        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />参考（低）</span>
         <span className="border-l border-border/50 pl-3 flex items-center gap-1">🇯🇵 日本</span>
         <span className="flex items-center gap-1">🇺🇸 米国</span>
       </div>
@@ -80,8 +80,8 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
         {WEEKDAYS.map((d, i) => (
           <div
             key={d}
-            className={`text-xs text-center py-1 ${
-              i === 5 ? 'text-blue-400/70' : i === 6 ? 'text-red-400/70' : 'text-text-secondary/60'
+            className={`text-sm text-center py-1 font-medium ${
+              i === 5 ? 'text-blue-400/80' : i === 6 ? 'text-red-400/80' : 'text-text-secondary/70'
             }`}
           >
             {d}
@@ -90,7 +90,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
 
         {/* Day cells */}
         {cells.map((cell, i) => {
-          if (!cell) return <div key={`empty-${i}`} className="min-h-[4.5rem]" />;
+          if (!cell) return <div key={`empty-${i}`} className="min-h-[5.5rem]" />;
           const isSelected = cell.dateStr === selectedDate;
           const isToday = cell.dateStr === todayStr;
           const dayEvents = eventsByDate.get(cell.dateStr) || [];
@@ -102,7 +102,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
             <button
               key={cell.dateStr}
               onClick={() => onSelectDate(cell.dateStr)}
-              className={`relative text-left rounded-lg p-1 min-h-[4.5rem] transition-all border ${
+              className={`relative text-left rounded-lg p-1.5 min-h-[5.5rem] transition-all border ${
                 isSelected
                   ? 'bg-accent-gold/10 border-accent-gold/40'
                   : isToday
@@ -111,7 +111,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
               }`}
             >
               {/* Day number */}
-              <div className={`text-xs font-mono mb-0.5 ${
+              <div className={`text-sm font-mono mb-0.5 ${
                 isSelected
                   ? 'text-accent-gold font-bold'
                   : isToday
@@ -126,23 +126,23 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
               </div>
 
               {/* Event list inside cell */}
-              <div className="space-y-px">
+              <div className="space-y-0.5">
                 {visibleEvents.map((evt) => (
                   <div
                     key={evt.id}
-                    className={`text-[9px] leading-tight truncate rounded-sm pl-1 border-l-2 ${IMPORTANCE_BORDER[evt.importance]} ${
-                      evt.importance === 'high' ? 'bg-red-500/8' : evt.importance === 'medium' ? 'bg-amber-400/8' : 'bg-cyan-400/8'
+                    className={`text-[11px] leading-tight truncate rounded-sm pl-1 border-l-2 ${IMPORTANCE_BORDER[evt.importance]} ${
+                      evt.importance === 'high' ? 'bg-red-500/10' : evt.importance === 'medium' ? 'bg-amber-400/10' : 'bg-cyan-400/10'
                     }`}
                     title={`${evt.time} ${evt.title}${evt.region ? ` (${evt.region})` : ''}`}
                   >
-                    <span className="text-[8px]">{evt.region ? REGION_FLAG[evt.region] : ''}</span>
-                    <span className="font-mono text-text-secondary/60">{evt.time.slice(0, 5)}</span>
+                    <span className="text-[10px]">{evt.region ? REGION_FLAG[evt.region] : ''}</span>
+                    <span className="font-mono text-text-secondary/80">{evt.time.slice(0, 5)}</span>
                     {' '}
-                    <span className="text-text-primary/80">{evt.title.length > 8 ? evt.title.slice(0, 8) + '…' : evt.title}</span>
+                    <span className="text-text-primary/90">{evt.title.length > 10 ? evt.title.slice(0, 10) + '…' : evt.title}</span>
                   </div>
                 ))}
                 {overflow > 0 && (
-                  <div className="text-[9px] text-text-secondary/50 pl-1">+{overflow}件</div>
+                  <div className="text-[11px] text-text-secondary/60 pl-1">+{overflow}件</div>
                 )}
               </div>
             </button>
