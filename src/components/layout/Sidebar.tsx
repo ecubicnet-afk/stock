@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../utils/constants';
+import { useSchedule } from '../../hooks/useSchedule';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -52,13 +53,26 @@ const ICONS: Record<string, ReactNode> = {
   ),
 };
 
-const SAMPLE_EVENTS = [
-  { time: '08:50', name: '日本GDP速報値', importance: 'high' },
-  { time: '22:30', name: '米雇用統計', importance: 'high' },
-  { time: '03:00', name: 'FOMC政策声明', importance: 'high' },
-];
+const REGION_FLAG: Record<string, string> = {
+  JP: '🇯🇵',
+  US: '🇺🇸',
+};
+
+const IMPORTANCE_DOT: Record<string, string> = {
+  high: 'bg-red-500',
+  medium: 'bg-amber-400',
+  low: 'bg-cyan-400',
+};
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { events } = useSchedule();
+
+  // Get today's important events (high and medium)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayEvents = events
+    .filter((e) => e.date === todayStr && (e.importance === 'high' || e.importance === 'medium'))
+    .sort((a, b) => a.time.localeCompare(b.time));
+
   return (
     <>
       {/* オーバーレイ背景（モバイル） */}
@@ -115,17 +129,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             本日の重要イベント
           </h3>
           <div className="space-y-2">
-            {SAMPLE_EVENTS.map((event, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs">
+            {todayEvents.length === 0 && (
+              <p className="text-text-secondary/50 text-xs">本日のイベントはありません</p>
+            )}
+            {todayEvents.map((event) => (
+              <div key={event.id} className="flex items-start gap-1.5 text-xs">
                 <span className="font-mono text-text-secondary whitespace-nowrap">
                   {event.time}
                 </span>
                 <span
-                  className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${
-                    event.importance === 'high' ? 'bg-down' : 'bg-accent-gold'
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${IMPORTANCE_DOT[event.importance]}`}
                 />
-                <span className="text-text-primary">{event.name}</span>
+                <span className="text-text-primary">
+                  {event.region && REGION_FLAG[event.region] ? <span className="text-[10px] mr-0.5">{REGION_FLAG[event.region]}</span> : null}
+                  {event.title}
+                </span>
               </div>
             ))}
           </div>

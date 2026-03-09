@@ -15,11 +15,18 @@ function formatDateLabel(dateStr: string) {
   return `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
 }
 
-const IMPORTANCE_STYLES: Record<ScheduleEvent['importance'], string> = {
-  high: 'bg-down',
-  medium: 'bg-accent-gold',
-  low: 'bg-accent-cyan',
+const IMPORTANCE_STYLES: Record<ScheduleEvent['importance'], { dot: string; label: string }> = {
+  high: { dot: 'bg-red-500', label: '重要' },
+  medium: { dot: 'bg-amber-400', label: '注目' },
+  low: { dot: 'bg-cyan-400', label: '参考' },
 };
+
+const REGION_FLAG: Record<string, string> = {
+  JP: '🇯🇵',
+  US: '🇺🇸',
+};
+
+type RegionType = ScheduleEvent['region'];
 
 export function MemoPage() {
   const { memos, addMemo, updateMemo, deleteMemo } = useMemos();
@@ -40,6 +47,7 @@ export function MemoPage() {
   const [newTime, setNewTime] = useState('');
   const [newImportance, setNewImportance] = useState<ScheduleEvent['importance']>('medium');
   const [newDescription, setNewDescription] = useState('');
+  const [newRegion, setNewRegion] = useState<RegionType>('JP');
 
   // Event editing state
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -48,6 +56,7 @@ export function MemoPage() {
   const [editEventTime, setEditEventTime] = useState('');
   const [editEventImportance, setEditEventImportance] = useState<ScheduleEvent['importance']>('medium');
   const [editEventDescription, setEditEventDescription] = useState('');
+  const [editEventRegion, setEditEventRegion] = useState<RegionType>('JP');
 
   // Expanded event for showing description
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -91,12 +100,14 @@ export function MemoPage() {
       time: newTime || '00:00',
       importance: newImportance,
       description: newDescription.trim() || undefined,
+      region: newRegion || undefined,
     });
     setNewTitle('');
     setNewDate('');
     setNewTime('');
     setNewImportance('medium');
     setNewDescription('');
+    setNewRegion('JP');
   };
 
   const handleStartEditEvent = (event: ScheduleEvent) => {
@@ -106,6 +117,7 @@ export function MemoPage() {
     setEditEventTime(event.time);
     setEditEventImportance(event.importance);
     setEditEventDescription(event.description || '');
+    setEditEventRegion(event.region || 'JP');
   };
 
   const handleSaveEventEdit = () => {
@@ -116,6 +128,7 @@ export function MemoPage() {
         time: editEventTime || '00:00',
         importance: editEventImportance,
         description: editEventDescription.trim() || undefined,
+        region: editEventRegion || undefined,
       });
     }
     setEditingEventId(null);
@@ -264,14 +277,23 @@ export function MemoPage() {
                 onChange={(e) => setNewImportance(e.target.value as ScheduleEvent['importance'])}
                 className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
               >
-                <option value="high">高（重要）</option>
-                <option value="medium">中</option>
-                <option value="low">低</option>
+                <option value="high">重要（高）</option>
+                <option value="medium">注目（中）</option>
+                <option value="low">参考（低）</option>
+              </select>
+              <select
+                value={newRegion || ''}
+                onChange={(e) => setNewRegion((e.target.value || undefined) as RegionType)}
+                className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+              >
+                <option value="JP">🇯🇵 日本</option>
+                <option value="US">🇺🇸 米国</option>
+                <option value="other">その他</option>
               </select>
               <button
                 onClick={handleAddEvent}
                 disabled={!newTitle.trim() || !newDate}
-                className="px-4 py-2 bg-accent-gold/20 text-accent-gold text-sm rounded-lg hover:bg-accent-gold/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="col-span-2 px-4 py-2 bg-accent-gold/20 text-accent-gold text-sm rounded-lg hover:bg-accent-gold/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 追加
               </button>
@@ -329,7 +351,7 @@ export function MemoPage() {
                               placeholder="詳細メモ（任意）"
                               className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 h-16"
                             />
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-4 gap-2">
                               <input
                                 type="date"
                                 value={editEventDate}
@@ -347,9 +369,18 @@ export function MemoPage() {
                                 onChange={(e) => setEditEventImportance(e.target.value as ScheduleEvent['importance'])}
                                 className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
                               >
-                                <option value="high">高</option>
-                                <option value="medium">中</option>
-                                <option value="low">低</option>
+                                <option value="high">重要</option>
+                                <option value="medium">注目</option>
+                                <option value="low">参考</option>
+                              </select>
+                              <select
+                                value={editEventRegion || ''}
+                                onChange={(e) => setEditEventRegion((e.target.value || undefined) as RegionType)}
+                                className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+                              >
+                                <option value="JP">🇯🇵</option>
+                                <option value="US">🇺🇸</option>
+                                <option value="other">他</option>
                               </select>
                             </div>
                             <div className="flex gap-2">
@@ -360,14 +391,21 @@ export function MemoPage() {
                         ) : (
                           /* Event Display */
                           <div className="bg-bg-primary/30 border border-border/50 rounded-lg px-3 py-2">
-                            <div className="flex items-center gap-3">
-                              <span className={`w-2 h-2 rounded-full shrink-0 ${IMPORTANCE_STYLES[event.importance]}`} />
+                            <div className="flex items-center gap-2">
+                              {/* Region flag */}
+                              <span className="text-xs shrink-0 w-5 text-center">
+                                {event.region && REGION_FLAG[event.region] ? REGION_FLAG[event.region] : ''}
+                              </span>
+                              {/* Importance dot + label */}
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${IMPORTANCE_STYLES[event.importance].dot}`} />
                               <span className="font-mono text-xs text-text-secondary w-12 shrink-0">{event.time}</span>
                               <button
                                 onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
-                                className="text-sm text-text-primary flex-1 text-left hover:text-accent-gold transition-colors"
+                                className="text-sm text-text-primary flex-1 text-left hover:text-accent-gold transition-colors min-w-0"
                               >
-                                {event.title}
+                                <span className="truncate block">
+                                  {event.title}
+                                </span>
                                 {event.description && (
                                   <svg className={`w-3 h-3 inline-block ml-1 text-text-secondary/40 transition-transform ${expandedEventId === event.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -389,7 +427,7 @@ export function MemoPage() {
                             </div>
                             {/* Description expandable */}
                             {expandedEventId === event.id && event.description && (
-                              <div className="mt-2 ml-[4.25rem] text-xs text-text-secondary/80 whitespace-pre-wrap border-l-2 border-accent-gold/30 pl-2">
+                              <div className="mt-2 ml-[5rem] text-xs text-text-secondary/80 whitespace-pre-wrap border-l-2 border-accent-gold/30 pl-2">
                                 {event.description}
                               </div>
                             )}
