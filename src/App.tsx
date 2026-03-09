@@ -4,7 +4,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ChartPage } from './pages/ChartPage';
 import { MemoPage } from './pages/MemoPage';
 import { JournalPage } from './pages/JournalPage';
-import { WatchlistPage } from './pages/WatchlistPage';
+
 import { PortfolioPage } from './pages/PortfolioPage';
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
           <Route path="/memo" element={<MemoPage />} />
           <Route path="/schedule" element={<Navigate to="/memo" replace />} />
           <Route path="/journal" element={<JournalPage />} />
-          <Route path="/watchlist" element={<WatchlistPage />} />
+          <Route path="/watchlist" element={<Navigate to="/memo" replace />} />
           <Route path="/trade-analysis" element={<Navigate to="/journal" replace />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
         </Route>

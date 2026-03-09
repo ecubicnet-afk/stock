@@ -20,10 +20,9 @@ interface Props {
   event: ScheduleEvent;
   onUpdate: (id: string, data: Partial<Omit<ScheduleEvent, 'id' | 'createdAt' | 'updatedAt'>>) => void;
   onDelete: (id: string) => void;
-  readOnly?: boolean;
 }
 
-export function EventCard({ event, onUpdate, onDelete, readOnly }: Props) {
+export function EventCard({ event, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDate, setEditDate] = useState('');
@@ -136,20 +135,18 @@ export function EventCard({ event, onUpdate, onDelete, readOnly }: Props) {
         <span className="text-sm text-text-primary flex-1 min-w-0 font-medium truncate">
           {event.title}
         </span>
-        {!readOnly && (
-          <div className="flex gap-1.5 shrink-0">
-            <button onClick={startEdit} className="text-text-secondary/40 hover:text-accent-cyan transition-colors" title="編集">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button onClick={() => onDelete(event.id)} className="text-text-secondary/40 hover:text-down transition-colors" title="削除">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+        <div className="flex gap-1.5 shrink-0">
+          <button onClick={startEdit} className="text-text-secondary/40 hover:text-accent-cyan transition-colors" title="編集">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+          <button onClick={() => onDelete(event.id)} className="text-text-secondary/40 hover:text-down transition-colors" title="削除">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {event.description && !memoEditing && (
@@ -177,7 +174,7 @@ export function EventCard({ event, onUpdate, onDelete, readOnly }: Props) {
             <button onClick={() => setMemoEditing(false)} className="px-3 py-1 bg-bg-primary text-text-secondary text-xs rounded-lg hover:text-text-primary">キャンセル</button>
           </div>
         </div>
-      ) : !readOnly ? (
+      ) : (
         <button
           onClick={startMemoEdit}
           className="mt-1.5 ml-[3.75rem] text-[11px] text-text-secondary/40 hover:text-accent-gold/70 transition-colors flex items-center gap-1"
@@ -187,7 +184,7 @@ export function EventCard({ event, onUpdate, onDelete, readOnly }: Props) {
           </svg>
           {event.description ? 'メモを編集' : 'メモを追加'}
         </button>
-      ) : null}
+      )}
     </div>
   );
 }

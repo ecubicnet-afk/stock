@@ -5,7 +5,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/chart', label: 'Chart', labelJa: 'チャート', icon: 'chart' },
   { path: '/memo', label: 'Notes & Schedule', labelJa: 'メモ & スケジュール', icon: 'memo' },
   { path: '/journal', label: 'Trade', labelJa: 'トレード', icon: 'tradeAnalysis' },
-  { path: '/watchlist', label: 'Watchlist', labelJa: 'ウォッチリスト', icon: 'watchlist' },
+
   { path: '/portfolio', label: 'Portfolio', labelJa: '資産管理', icon: 'portfolio' },
 ];
 
