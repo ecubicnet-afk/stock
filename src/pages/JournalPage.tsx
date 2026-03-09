@@ -134,21 +134,19 @@ export function JournalPage() {
           トレード日誌
         </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div>
-            <JournalCalendar
-              year={calYear}
-              month={calMonth}
-              entries={entries}
-              trades={trades}
-              csvTradeDates={csvTradeDates}
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              onChangeMonth={handleChangeMonth}
-            />
-          </div>
+        <div className="space-y-4">
+          <JournalCalendar
+            year={calYear}
+            month={calMonth}
+            entries={entries}
+            trades={trades}
+            csvTradeDates={csvTradeDates}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            onChangeMonth={handleChangeMonth}
+          />
 
-          <div className="lg:col-span-2 space-y-3">
+          <div className="space-y-3">
             <DailyEntryForm
               date={selectedDate}
               entry={currentEntry}
