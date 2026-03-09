@@ -5,6 +5,10 @@ const DEFAULT_SETTINGS: Settings = {
   fmpApiKey: '',
   autoRefreshInterval: 60,
   dataSource: 'auto',
+  geminiApiKey: '',
+  firebaseProjectId: '',
+  firebaseApiKey: '',
+  firebaseAppId: '',
 };
 
 export function useSettings() {

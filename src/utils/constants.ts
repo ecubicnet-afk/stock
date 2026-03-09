@@ -6,6 +6,8 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/memo', label: 'Notes & Schedule', labelJa: 'メモ & スケジュール', icon: 'memo' },
   { path: '/journal', label: 'Journal', labelJa: 'トレード日誌', icon: 'journal' },
   { path: '/watchlist', label: 'Watchlist', labelJa: 'ウォッチリスト', icon: 'watchlist' },
+  { path: '/trade-analysis', label: 'Trade Analysis', labelJa: 'トレード管理', icon: 'tradeAnalysis' },
+  { path: '/portfolio', label: 'Portfolio', labelJa: '資産管理', icon: 'portfolio' },
 ];
 
 export const MARKET_HOURS = {

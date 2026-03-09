@@ -86,6 +86,10 @@ export interface Settings {
   fmpApiKey: string;
   autoRefreshInterval: number;
   dataSource: 'auto' | 'mock';
+  geminiApiKey: string;
+  firebaseProjectId: string;
+  firebaseApiKey: string;
+  firebaseAppId: string;
 }
 
 // Journal
