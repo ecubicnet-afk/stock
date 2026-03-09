@@ -1,0 +1,28 @@
+import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import type { DataPoint } from '../../types';
+
+interface SparklineChartProps {
+  data: DataPoint[];
+  color: string;
+  width?: number;
+  height?: number;
+}
+
+export function SparklineChart({ data, color, height = 40 }: SparklineChartProps) {
+  if (data.length === 0) return null;
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart data={data}>
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke={color}
+          strokeWidth={1.5}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}

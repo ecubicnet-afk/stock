@@ -1,0 +1,120 @@
+import type { ReactNode } from 'react';
+import { NavLink } from 'react-router-dom';
+import { NAV_ITEMS } from '../../utils/constants';
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const ICONS: Record<string, ReactNode> = {
+  dashboard: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" />
+    </svg>
+  ),
+  chart: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4v16" />
+    </svg>
+  ),
+  memo: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  ),
+  schedule: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  ),
+  watchlist: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  ),
+};
+
+const SAMPLE_EVENTS = [
+  { time: '08:50', name: '日本GDP速報値', importance: 'high' },
+  { time: '21:30', name: '米雇用統計', importance: 'high' },
+  { time: '03:00', name: 'FOMC議事録', importance: 'medium' },
+];
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  return (
+    <>
+      {/* オーバーレイ背景（モバイル） */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* サイドバー本体 */}
+      <aside
+        className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-bg-secondary/95 backdrop-blur-md border-r border-border transform transition-transform duration-300 overflow-y-auto
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+      >
+        {/* ナビゲーション */}
+        <nav className="p-4 space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+                  isActive
+                    ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
+                }`
+              }
+            >
+              {ICONS[item.icon]}
+              <span>{item.labelJa}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* クイックメモ */}
+        <div className="p-4 border-t border-border">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            クイックメモ
+          </h3>
+          <textarea
+            className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
+            placeholder="メモを入力..."
+          />
+          <button className="mt-2 w-full py-1.5 bg-accent-cyan/20 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/30 transition-colors">
+            保存
+          </button>
+        </div>
+
+        {/* 本日の重要イベント */}
+        <div className="p-4 border-t border-border">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            本日の重要イベント
+          </h3>
+          <div className="space-y-2">
+            {SAMPLE_EVENTS.map((event, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className="font-mono text-text-secondary whitespace-nowrap">
+                  {event.time}
+                </span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${
+                    event.importance === 'high' ? 'bg-down' : 'bg-accent-gold'
+                  }`}
+                />
+                <span className="text-text-primary">{event.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
