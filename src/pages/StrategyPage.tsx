@@ -17,6 +17,20 @@ const DIRECTION_OPTIONS: { value: StrategyNoteDirection; label: string; emoji: s
   { value: 'neutral', label: '中立', emoji: '―' },
 ];
 
+const FONT_SIZES = [
+  { label: '小', cmd: '1', px: '12px' },
+  { label: '中', cmd: '3', px: '14px' },
+  { label: '大', cmd: '5', px: '18px' },
+];
+
+const FONT_COLORS = [
+  { label: '白', hex: '#e2e8f0', cls: 'bg-slate-200' },
+  { label: '黄', hex: '#fcd34d', cls: 'bg-amber-300' },
+  { label: '赤', hex: '#f87171', cls: 'bg-red-400' },
+  { label: '緑', hex: '#34d399', cls: 'bg-emerald-400' },
+  { label: '青', hex: '#22d3ee', cls: 'bg-cyan-400' },
+];
+
 function resizeImage(file: File, maxWidth: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -39,10 +53,27 @@ function resizeImage(file: File, maxWidth: number): Promise<string> {
   });
 }
 
+/** Apply execCommand and convert generated <font> tags to <span style> */
+function applyFontSize(cmdSize: string, pxSize: string) {
+  document.execCommand('fontSize', false, cmdSize);
+  // Convert <font size="X"> to <span style="font-size:...">
+  const fonts = document.querySelectorAll(`font[size="${cmdSize}"]`);
+  fonts.forEach((font) => {
+    const span = document.createElement('span');
+    span.style.fontSize = pxSize;
+    span.innerHTML = font.innerHTML;
+    font.parentNode?.replaceChild(span, font);
+  });
+}
+
+function applyFontColor(hex: string) {
+  document.execCommand('foreColor', false, hex);
+}
+
 export function StrategyPage() {
   const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription } = useStrategy();
-  const { memos } = useMemos();
-  const { events } = useSchedule();
+  const { memos, addMemo } = useMemos();
+  const { events, addEvent } = useSchedule();
 
   const scenarioId = data.scenarios[0]?.id ?? 'main';
   const activeScenario = data.scenarios[0];
@@ -53,18 +84,25 @@ export function StrategyPage() {
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [newUrl, setNewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
   const desc = data.scenarioDescription;
+  const zoom = desc.imageZoom ?? 100;
 
-  // Auto-resize textarea
+  // Initialize contentEditable with saved HTML
   useEffect(() => {
-    const ta = textareaRef.current;
-    if (ta) {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
+    if (editorRef.current && !initializedRef.current) {
+      editorRef.current.innerHTML = desc.text || '';
+      initializedRef.current = true;
     }
-  }, [desc.text, showScenario]);
+  }, [showScenario]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleEditorInput = useCallback(() => {
+    if (editorRef.current) {
+      updateScenarioDescription({ text: editorRef.current.innerHTML });
+    }
+  }, [updateScenarioDescription]);
 
   const importedSourceIds = useMemo(() => {
     if (!activeScenario) return new Set<string>();
@@ -97,8 +135,8 @@ export function StrategyPage() {
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await resizeImage(file, 800);
-    updateScenarioDescription({ imageDataUrl: dataUrl });
+    const dataUrl = await resizeImage(file, 1200);
+    updateScenarioDescription({ imageDataUrl: dataUrl, imageZoom: 100 });
     e.target.value = '';
   }, [updateScenarioDescription]);
 
@@ -113,6 +151,25 @@ export function StrategyPage() {
     updateScenarioDescription({ urls: desc.urls.filter((_, i) => i !== index) });
   }, [desc.urls, updateScenarioDescription]);
 
+  const handleSaveToMemo = useCallback(() => {
+    const plainText = editorRef.current?.innerText || '';
+    if (!plainText.trim()) return;
+    addMemo(plainText);
+  }, [addMemo]);
+
+  const handleSaveToSchedule = useCallback(() => {
+    const plainText = editorRef.current?.innerText || '';
+    if (!plainText.trim() || !desc.date) return;
+    addEvent({
+      title: '想定シナリオ',
+      date: desc.date,
+      time: '00:00',
+      importance: 'medium',
+      description: plainText,
+      region: 'JP',
+    });
+  }, [addEvent, desc.date]);
+
   if (!activeScenario) return null;
 
   return (
@@ -125,7 +182,7 @@ export function StrategyPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowScenario(!showScenario)}
+            onClick={() => { setShowScenario(!showScenario); initializedRef.current = false; }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showScenario ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
           >
             📋 想定シナリオ
@@ -148,44 +205,69 @@ export function StrategyPage() {
       {/* Scenario Description Panel */}
       {showScenario && (
         <div className="flex-shrink-0 border-b border-primary/10 px-4 py-3 bg-amber-500/5">
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <h3 className="text-xs font-semibold text-amber-300">想定シナリオ</h3>
+            <div className="h-4 w-px bg-primary/20" />
+            {/* Font size */}
+            <div className="flex gap-0.5">
+              {FONT_SIZES.map((s) => (
+                <button key={s.label}
+                  onMouseDown={(e) => { e.preventDefault(); applyFontSize(s.cmd, s.px); handleEditorInput(); }}
+                  className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-primary hover:bg-primary/10"
+                  title={`フォントサイズ: ${s.label}`}
+                >{s.label}</button>
+              ))}
+            </div>
+            <div className="h-4 w-px bg-primary/20" />
+            {/* Font color */}
+            <div className="flex gap-1">
+              {FONT_COLORS.map((c) => (
+                <button key={c.hex}
+                  onMouseDown={(e) => { e.preventDefault(); applyFontColor(c.hex); handleEditorInput(); }}
+                  className={`w-4 h-4 rounded-full ${c.cls} opacity-60 hover:opacity-100 transition-opacity`}
+                  title={c.label}
+                />
+              ))}
+            </div>
+            <div className="h-4 w-px bg-primary/20" />
+            {/* Date */}
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] text-muted">📅</span>
+              <input
+                type="date"
+                value={desc.date || ''}
+                onChange={(e) => updateScenarioDescription({ date: e.target.value })}
+                className="px-1.5 py-0.5 bg-primary/5 border border-primary/10 rounded text-[11px] text-primary focus:outline-none focus:border-amber-400/50"
+              />
+              {desc.date && (
+                <button onClick={() => updateScenarioDescription({ date: undefined })} className="text-muted hover:text-primary text-xs">×</button>
+              )}
+            </div>
+            <div className="flex-1" />
+            {/* Save buttons */}
+            <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] hover:bg-amber-500/20">
+              📝 メモに保存
+            </button>
+            <button
+              onClick={handleSaveToSchedule}
+              disabled={!desc.date}
+              className={`px-2 py-0.5 rounded text-[10px] ${desc.date ? 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' : 'bg-primary/5 text-muted cursor-not-allowed'}`}
+            >
+              📅 スケジュールに追加
+            </button>
+          </div>
+
           <div className="flex items-stretch gap-4">
-            {/* Text side */}
+            {/* Rich text editor */}
             <div className="flex-1 space-y-2 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-xs font-semibold text-amber-300">想定シナリオ</h3>
-                {/* Font size */}
-                <div className="flex gap-0.5 ml-2">
-                  {([['xs', '小'], ['sm', '中'], ['base', '大']] as const).map(([size, label]) => (
-                    <button key={size}
-                      onClick={() => updateScenarioDescription({ fontSize: size })}
-                      className={`px-1.5 py-0.5 rounded text-[10px] ${(desc.fontSize || 'sm') === size ? 'bg-amber-500/20 text-amber-300' : 'text-muted hover:text-primary'}`}
-                    >{label}</button>
-                  ))}
-                </div>
-                {/* Font color */}
-                <div className="flex gap-1 ml-1">
-                  {[
-                    { value: '', label: '白', cls: 'bg-white' },
-                    { value: 'text-amber-300', label: '黄', cls: 'bg-amber-300' },
-                    { value: 'text-red-400', label: '赤', cls: 'bg-red-400' },
-                    { value: 'text-emerald-400', label: '緑', cls: 'bg-emerald-400' },
-                    { value: 'text-cyan-400', label: '青', cls: 'bg-cyan-400' },
-                  ].map((c) => (
-                    <button key={c.value}
-                      onClick={() => updateScenarioDescription({ fontColor: c.value })}
-                      className={`w-4 h-4 rounded-full ${c.cls} ${(desc.fontColor || '') === c.value ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-[#0a0a14]' : 'opacity-50 hover:opacity-80'}`}
-                      title={c.label}
-                    />
-                  ))}
-                </div>
-              </div>
-              <textarea
-                ref={textareaRef}
-                value={desc.text}
-                onChange={(e) => updateScenarioDescription({ text: e.target.value })}
-                placeholder="直近の想定シナリオを記入... 例: 米CPIが上振れし利下げ期待後退、日経は調整局面入りの可能性。36000円台サポート確認後の反発を想定。"
-                className={`w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg ${desc.fontColor || 'text-primary'} focus:outline-none focus:border-amber-400/50 resize-none overflow-hidden ${desc.fontSize === 'xs' ? 'text-xs' : desc.fontSize === 'base' ? 'text-base' : 'text-sm'}`}
-                style={{ minHeight: '80px' }}
+              <div
+                ref={editorRef}
+                contentEditable
+                onInput={handleEditorInput}
+                className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-amber-400/50"
+                style={{ minHeight: '80px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                data-placeholder="直近の想定シナリオを記入..."
               />
               {/* URLs */}
               <div className="space-y-1">
@@ -209,23 +291,46 @@ export function StrategyPage() {
                 </div>
               </div>
             </div>
-            {/* Image area - 50:50 */}
-            <div className="flex-1 min-w-0">
+            {/* Image area with zoom */}
+            <div className="flex-1 min-w-0 flex flex-col">
               {desc.imageDataUrl ? (
-                <div className="relative group h-full">
-                  <img src={desc.imageDataUrl} alt="scenario" className="w-full h-full object-contain rounded-lg border border-primary/10" />
-                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <>
+                  {/* Zoom controls */}
+                  <div className="flex items-center justify-center gap-2 mb-1">
                     <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/90"
-                      title="画像を変更"
-                    >📷</button>
+                      onClick={() => updateScenarioDescription({ imageZoom: Math.max(25, zoom - 25) })}
+                      className="w-6 h-6 bg-primary/10 text-primary rounded text-xs hover:bg-primary/20 flex items-center justify-center"
+                    >−</button>
+                    <span className="text-[10px] text-muted font-mono w-10 text-center">{zoom}%</span>
                     <button
-                      onClick={() => updateScenarioDescription({ imageDataUrl: undefined })}
-                      className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600/80"
-                    >×</button>
+                      onClick={() => updateScenarioDescription({ imageZoom: Math.min(300, zoom + 25) })}
+                      className="w-6 h-6 bg-primary/10 text-primary rounded text-xs hover:bg-primary/20 flex items-center justify-center"
+                    >+</button>
+                    <button
+                      onClick={() => updateScenarioDescription({ imageZoom: 100 })}
+                      className="text-[10px] text-muted hover:text-primary"
+                    >リセット</button>
                   </div>
-                </div>
+                  {/* Image with zoom */}
+                  <div className="relative group flex-1 overflow-auto rounded-lg border border-primary/10 bg-black/20">
+                    <img
+                      src={desc.imageDataUrl}
+                      alt="scenario"
+                      style={{ width: `${zoom}%`, maxWidth: 'none', transformOrigin: 'top left' }}
+                    />
+                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/90"
+                        title="画像を変更"
+                      >📷</button>
+                      <button
+                        onClick={() => updateScenarioDescription({ imageDataUrl: undefined, imageZoom: 100 })}
+                        className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600/80"
+                      >×</button>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
