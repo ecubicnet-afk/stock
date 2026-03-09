@@ -20,3 +20,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--color-bg-secondary) transparent;
 }
+
+[contenteditable][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  pointer-events: none;
+}
