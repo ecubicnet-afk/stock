@@ -3,7 +3,7 @@ import { useStrategy } from '../hooks/useStrategy';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { StrategyCanvas } from '../components/strategy/StrategyCanvas';
-import type { StrategyNoteCategory } from '../types';
+import type { StrategyNoteRegion, StrategyNoteDirection } from '../types';
 
 const SCENARIO_TABS = [
   { id: 'bullish', label: '楽観シナリオ', emoji: '🟢', desc: '順張り・ベースライン継続' },
@@ -11,11 +11,16 @@ const SCENARIO_TABS = [
   { id: 'crisis', label: '最悪シナリオ', emoji: '🔴', desc: '破産回避・絶対撤退ライン' },
 ] as const;
 
-const CATEGORY_OPTIONS: { value: StrategyNoteCategory; label: string; emoji: string }[] = [
-  { value: 'macro', label: '外圧・マクロ', emoji: '🟦' },
-  { value: 'internal', label: '観客・内部燃料', emoji: '🟩' },
-  { value: 'technical', label: '物理的波動', emoji: '🟥' },
-  { value: 'psychology', label: '心理・感情', emoji: '🟨' },
+const REGION_OPTIONS: { value: StrategyNoteRegion; label: string; emoji: string }[] = [
+  { value: 'jp', label: '日本', emoji: '🇯🇵' },
+  { value: 'us', label: '米国', emoji: '🇺🇸' },
+  { value: 'other', label: 'その他', emoji: '🌐' },
+];
+
+const DIRECTION_OPTIONS: { value: StrategyNoteDirection; label: string; emoji: string }[] = [
+  { value: 'bullish', label: '上昇要因', emoji: '▲' },
+  { value: 'bearish', label: '下落要因', emoji: '▼' },
+  { value: 'neutral', label: '中立', emoji: '―' },
 ];
 
 export function StrategyPage() {
@@ -26,7 +31,7 @@ export function StrategyPage() {
   const [activeTab, setActiveTab] = useState<string>('bullish');
   const [showAddNote, setShowAddNote] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [newNote, setNewNote] = useState({ title: '', description: '', category: 'macro' as StrategyNoteCategory, url: '', date: '' });
+  const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
 
   const activeScenario = useMemo(() => data.scenarios.find((s) => s.id === activeTab), [data.scenarios, activeTab]);
 
@@ -39,8 +44,8 @@ export function StrategyPage() {
     if (!newNote.title.trim()) return;
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, newNote.category, newNote.title, newNote.description, x, y, newNote.url || undefined, undefined, undefined, newNote.date || undefined);
-    setNewNote({ title: '', description: '', category: 'macro', url: '', date: '' });
+    addNote(activeTab, newNote.region, newNote.direction, newNote.title, newNote.description, x, y, newNote.url || undefined, undefined, undefined, newNote.date || undefined);
+    setNewNote({ title: '', description: '', region: 'jp', direction: 'neutral', url: '', date: '' });
     setShowAddNote(false);
   }, [activeTab, newNote, addNote]);
 
@@ -49,13 +54,13 @@ export function StrategyPage() {
     const y = 100 + Math.random() * 400;
     const title = text.length > 40 ? text.slice(0, 40) + '…' : text;
     const memoDate = createdAt.split('T')[0];
-    addNote(activeTab, 'psychology', title, text, x, y, undefined, 'memo', memoId, memoDate);
+    addNote(activeTab, 'jp', 'neutral', title, text, x, y, undefined, 'memo', memoId, memoDate);
   }, [activeTab, addNote]);
 
   const handleImportEvent = useCallback((eventId: string, title: string, description: string, eventDate: string) => {
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, 'macro', title, description, x, y, undefined, 'schedule', eventId, eventDate);
+    addNote(activeTab, 'jp', 'neutral', title, description, x, y, undefined, 'schedule', eventId, eventDate);
   }, [activeTab, addNote]);
 
   if (!activeScenario) return null;
@@ -140,15 +145,29 @@ export function StrategyPage() {
                 <h3 className="text-sm font-semibold text-primary mb-3">新規ノート</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] text-muted block mb-1">カテゴリ</label>
-                    <div className="grid grid-cols-2 gap-1">
-                      {CATEGORY_OPTIONS.map((cat) => (
+                    <label className="text-[10px] text-muted block mb-1">地域</label>
+                    <div className="flex gap-1">
+                      {REGION_OPTIONS.map((r) => (
                         <button
-                          key={cat.value}
-                          onClick={() => setNewNote((n) => ({ ...n, category: cat.value }))}
-                          className={`px-2 py-1.5 rounded text-xs text-left ${newNote.category === cat.value ? 'bg-accent-cyan/20 text-accent-cyan ring-1 ring-accent-cyan/30' : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
+                          key={r.value}
+                          onClick={() => setNewNote((n) => ({ ...n, region: r.value }))}
+                          className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.region === r.value ? 'bg-accent-cyan/20 text-accent-cyan ring-1 ring-accent-cyan/30' : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
                         >
-                          {cat.emoji} {cat.label}
+                          {r.emoji} {r.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted block mb-1">方向</label>
+                    <div className="flex gap-1">
+                      {DIRECTION_OPTIONS.map((d) => (
+                        <button
+                          key={d.value}
+                          onClick={() => setNewNote((n) => ({ ...n, direction: d.value }))}
+                          className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.direction === d.value ? (d.value === 'bullish' ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : d.value === 'bearish' ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30') : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
+                        >
+                          {d.emoji} {d.label}
                         </button>
                       ))}
                     </div>

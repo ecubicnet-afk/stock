@@ -5,7 +5,7 @@
 
 import type { Settings } from '../types';
 
-interface DailySnapshot {
+export interface DailySnapshot {
   date: string;
   totalAsset: number;
   totalProfit: number;
