@@ -6,6 +6,7 @@ import { MemoPage } from './pages/MemoPage';
 import { JournalPage } from './pages/JournalPage';
 
 import { PortfolioPage } from './pages/PortfolioPage';
+import { StrategyPage } from './pages/StrategyPage';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/watchlist" element={<Navigate to="/memo" replace />} />
           <Route path="/trade-analysis" element={<Navigate to="/journal" replace />} />
+          <Route path="/strategy" element={<StrategyPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
         </Route>
       </Routes>

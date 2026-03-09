@@ -132,6 +132,50 @@ export interface TradeRecord {
   createdAt: string;
 }
 
+// Strategy
+export type StrategyNoteCategory = 'macro' | 'internal' | 'technical' | 'psychology';
+
+export interface StrategyNote {
+  id: string;
+  category: StrategyNoteCategory;
+  title: string;
+  description: string;
+  url?: string;
+  sourceType?: 'memo' | 'schedule';
+  sourceId?: string;
+  x: number;
+  y: number;
+}
+
+export interface StrategyConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  label?: string;
+  direction: 'bullish' | 'bearish' | 'neutral';
+}
+
+export interface StrategyScenario {
+  id: string;
+  name: string;
+  type: 'bullish' | 'bearish' | 'crisis';
+  notes: StrategyNote[];
+  connections: StrategyConnection[];
+  summary: string;
+}
+
+export interface PositionSizing {
+  capital: number;
+  riskPercent: number;
+  entryPrice: number;
+  stopLossPrice: number;
+}
+
+export interface StrategyData {
+  scenarios: StrategyScenario[];
+  positionSizing: PositionSizing;
+}
+
 // Watchlist
 export interface WatchlistItem {
   id: string;
