@@ -49,6 +49,24 @@ export function JournalPage() {
     return csvTradeData.filter((t) => t.date.replace(/\//g, '-') === selectedDate);
   }, [csvTradeData, selectedDate]);
 
+  const dayStats = useMemo(() => {
+    if (selectedDayCsvTrades.length === 0) return null;
+    const wins = selectedDayCsvTrades.filter((t) => t.profit > 0);
+    const losses = selectedDayCsvTrades.filter((t) => t.profit < 0);
+    const totalPnl = selectedDayCsvTrades.reduce((s, t) => s + t.profit, 0);
+    const avgWin = wins.length > 0 ? wins.reduce((s, t) => s + t.profit, 0) / wins.length : 0;
+    const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((s, t) => s + t.profit, 0)) / losses.length : 0;
+    return {
+      count: selectedDayCsvTrades.length,
+      winRate: (wins.length / selectedDayCsvTrades.length) * 100,
+      totalPnl,
+      avgPnl: totalPnl / selectedDayCsvTrades.length,
+      rrRatio: avgLoss > 0 ? avgWin / avgLoss : 0,
+      wins: wins.length,
+      losses: losses.length,
+    };
+  }, [selectedDayCsvTrades]);
+
   const currentEntry = getEntryByDate(selectedDate);
   const dayTrades = getTradesByDate(selectedDate);
 
@@ -138,52 +156,7 @@ export function JournalPage() {
               onDelete={deleteEntry}
             />
 
-            {/* CSV Trades for selected date */}
-            {selectedDayCsvTrades.length > 0 && (
-              <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-up flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    CSV取引データ
-                  </h3>
-                  <span className="text-[10px] text-up/60">クリックでトレード記録に入力</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="text-text-secondary border-b border-border">
-                      <tr>
-                        <th className="px-2 py-1.5">コード</th>
-                        <th className="px-2 py-1.5">銘柄</th>
-                        <th className="px-2 py-1.5 text-right">数量</th>
-                        <th className="px-2 py-1.5 text-right">単価</th>
-                        <th className="px-2 py-1.5 text-right">損益</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {selectedDayCsvTrades.map((t, i) => (
-                        <tr
-                          key={i}
-                          className="cursor-pointer hover:bg-up/5 transition-colors"
-                          onClick={() => handleCsvRowClick(t)}
-                        >
-                          <td className="px-2 py-1.5 font-mono text-text-secondary">{t.ticker || '-'}</td>
-                          <td className="px-2 py-1.5 text-text-primary">{t.name}</td>
-                          <td className="px-2 py-1.5 text-right font-mono text-text-secondary">{t.quantity > 0 ? t.quantity.toLocaleString() : '-'}</td>
-                          <td className="px-2 py-1.5 text-right font-mono text-text-secondary">{t.price > 0 ? t.price.toLocaleString() : '-'}</td>
-                          <td className={`px-2 py-1.5 text-right font-mono font-bold ${t.profit > 0 ? 'text-up' : 'text-down'}`}>
-                            {t.profit > 0 ? '+' : ''}{t.profit.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Trade record section */}
+            {/* Trade record section (above CSV data) */}
             <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
@@ -219,6 +192,87 @@ export function JournalPage() {
 
               <TradeList trades={dayTrades} onDelete={deleteTrade} />
             </div>
+
+            {/* CSV Trades for selected date with daily stats */}
+            {selectedDayCsvTrades.length > 0 && (
+              <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-up flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    CSV取引データ
+                  </h3>
+                  <span className="text-[10px] text-up/60">クリックでトレード記録に入力</span>
+                </div>
+
+                {/* Daily stats summary */}
+                {dayStats && (
+                  <div className="grid grid-cols-5 gap-2 mb-3">
+                    <div className="bg-bg-primary/40 rounded-lg px-2 py-1.5 text-center">
+                      <div className="text-[10px] text-text-secondary">取引数</div>
+                      <div className="text-sm font-bold font-mono text-text-primary">{dayStats.count}</div>
+                      <div className="text-[10px] text-text-secondary">{dayStats.wins}勝{dayStats.losses}負</div>
+                    </div>
+                    <div className="bg-bg-primary/40 rounded-lg px-2 py-1.5 text-center">
+                      <div className="text-[10px] text-text-secondary">勝率</div>
+                      <div className={`text-sm font-bold font-mono ${dayStats.winRate >= 50 ? 'text-up' : 'text-down'}`}>
+                        {dayStats.winRate.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="bg-bg-primary/40 rounded-lg px-2 py-1.5 text-center">
+                      <div className="text-[10px] text-text-secondary">合計損益</div>
+                      <div className={`text-sm font-bold font-mono ${dayStats.totalPnl >= 0 ? 'text-up' : 'text-down'}`}>
+                        {dayStats.totalPnl >= 0 ? '+' : ''}{dayStats.totalPnl.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="bg-bg-primary/40 rounded-lg px-2 py-1.5 text-center">
+                      <div className="text-[10px] text-text-secondary">平均損益</div>
+                      <div className={`text-sm font-bold font-mono ${dayStats.avgPnl >= 0 ? 'text-up' : 'text-down'}`}>
+                        {dayStats.avgPnl >= 0 ? '+' : ''}{Math.round(dayStats.avgPnl).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="bg-bg-primary/40 rounded-lg px-2 py-1.5 text-center">
+                      <div className="text-[10px] text-text-secondary">RR比</div>
+                      <div className="text-sm font-bold font-mono text-text-primary">
+                        {dayStats.rrRatio > 0 ? dayStats.rrRatio.toFixed(2) : '-'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="text-text-secondary border-b border-border">
+                      <tr>
+                        <th className="px-2 py-1.5">コード</th>
+                        <th className="px-2 py-1.5">銘柄</th>
+                        <th className="px-2 py-1.5 text-right">数量</th>
+                        <th className="px-2 py-1.5 text-right">単価</th>
+                        <th className="px-2 py-1.5 text-right">損益</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {selectedDayCsvTrades.map((t, i) => (
+                        <tr
+                          key={i}
+                          className="cursor-pointer hover:bg-up/5 transition-colors"
+                          onClick={() => handleCsvRowClick(t)}
+                        >
+                          <td className="px-2 py-1.5 font-mono text-text-secondary">{t.ticker || '-'}</td>
+                          <td className="px-2 py-1.5 text-text-primary">{t.name}</td>
+                          <td className="px-2 py-1.5 text-right font-mono text-text-secondary">{t.quantity > 0 ? t.quantity.toLocaleString() : '-'}</td>
+                          <td className="px-2 py-1.5 text-right font-mono text-text-secondary">{t.price > 0 ? t.price.toLocaleString() : '-'}</td>
+                          <td className={`px-2 py-1.5 text-right font-mono font-bold ${t.profit > 0 ? 'text-up' : 'text-down'}`}>
+                            {t.profit > 0 ? '+' : ''}{t.profit.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -76,9 +76,9 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
     <>
       <div className="space-y-2">
         {images.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-1.5">
             {images.map((img, i) => (
-              <div key={i} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-border">
+              <div key={i} className="relative group w-[72px] h-[72px] rounded-lg overflow-hidden border border-border">
                 <img
                   src={img}
                   alt={`添付${i + 1}`}

@@ -111,10 +111,10 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
         )}
       </div>
 
-      {/* Main content: images left, text right */}
-      <div className="flex gap-4">
-        {/* Left: images */}
-        <div className="shrink-0">
+      {/* Main content: compact images left, text right */}
+      <div className="flex gap-3">
+        {/* Left: images column (compact vertical strip) */}
+        <div className="shrink-0 w-[76px]">
           <ImageAttachment images={images} onChange={setImages} maxImages={5} />
         </div>
 
@@ -125,7 +125,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             <textarea
               value={marketOutlook}
               onChange={(e) => setMarketOutlook(e.target.value)}
-              className="w-full h-14 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
+              className="w-full h-16 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
               placeholder="今日のマーケットの見通しや所感..."
             />
           </div>
@@ -134,7 +134,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full h-14 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
+              className="w-full h-16 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
               placeholder="今日の反省点、気づき、次回への教訓..."
             />
           </div>
