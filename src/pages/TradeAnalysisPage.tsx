@@ -4,6 +4,7 @@ import {
   BarChart, Bar, Cell,
 } from 'recharts';
 import { readFileAsText } from '../utils/csvParser';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 interface Trade {
   key: string;
@@ -107,8 +108,8 @@ const formatCurrency = (val: number) =>
   new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(val);
 
 export function TradeAnalysisPage() {
-  const [data, setData] = useState<Trade[]>([]);
-  const [loadedFiles, setLoadedFiles] = useState<FileInfo[]>([]);
+  const [data, setData] = useLocalStorage<Trade[]>('stock-app-trade-analysis', []);
+  const [loadedFiles, setLoadedFiles] = useLocalStorage<FileInfo[]>('stock-app-trade-files', []);
   const [error, setError] = useState('');
 
   const handleFileUpload = useCallback(
