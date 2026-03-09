@@ -46,9 +46,31 @@ export function useWatchlist() {
     );
   };
 
+  // Update event by eventId only (searches across all items)
+  const updateEventById = (eventId: string, updates: Partial<Omit<ScheduleEvent, 'id'>>) => {
+    setItems((prev) =>
+      prev.map((item) => ({
+        ...item,
+        events: item.events.map((e) =>
+          e.id === eventId ? { ...e, ...updates } : e
+        ),
+      }))
+    );
+  };
+
+  // Remove event by eventId only (searches across all items)
+  const removeEventById = (eventId: string) => {
+    setItems((prev) =>
+      prev.map((item) => ({
+        ...item,
+        events: item.events.filter((e) => e.id !== eventId),
+      }))
+    );
+  };
+
   const updateTags = (id: string, tags: string[]) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, tags } : i)));
   };
 
-  return { items, addItem, removeItem, updateNotes, addEvent, removeEvent, updateTags };
+  return { items, addItem, removeItem, updateNotes, addEvent, removeEvent, updateEventById, removeEventById, updateTags };
 }

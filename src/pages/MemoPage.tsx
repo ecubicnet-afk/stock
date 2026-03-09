@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { useWatchlist } from '../hooks/useWatchlist';
+import { useTrades } from '../hooks/useTrades';
 import { ScheduleCalendar } from '../components/schedule/ScheduleCalendar';
 import { ImageAttachment } from '../components/common/ImageAttachment';
+import { LinkifiedText } from '../components/common/LinkifiedText';
 import { EventCard } from '../components/memo/EventCard';
 import { MemoList } from '../components/memo/MemoList';
-import type { ScheduleEvent } from '../types';
+import type { ScheduleEvent, WatchlistItem } from '../types';
 
 function formatDateLabel(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00');
@@ -14,12 +16,34 @@ function formatDateLabel(dateStr: string) {
   return `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
 }
 
+function formatDate(d: string) {
+  const dt = new Date(d + 'T00:00:00');
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${dt.getMonth() + 1}/${dt.getDate()} (${days[dt.getDay()]})`;
+}
+
+const IMPORTANCE_DOT: Record<ScheduleEvent['importance'], string> = {
+  high: 'bg-down',
+  medium: 'bg-accent-gold',
+  low: 'bg-accent-cyan',
+};
+
 type RegionType = ScheduleEvent['region'];
 
 export function MemoPage() {
   const { memos, addMemo, updateMemo, deleteMemo } = useMemos();
   const { events, addEvent, updateEvent, deleteEvent } = useSchedule();
-  const { items: watchlistItems } = useWatchlist();
+  const {
+    items: watchlistItems,
+    addItem: addWatchlistItem,
+    removeItem: removeWatchlistItem,
+    updateNotes: updateWatchlistNotes,
+    addEvent: addWatchlistEvent,
+    removeEvent: removeWatchlistEvent,
+    updateEventById: updateWatchlistEventById,
+    removeEventById: removeWatchlistEventById,
+  } = useWatchlist();
+  const { getTradesByTicker } = useTrades();
 
   // Merge watchlist events into schedule events for calendar display
   const allEvents = useMemo(() => {
@@ -33,6 +57,9 @@ export function MemoPage() {
       `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)
     );
   }, [events, watchlistItems]);
+
+  // Set of schedule event IDs for distinguishing update/delete handlers
+  const scheduleEventIds = useMemo(() => new Set(events.map((e) => e.id)), [events]);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -50,6 +77,20 @@ export function MemoPage() {
   const [newDescription, setNewDescription] = useState('');
   const [newRegion, setNewRegion] = useState<RegionType>('JP');
   const [newEventImages, setNewEventImages] = useState<string[]>([]);
+
+  // Watchlist state
+  const [wlExpandedId, setWlExpandedId] = useState<string | null>(null);
+  const [wlShowAddForm, setWlShowAddForm] = useState(false);
+  const [wlNewTicker, setWlNewTicker] = useState('');
+  const [wlNewName, setWlNewName] = useState('');
+  const [wlNewMarket, setWlNewMarket] = useState<WatchlistItem['market']>('JP');
+  const [wlEditingNotesId, setWlEditingNotesId] = useState<string | null>(null);
+  const [wlNotesDraft, setWlNotesDraft] = useState('');
+  const [wlEventTitle, setWlEventTitle] = useState('');
+  const [wlEventDate, setWlEventDate] = useState('');
+  const [wlEventTime, setWlEventTime] = useState('');
+  const [wlEventImportance, setWlEventImportance] = useState<ScheduleEvent['importance']>('medium');
+  const [wlEventDescription, setWlEventDescription] = useState('');
 
   useEffect(() => {
     if (selectedDate) setNewDate(selectedDate);
@@ -89,14 +130,29 @@ export function MemoPage() {
     setNewEventImages([]);
   };
 
+  // Event update/delete handler that routes to the right hook
+  const handleEventUpdate = (id: string, data: Partial<Omit<ScheduleEvent, 'id'>>) => {
+    if (scheduleEventIds.has(id)) {
+      updateEvent(id, data);
+    } else {
+      updateWatchlistEventById(id, data);
+    }
+  };
+
+  const handleEventDelete = (id: string) => {
+    if (scheduleEventIds.has(id)) {
+      deleteEvent(id);
+    } else {
+      removeWatchlistEventById(id);
+    }
+  };
+
   const filteredEvents = selectedDate
     ? allEvents.filter((e) => e.date === selectedDate)
     : allEvents.filter((e) => {
         const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
         return e.date.startsWith(monthPrefix);
       });
-
-  const scheduleEventIds = useMemo(() => new Set(events.map((e) => e.id)), [events]);
 
   const grouped = filteredEvents.reduce<Record<string, ScheduleEvent[]>>((acc, e) => {
     (acc[e.date] ||= []).push(e);
@@ -107,6 +163,31 @@ export function MemoPage() {
   const eventListHeader = selectedDate
     ? `${formatDateLabel(selectedDate)} のイベント`
     : `${calYear}年${calMonth + 1}月 のイベント`;
+
+  // Watchlist handlers
+  const handleWlAdd = () => {
+    if (!wlNewTicker.trim()) return;
+    addWatchlistItem({ ticker: wlNewTicker.trim(), tickerName: wlNewName.trim() || wlNewTicker.trim(), market: wlNewMarket });
+    setWlNewTicker('');
+    setWlNewName('');
+    setWlShowAddForm(false);
+  };
+
+  const handleWlAddEvent = (itemId: string) => {
+    if (!wlEventTitle.trim() || !wlEventDate) return;
+    addWatchlistEvent(itemId, {
+      title: wlEventTitle.trim(),
+      date: wlEventDate,
+      time: wlEventTime || '00:00',
+      importance: wlEventImportance,
+      description: wlEventDescription.trim() || undefined,
+    });
+    setWlEventTitle('');
+    setWlEventDate('');
+    setWlEventTime('');
+    setWlEventImportance('medium');
+    setWlEventDescription('');
+  };
 
   return (
     <div className="space-y-4">
@@ -252,9 +333,8 @@ export function MemoPage() {
                   <EventCard
                     key={event.id}
                     event={event}
-                    onUpdate={scheduleEventIds.has(event.id) ? updateEvent : () => {}}
-                    onDelete={scheduleEventIds.has(event.id) ? deleteEvent : () => {}}
-                    readOnly={!scheduleEventIds.has(event.id)}
+                    onUpdate={handleEventUpdate}
+                    onDelete={handleEventDelete}
                   />
                 ))}
               </div>
@@ -264,6 +344,180 @@ export function MemoPage() {
       </div>
 
       <MemoList memos={memos} onUpdate={updateMemo} onDelete={deleteMemo} />
+
+      {/* ── Watchlist Section ── */}
+      <div className="border-t border-border pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+            <svg className="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            ウォッチリスト
+          </h2>
+          <button
+            onClick={() => setWlShowAddForm(!wlShowAddForm)}
+            className="px-3 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30"
+          >
+            + 銘柄追加
+          </button>
+        </div>
+
+        {wlShowAddForm && (
+          <div className="bg-bg-card/70 border border-border rounded-xl p-4 mb-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              <input type="text" value={wlNewTicker} onChange={(e) => setWlNewTicker(e.target.value)} placeholder="銘柄コード (例: 7203)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
+              <input type="text" value={wlNewName} onChange={(e) => setWlNewName(e.target.value)} placeholder="銘柄名 (例: トヨタ)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
+              <select value={wlNewMarket} onChange={(e) => setWlNewMarket(e.target.value as WatchlistItem['market'])} className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:dark]">
+                <option value="JP">日本株</option>
+                <option value="US">米国株</option>
+                <option value="other">その他</option>
+              </select>
+              <button onClick={handleWlAdd} disabled={!wlNewTicker.trim()} className="px-4 py-2 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 disabled:opacity-40">追加</button>
+            </div>
+          </div>
+        )}
+
+        {watchlistItems.length === 0 && !wlShowAddForm && (
+          <div className="text-center py-8">
+            <p className="text-text-secondary/60 text-sm">ウォッチリストに銘柄を追加してください</p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {watchlistItems.map((item) => {
+            const isExpanded = wlExpandedId === item.id;
+            const tickerTrades = getTradesByTicker(item.ticker);
+            return (
+              <div key={item.id} className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl overflow-hidden">
+                {/* Header row */}
+                <div
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-bg-primary/30"
+                  onClick={() => setWlExpandedId(isExpanded ? null : item.id)}
+                >
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-bg-primary text-text-secondary">{item.market}</span>
+                  <span className="font-mono text-sm font-semibold text-text-primary">{item.ticker}</span>
+                  <span className="text-sm text-text-secondary">{item.tickerName}</span>
+                  {item.tags.length > 0 && (
+                    <div className="flex gap-1 ml-2">
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="text-xs bg-accent-cyan/10 text-accent-cyan px-1.5 py-0.5 rounded">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-xs text-text-secondary/60">
+                      {item.events.length > 0 && `${item.events.length}件の予定`}
+                      {item.events.length > 0 && tickerTrades.length > 0 && ' / '}
+                      {tickerTrades.length > 0 && `${tickerTrades.length}件のトレード`}
+                    </span>
+                    <svg className={`w-4 h-4 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="border-t border-border px-4 py-3 space-y-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      {/* Notes */}
+                      <div>
+                        <h4 className="text-xs font-semibold text-text-secondary mb-1">メモ</h4>
+                        {wlEditingNotesId === item.id ? (
+                          <div>
+                            <textarea
+                              value={wlNotesDraft}
+                              onChange={(e) => setWlNotesDraft(e.target.value)}
+                              className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50"
+                              autoFocus
+                            />
+                            <div className="flex gap-2 mt-1">
+                              <button onClick={() => { updateWatchlistNotes(item.id, wlNotesDraft); setWlEditingNotesId(null); }} className="text-xs text-accent-cyan">保存</button>
+                              <button onClick={() => setWlEditingNotesId(null)} className="text-xs text-text-secondary">キャンセル</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => { setWlEditingNotesId(item.id); setWlNotesDraft(item.notes); }}
+                            className="min-h-[3rem] bg-bg-primary/30 rounded-lg p-2 text-sm text-text-primary cursor-text"
+                          >
+                            {item.notes ? <span className="whitespace-pre-wrap"><LinkifiedText text={item.notes} /></span> : <span className="text-text-secondary/50">クリックしてメモを追加...</span>}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Events */}
+                      <div>
+                        <h4 className="text-xs font-semibold text-text-secondary mb-1">予定</h4>
+                        <div className="space-y-1 mb-2">
+                          {item.events.length === 0 && <p className="text-xs text-text-secondary/50">予定なし</p>}
+                          {[...item.events].sort((a, b) => a.date.localeCompare(b.date)).map((ev) => (
+                            <div key={ev.id} className="flex items-center gap-2 text-xs">
+                              <span className={`w-1.5 h-1.5 rounded-full ${IMPORTANCE_DOT[ev.importance]}`} />
+                              <span className="text-text-secondary font-mono">{formatDate(ev.date)}</span>
+                              <span className="text-text-primary flex-1 min-w-0 truncate">{ev.title}</span>
+                              {ev.description && (
+                                <span className="text-text-secondary/50 truncate max-w-[8rem]" title={ev.description}>{ev.description}</span>
+                              )}
+                              <button onClick={() => removeWatchlistEvent(item.id, ev.id)} className="text-text-secondary/40 hover:text-down shrink-0">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex gap-1">
+                            <input type="text" value={wlEventTitle} onChange={(e) => setWlEventTitle(e.target.value)} placeholder="予定名" className="flex-1 bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none" />
+                            <input type="date" value={wlEventDate} onChange={(e) => setWlEventDate(e.target.value)} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:dark]" />
+                          </div>
+                          <div className="flex gap-1">
+                            <input type="time" value={wlEventTime} onChange={(e) => setWlEventTime(e.target.value)} placeholder="時刻" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:dark]" />
+                            <select value={wlEventImportance} onChange={(e) => setWlEventImportance(e.target.value as ScheduleEvent['importance'])} className="bg-bg-primary/50 border border-border rounded px-1 py-1 text-xs text-text-primary [color-scheme:dark]">
+                              <option value="high">高</option>
+                              <option value="medium">中</option>
+                              <option value="low">低</option>
+                            </select>
+                            <button onClick={() => handleWlAddEvent(item.id)} className="text-xs text-accent-gold hover:text-accent-gold/80 px-2 shrink-0">追加</button>
+                          </div>
+                          <input type="text" value={wlEventDescription} onChange={(e) => setWlEventDescription(e.target.value)} placeholder="詳細メモ（任意）" className="w-full bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trade history */}
+                    {tickerTrades.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-text-secondary mb-1">トレード履歴</h4>
+                        <div className="space-y-1">
+                          {tickerTrades.slice(0, 10).map((t) => (
+                            <div key={t.id} className="flex items-center gap-2 text-xs bg-bg-primary/30 rounded px-2 py-1.5">
+                              <span className="font-mono text-text-secondary">{t.date}</span>
+                              <span className={`font-bold ${t.side === 'buy' ? 'text-up' : 'text-down'}`}>{t.side === 'buy' ? '買' : '売'}</span>
+                              <span className="text-text-primary font-mono">{t.quantity.toLocaleString()}</span>
+                              <span className="text-text-secondary">@</span>
+                              <span className="text-text-primary font-mono">{t.price.toLocaleString()}</span>
+                              {t.pnl !== undefined && (
+                                <span className={`ml-auto font-mono ${t.pnl >= 0 ? 'text-up' : 'text-down'}`}>
+                                  {t.pnl >= 0 ? '+' : ''}{t.pnl.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
+                      <button onClick={() => removeWatchlistItem(item.id)} className="text-xs text-down/60 hover:text-down">この銘柄を削除</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
