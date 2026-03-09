@@ -12,6 +12,8 @@ export interface SelectedCsvTrade {
   ticker: string;
   name: string;
   profit: number;
+  quantity: number;
+  price: number;
 }
 
 interface AnalysisProps {
@@ -25,6 +27,8 @@ interface Trade {
   name: string;
   ticker: string;
   profit: number;
+  quantity: number;
+  price: number;
   source: string;
 }
 
@@ -90,6 +94,12 @@ function parseCSVData(text: string, fileName: string): Trade[] {
   const tickerIdx = detectedHeaders.findIndex(
     (h) => h.includes('銘柄コード') || h === 'コード' || h.includes('ティッカー')
   );
+  const quantityIdx = detectedHeaders.findIndex(
+    (h) => h === '数量' || h.includes('約定数量') || h.includes('株数')
+  );
+  const priceIdx = detectedHeaders.findIndex(
+    (h) => h.includes('約定単価') || h === '単価' || h.includes('約定価格')
+  );
   const finalProfitIdx = profitIdx !== -1 ? profitIdx : 11;
   const finalNameIdx = nameIdx !== -1 ? nameIdx : finalProfitIdx > 2 ? 1 : 0;
   const finalTickerIdx = tickerIdx !== -1 ? tickerIdx : -1;
@@ -103,6 +113,10 @@ function parseCSVData(text: string, fileName: string): Trade[] {
       const dateStr = row[dateIdx] || '';
       const month = dateStr.substring(0, 7);
       const ticker = finalTickerIdx !== -1 ? row[finalTickerIdx] : '';
+      const qtyRaw = quantityIdx !== -1 ? row[quantityIdx]?.replace(/[^-0-9.]/g, '') : '';
+      const qty = qtyRaw ? parseFloat(qtyRaw) : 0;
+      const prcRaw = priceIdx !== -1 ? row[priceIdx]?.replace(/[^-0-9.]/g, '') : '';
+      const prc = prcRaw ? parseFloat(prcRaw) : 0;
       return {
         key: `${dateStr}-${row[finalNameIdx]}-${profit}-${idx}`,
         date: dateStr,
@@ -110,6 +124,8 @@ function parseCSVData(text: string, fileName: string): Trade[] {
         name: row[finalNameIdx] || '不明',
         ticker,
         profit,
+        quantity: isNaN(qty) ? 0 : qty,
+        price: isNaN(prc) ? 0 : prc,
         source: fileName,
       };
     })
@@ -504,7 +520,7 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
                     <tr
                       key={idx}
                       className={`hover:bg-bg-primary/30 ${onSelectTrade ? 'cursor-pointer hover:bg-accent-gold/5' : ''}`}
-                      onClick={() => onSelectTrade?.({ date: t.date, ticker: t.ticker, name: t.name, profit: t.profit })}
+                      onClick={() => onSelectTrade?.({ date: t.date, ticker: t.ticker, name: t.name, profit: t.profit, quantity: t.quantity, price: t.price })}
                     >
                       <td className="px-4 py-2.5 text-text-secondary font-mono">{t.date}</td>
                       <td className="px-4 py-2.5 text-center font-mono text-text-secondary">{t.ticker || '-'}</td>

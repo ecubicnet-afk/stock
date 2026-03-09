@@ -15,6 +15,8 @@ export interface PrefillData {
   tickerName?: string;
   side?: 'buy' | 'sell';
   pnl?: number;
+  quantity?: number;
+  price?: number;
 }
 
 export function JournalPage() {
@@ -55,6 +57,8 @@ export function JournalPage() {
       tickerName: trade.name,
       side: 'sell',
       pnl: trade.profit,
+      quantity: trade.quantity || undefined,
+      price: trade.price || undefined,
     });
     setShowTradeForm(true);
 
