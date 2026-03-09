@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { TradeRecord } from '../../types';
+import { ImageAttachment } from '../common/ImageAttachment';
+
+interface PrefillData {
+  date?: string;
+  ticker?: string;
+  tickerName?: string;
+  side?: 'buy' | 'sell';
+  pnl?: number;
+}
 
 interface Props {
   date: string;
+  prefill?: PrefillData;
   onAdd: (trade: Omit<TradeRecord, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
 }
 
-export function TradeForm({ date, onAdd, onCancel }: Props) {
+export function TradeForm({ date, prefill, onAdd, onCancel }: Props) {
   const [ticker, setTicker] = useState('');
   const [tickerName, setTickerName] = useState('');
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
@@ -16,6 +26,16 @@ export function TradeForm({ date, onAdd, onCancel }: Props) {
   const [reason, setReason] = useState('');
   const [emotion, setEmotion] = useState('');
   const [pnl, setPnl] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (prefill) {
+      if (prefill.ticker) setTicker(prefill.ticker);
+      if (prefill.tickerName) setTickerName(prefill.tickerName);
+      if (prefill.side) setSide(prefill.side);
+      if (prefill.pnl !== undefined) setPnl(String(prefill.pnl));
+    }
+  }, [prefill]);
 
   const handleSubmit = () => {
     if (!ticker || !quantity || !price) return;
@@ -33,11 +53,17 @@ export function TradeForm({ date, onAdd, onCancel }: Props) {
       emotion,
       pnl: pnl ? Number(pnl) : undefined,
       tags: [],
+      images: images.length > 0 ? images : undefined,
     });
   };
 
   return (
     <div className="bg-bg-primary/50 border border-border rounded-xl p-3 space-y-2">
+      {prefill && (
+        <div className="text-[11px] text-accent-gold/70 bg-accent-gold/5 px-2 py-1 rounded mb-1">
+          CSV取引明細から自動入力されました
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <input type="text" value={ticker} onChange={(e) => setTicker(e.target.value)} placeholder="銘柄コード" className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold/50" />
         <input type="text" value={tickerName} onChange={(e) => setTickerName(e.target.value)} placeholder="銘柄名" className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold/50" />
@@ -51,6 +77,7 @@ export function TradeForm({ date, onAdd, onCancel }: Props) {
         <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="価格" className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold/50" />
       </div>
       <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="理由（エントリー/イグジット理由）" className="w-full h-12 bg-bg-card/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold/50" />
+      <ImageAttachment images={images} onChange={setImages} maxImages={3} />
       <div className="grid grid-cols-2 gap-2">
         <select value={emotion} onChange={(e) => setEmotion(e.target.value)} className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary [color-scheme:dark]">
           <option value="">感情状態</option>

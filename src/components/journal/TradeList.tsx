@@ -1,4 +1,5 @@
 import type { TradeRecord } from '../../types';
+import { ImageThumbnails } from '../common/ImageAttachment';
 
 interface Props {
   trades: TradeRecord[];
@@ -39,6 +40,7 @@ export function TradeList({ trades, onDelete }: Props) {
           )}
           {t.reason && <p className="text-xs text-text-secondary/80 mt-1">{t.reason}</p>}
           {t.emotion && <span className="inline-block text-xs bg-bg-card px-1.5 py-0.5 rounded text-text-secondary mt-1">{t.emotion}</span>}
+          <ImageThumbnails images={t.images} />
         </div>
       ))}
     </div>

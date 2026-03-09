@@ -5,6 +5,18 @@ import {
 } from 'recharts';
 import { readFileAsText } from '../utils/csvParser';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { lookupMaxRisk } from '../utils/riskTable';
+
+export interface SelectedCsvTrade {
+  date: string;
+  ticker: string;
+  name: string;
+  profit: number;
+}
+
+interface AnalysisProps {
+  onSelectTrade?: (trade: SelectedCsvTrade) => void;
+}
 
 interface Trade {
   key: string;
@@ -107,7 +119,7 @@ function parseCSVData(text: string, fileName: string): Trade[] {
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(val);
 
-export function TradeAnalysisContent() {
+export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
   const [data, setData] = useLocalStorage<Trade[]>('stock-app-trade-analysis', []);
   const [loadedFiles, setLoadedFiles] = useLocalStorage<FileInfo[]>('stock-app-trade-files', []);
   const [error, setError] = useState('');
@@ -249,11 +261,15 @@ export function TradeAnalysisContent() {
       })
       .sort((a, b) => b.total - a.total);
 
+    const wr = winCount + lossCount > 0 ? (winCount / (winCount + lossCount)) * 100 : 0;
+    const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
+
     return {
-      winRate: winCount + lossCount > 0 ? (winCount / (winCount + lossCount)) * 100 : 0,
-      rrRatio: avgLoss > 0 ? avgWin / avgLoss : 0,
+      winRate: wr,
+      rrRatio: rr,
       netProfit: totalProfit - totalLoss,
       profitFactor: totalLoss > 0 ? totalProfit / totalLoss : 99.9,
+      maxRisk: lookupMaxRisk(wr, rr),
       winCount,
       lossCount,
       chartData,
@@ -309,7 +325,7 @@ export function TradeAnalysisContent() {
       {analysis ? (
         <>
           {/* Summary stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 text-center">
               <div className="text-xs font-semibold text-text-secondary mb-1">全体勝率</div>
               <div className="text-xl font-bold text-text-primary">{analysis.winRate.toFixed(1)}%</div>
@@ -330,6 +346,13 @@ export function TradeAnalysisContent() {
               <div className={`text-xl font-bold ${analysis.netProfit >= 0 ? 'text-up' : 'text-down'}`}>
                 {formatCurrency(analysis.netProfit)}
               </div>
+            </div>
+            <div className="bg-accent-gold/5 backdrop-blur-sm border border-accent-gold/30 rounded-xl p-4 text-center">
+              <div className="text-xs font-semibold text-accent-gold mb-1">限界リスク</div>
+              <div className="text-xl font-bold text-accent-gold">
+                {analysis.maxRisk !== null ? `${analysis.maxRisk}%` : '-'}
+              </div>
+              <div className="text-[10px] text-text-secondary mt-1">破産基準-30% / 1回あたり</div>
             </div>
           </div>
 
@@ -459,9 +482,12 @@ export function TradeAnalysisContent() {
                 </svg>
                 取引明細
               </h3>
-              <span className="text-xs text-text-secondary bg-bg-primary px-2 py-0.5 rounded">
-                {data.length} TRADES
-              </span>
+              <div className="flex items-center gap-2">
+                {onSelectTrade && <span className="text-[10px] text-accent-gold/60">行をクリックで日誌に記録</span>}
+                <span className="text-xs text-text-secondary bg-bg-primary px-2 py-0.5 rounded">
+                  {data.length} TRADES
+                </span>
+              </div>
             </div>
             <div className="overflow-x-auto max-h-96 overflow-y-auto">
               <table className="w-full text-left text-sm">
@@ -475,7 +501,11 @@ export function TradeAnalysisContent() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {data.slice().reverse().map((t, idx) => (
-                    <tr key={idx} className="hover:bg-bg-primary/30">
+                    <tr
+                      key={idx}
+                      className={`hover:bg-bg-primary/30 ${onSelectTrade ? 'cursor-pointer hover:bg-accent-gold/5' : ''}`}
+                      onClick={() => onSelectTrade?.({ date: t.date, ticker: t.ticker, name: t.name, profit: t.profit })}
+                    >
                       <td className="px-4 py-2.5 text-text-secondary font-mono">{t.date}</td>
                       <td className="px-4 py-2.5 text-center font-mono text-text-secondary">{t.ticker || '-'}</td>
                       <td className="px-4 py-2.5 text-text-primary">{t.name}</td>

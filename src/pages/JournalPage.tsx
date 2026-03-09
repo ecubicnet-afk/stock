@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useJournal } from '../hooks/useJournal';
 import { useTrades } from '../hooks/useTrades';
 import { JournalCalendar } from '../components/journal/JournalCalendar';
@@ -7,16 +7,25 @@ import { TradeList } from '../components/journal/TradeList';
 import { TradeForm } from '../components/journal/TradeForm';
 import { JournalStats } from '../components/journal/JournalStats';
 import { TradeAnalysisContent } from './TradeAnalysisPage';
+import type { SelectedCsvTrade } from './TradeAnalysisPage';
 
-type Tab = 'journal' | 'analysis';
+export interface PrefillData {
+  date?: string;
+  ticker?: string;
+  tickerName?: string;
+  side?: 'buy' | 'sell';
+  pnl?: number;
+}
 
 export function JournalPage() {
   const today = new Date().toISOString().split('T')[0];
-  const [activeTab, setActiveTab] = useState<Tab>('journal');
   const [selectedDate, setSelectedDate] = useState(today);
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
   const [showTradeForm, setShowTradeForm] = useState(false);
+  const [prefill, setPrefill] = useState<PrefillData | undefined>();
+
+  const journalRef = useRef<HTMLDivElement>(null);
 
   const { entries, getEntryByDate, saveEntry } = useJournal();
   const { trades, addTrade, deleteTrade, getTradesByDate, stats } = useTrades();
@@ -30,102 +39,109 @@ export function JournalPage() {
     setCalMonth(d.getMonth());
   };
 
+  const handleSelectCsvTrade = (trade: SelectedCsvTrade) => {
+    const normalizedDate = trade.date.replace(/\//g, '-');
+    setSelectedDate(normalizedDate);
+
+    const d = new Date(normalizedDate + 'T00:00:00');
+    if (!isNaN(d.getTime())) {
+      setCalYear(d.getFullYear());
+      setCalMonth(d.getMonth());
+    }
+
+    setPrefill({
+      date: normalizedDate,
+      ticker: trade.ticker,
+      tickerName: trade.name,
+      side: 'sell',
+      pnl: trade.profit,
+    });
+    setShowTradeForm(true);
+
+    setTimeout(() => {
+      journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Header with tabs */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-text-primary">トレード</h1>
-        <div className="flex bg-bg-card/70 border border-border rounded-lg p-0.5">
-          <button
-            onClick={() => setActiveTab('journal')}
-            className={`px-4 py-1.5 text-sm rounded-md transition-all font-medium ${
-              activeTab === 'journal'
-                ? 'bg-accent-cyan/20 text-accent-cyan'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            日誌
-          </button>
-          <button
-            onClick={() => setActiveTab('analysis')}
-            className={`px-4 py-1.5 text-sm rounded-md transition-all font-medium ${
-              activeTab === 'analysis'
-                ? 'bg-accent-cyan/20 text-accent-cyan'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            分析
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-lg font-semibold text-text-primary">トレード</h1>
 
-      {/* Tab content */}
-      {activeTab === 'journal' ? (
-        <>
-          <JournalStats {...stats} />
+      {/* Analysis section */}
+      <TradeAnalysisContent onSelectTrade={handleSelectCsvTrade} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Calendar */}
-            <div>
-              <JournalCalendar
-                year={calYear}
-                month={calMonth}
-                entries={entries}
-                trades={trades}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                onChangeMonth={handleChangeMonth}
-              />
-            </div>
+      {/* Divider */}
+      <div className="border-t border-border" />
 
-            {/* Daily Panel */}
-            <div className="lg:col-span-2 space-y-3">
-              <DailyEntryForm
-                date={selectedDate}
-                entry={currentEntry}
-                onSave={saveEntry}
-              />
+      {/* Journal section */}
+      <div ref={journalRef}>
+        <h2 className="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
+          <svg className="w-4 h-4 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          トレード日誌
+        </h2>
 
-              {/* Trade section */}
-              <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    トレード記録
-                  </h3>
-                  {!showTradeForm && (
-                    <button
-                      onClick={() => setShowTradeForm(true)}
-                      className="text-xs text-accent-gold hover:text-accent-gold/80"
-                    >
-                      + 新規追加
-                    </button>
-                  )}
-                </div>
+        <JournalStats {...stats} />
 
-                {showTradeForm && (
-                  <div className="mb-3">
-                    <TradeForm
-                      date={selectedDate}
-                      onAdd={(trade) => {
-                        addTrade(trade);
-                        setShowTradeForm(false);
-                      }}
-                      onCancel={() => setShowTradeForm(false)}
-                    />
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+          <div>
+            <JournalCalendar
+              year={calYear}
+              month={calMonth}
+              entries={entries}
+              trades={trades}
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              onChangeMonth={handleChangeMonth}
+            />
+          </div>
+
+          <div className="lg:col-span-2 space-y-3">
+            <DailyEntryForm
+              date={selectedDate}
+              entry={currentEntry}
+              onSave={saveEntry}
+            />
+
+            <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  トレード記録
+                </h3>
+                {!showTradeForm && (
+                  <button
+                    onClick={() => { setPrefill(undefined); setShowTradeForm(true); }}
+                    className="text-xs text-accent-gold hover:text-accent-gold/80"
+                  >
+                    + 新規追加
+                  </button>
                 )}
-
-                <TradeList trades={dayTrades} onDelete={deleteTrade} />
               </div>
+
+              {showTradeForm && (
+                <div className="mb-3">
+                  <TradeForm
+                    date={selectedDate}
+                    prefill={prefill}
+                    onAdd={(trade) => {
+                      addTrade(trade);
+                      setShowTradeForm(false);
+                      setPrefill(undefined);
+                    }}
+                    onCancel={() => { setShowTradeForm(false); setPrefill(undefined); }}
+                  />
+                </div>
+              )}
+
+              <TradeList trades={dayTrades} onDelete={deleteTrade} />
             </div>
           </div>
-        </>
-      ) : (
-        <TradeAnalysisContent />
-      )}
+        </div>
+      </div>
     </div>
   );
 }

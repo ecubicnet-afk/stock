@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { JournalEntry } from '../../types';
+import { ImageAttachment } from '../common/ImageAttachment';
 
 interface Props {
   date: string;
   entry: JournalEntry | undefined;
-  onSave: (date: string, data: { marketOutlook: string; healthRating: number; mentalRating: number; notes: string }) => void;
+  onSave: (date: string, data: { marketOutlook: string; healthRating: number; mentalRating: number; notes: string; images?: string[] }) => void;
 }
 
 function RatingSelector({ label, value, onChange, color }: { label: string; value: number; onChange: (v: number) => void; color: string }) {
@@ -35,16 +36,18 @@ export function DailyEntryForm({ date, entry, onSave }: Props) {
   const [healthRating, setHealthRating] = useState(3);
   const [mentalRating, setMentalRating] = useState(3);
   const [notes, setNotes] = useState('');
+  const [images, setImages] = useState<string[]>([]);
 
   useEffect(() => {
     setMarketOutlook(entry?.marketOutlook ?? '');
     setHealthRating(entry?.healthRating ?? 3);
     setMentalRating(entry?.mentalRating ?? 3);
     setNotes(entry?.notes ?? '');
+    setImages(entry?.images ?? []);
   }, [entry, date]);
 
   const handleSave = () => {
-    onSave(date, { marketOutlook, healthRating, mentalRating, notes });
+    onSave(date, { marketOutlook, healthRating, mentalRating, notes, images: images.length > 0 ? images : undefined });
   };
 
   const formatDate = (d: string) => {
@@ -86,6 +89,8 @@ export function DailyEntryForm({ date, entry, onSave }: Props) {
           placeholder="今日の反省点、気づき、次回への教訓..."
         />
       </div>
+
+      <ImageAttachment images={images} onChange={setImages} maxImages={5} />
 
       <button
         onClick={handleSave}
