@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { ScheduleCalendar } from '../components/schedule/ScheduleCalendar';
+import { ImageAttachment, ImageThumbnails } from '../components/common/ImageAttachment';
 import type { ScheduleEvent } from '../types';
 
 function formatDateTime(iso: string) {
@@ -39,8 +40,10 @@ export function MemoPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(todayStr);
 
   const [newMemoText, setNewMemoText] = useState('');
+  const [newMemoImages, setNewMemoImages] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [editImages, setEditImages] = useState<string[]>([]);
 
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
@@ -48,6 +51,7 @@ export function MemoPage() {
   const [newImportance, setNewImportance] = useState<ScheduleEvent['importance']>('medium');
   const [newDescription, setNewDescription] = useState('');
   const [newRegion, setNewRegion] = useState<RegionType>('JP');
+  const [newEventImages, setNewEventImages] = useState<string[]>([]);
 
   // Event editing state
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -75,22 +79,25 @@ export function MemoPage() {
   };
 
   const handleAddMemo = () => {
-    if (!newMemoText.trim()) return;
-    addMemo(newMemoText.trim());
+    if (!newMemoText.trim() && newMemoImages.length === 0) return;
+    addMemo(newMemoText.trim(), newMemoImages.length > 0 ? newMemoImages : undefined);
     setNewMemoText('');
+    setNewMemoImages([]);
   };
 
-  const handleStartEdit = (id: string, text: string) => {
+  const handleStartEdit = (id: string, text: string, images?: string[]) => {
     setEditingId(id);
     setEditText(text);
+    setEditImages(images ?? []);
   };
 
   const handleSaveEdit = () => {
-    if (editingId && editText.trim()) {
-      updateMemo(editingId, editText.trim());
+    if (editingId && (editText.trim() || editImages.length > 0)) {
+      updateMemo(editingId, editText.trim(), editImages.length > 0 ? editImages : undefined);
     }
     setEditingId(null);
     setEditText('');
+    setEditImages([]);
   };
 
   const handleAddEvent = () => {
@@ -102,6 +109,7 @@ export function MemoPage() {
       importance: newImportance,
       description: newDescription.trim() || undefined,
       region: newRegion || undefined,
+      images: newEventImages.length > 0 ? newEventImages : undefined,
     });
     setNewTitle('');
     setNewDate('');
@@ -109,6 +117,7 @@ export function MemoPage() {
     setNewImportance('medium');
     setNewDescription('');
     setNewRegion('JP');
+    setNewEventImages([]);
   };
 
   const handleStartEditEvent = (event: ScheduleEvent) => {
@@ -196,9 +205,10 @@ export function MemoPage() {
               if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddMemo();
             }}
           />
+          <ImageAttachment images={newMemoImages} onChange={setNewMemoImages} maxImages={5} />
           <button
             onClick={handleAddMemo}
-            disabled={!newMemoText.trim()}
+            disabled={!newMemoText.trim() && newMemoImages.length === 0}
             className="mt-2 px-4 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             保存 (Ctrl+Enter)
@@ -257,6 +267,9 @@ export function MemoPage() {
               placeholder="詳細メモ（任意）"
               className="col-span-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 placeholder:text-text-secondary/50 h-12"
             />
+            <div className="col-span-2">
+              <ImageAttachment images={newEventImages} onChange={setNewEventImages} maxImages={3} />
+            </div>
             <button
               onClick={handleAddEvent}
               disabled={!newTitle.trim() || !newDate}
@@ -399,6 +412,11 @@ export function MemoPage() {
                             {event.description}
                           </div>
                         )}
+                        {event.images && event.images.length > 0 && eventMemoEditId !== event.id && (
+                          <div className="ml-[3.75rem]">
+                            <ImageThumbnails images={event.images} />
+                          </div>
+                        )}
 
                         {/* Memo edit area */}
                         {eventMemoEditId === event.id ? (
@@ -466,6 +484,9 @@ export function MemoPage() {
                       className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50"
                       autoFocus
                     />
+                    <div className="mt-2">
+                      <ImageAttachment images={editImages} onChange={setEditImages} maxImages={5} />
+                    </div>
                     <div className="flex gap-2 mt-2">
                       <button onClick={handleSaveEdit} className="px-3 py-1 bg-accent-cyan/20 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/30">保存</button>
                       <button onClick={() => setEditingId(null)} className="px-3 py-1 bg-bg-primary text-text-secondary text-xs rounded-lg hover:text-text-primary">キャンセル</button>
@@ -474,10 +495,11 @@ export function MemoPage() {
                 ) : (
                   <>
                     <p className="text-sm text-text-primary whitespace-pre-wrap">{memo.text}</p>
+                    <ImageThumbnails images={memo.images} />
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-text-secondary/60">{formatDateTime(memo.updatedAt)}</span>
                       <div className="flex gap-2">
-                        <button onClick={() => handleStartEdit(memo.id, memo.text)} className="text-xs text-text-secondary hover:text-accent-cyan transition-colors">編集</button>
+                        <button onClick={() => handleStartEdit(memo.id, memo.text, memo.images)} className="text-xs text-text-secondary hover:text-accent-cyan transition-colors">編集</button>
                         <button onClick={() => deleteMemo(memo.id)} className="text-xs text-text-secondary hover:text-down transition-colors">削除</button>
                       </div>
                     </div>

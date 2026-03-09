@@ -69,6 +69,7 @@ export interface OHLCDataPoint {
 export interface MemoEntry {
   id: string;
   text: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -81,6 +82,7 @@ export interface ScheduleEvent {
   importance: 'high' | 'medium' | 'low';
   description?: string;
   region?: 'JP' | 'US' | 'other';
+  images?: string[];
 }
 
 // Settings
@@ -102,6 +104,7 @@ export interface JournalEntry {
   healthRating: number;
   mentalRating: number;
   notes: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -119,6 +122,7 @@ export interface TradeRecord {
   emotion: string;
   pnl?: number;
   tags: string[];
+  images?: string[];
   createdAt: string;
 }
 
