@@ -5,6 +5,7 @@ interface Props {
   month: number;
   entries: JournalEntry[];
   trades: TradeRecord[];
+  csvTradeDates?: Set<string>;
   selectedDate: string;
   onSelectDate: (date: string) => void;
   onChangeMonth: (delta: number) => void;
@@ -12,7 +13,7 @@ interface Props {
 
 const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
 
-export function JournalCalendar({ year, month, entries, trades, selectedDate, onSelectDate, onChangeMonth }: Props) {
+export function JournalCalendar({ year, month, entries, trades, csvTradeDates, selectedDate, onSelectDate, onChangeMonth }: Props) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const startDow = (firstDay.getDay() + 6) % 7; // Monday=0
@@ -50,6 +51,7 @@ export function JournalCalendar({ year, month, entries, trades, selectedDate, on
           const isSelected = cell.dateStr === selectedDate;
           const hasEntry = entryDates.has(cell.dateStr);
           const hasTrade = tradeDates.has(cell.dateStr);
+          const hasCsvTrade = csvTradeDates?.has(cell.dateStr) ?? false;
           const isToday = cell.dateStr === new Date().toISOString().split('T')[0];
           return (
             <button
@@ -64,10 +66,11 @@ export function JournalCalendar({ year, month, entries, trades, selectedDate, on
               }`}
             >
               {cell.day}
-              {(hasEntry || hasTrade) && (
+              {(hasEntry || hasTrade || hasCsvTrade) && (
                 <div className="flex gap-0.5 justify-center absolute bottom-0.5 left-0 right-0">
                   {hasEntry && <span className="w-1 h-1 rounded-full bg-accent-cyan" />}
                   {hasTrade && <span className="w-1 h-1 rounded-full bg-accent-gold" />}
+                  {hasCsvTrade && <span className="w-1 h-1 rounded-full bg-up" />}
                 </div>
               )}
             </button>
