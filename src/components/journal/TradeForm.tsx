@@ -8,6 +8,8 @@ interface PrefillData {
   tickerName?: string;
   side?: 'buy' | 'sell';
   pnl?: number;
+  quantity?: number;
+  price?: number;
 }
 
 interface Props {
@@ -34,6 +36,8 @@ export function TradeForm({ date, prefill, onAdd, onCancel }: Props) {
       if (prefill.tickerName) setTickerName(prefill.tickerName);
       if (prefill.side) setSide(prefill.side);
       if (prefill.pnl !== undefined) setPnl(String(prefill.pnl));
+      if (prefill.quantity) setQuantity(String(prefill.quantity));
+      if (prefill.price) setPrice(String(prefill.price));
     }
   }, [prefill]);
 
