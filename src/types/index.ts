@@ -16,6 +16,7 @@ export interface MarketItem {
   currency: string;
   lastUpdated: string;
   dataSource?: 'live' | 'mock';
+  tvSymbol?: string;
 }
 
 export interface SubIndicator {
