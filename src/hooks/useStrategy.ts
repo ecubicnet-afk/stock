@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteCategory, PositionSizing } from '../types';
+import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 
 const DEFAULT_STRATEGY: StrategyData = {
@@ -25,8 +25,8 @@ export function useStrategy() {
   );
 
   const addNote = useCallback(
-    (scenarioId: string, category: StrategyNoteCategory, title: string, description: string, x: number, y: number, url?: string, sourceType?: 'memo' | 'schedule', sourceId?: string, date?: string) => {
-      const note: StrategyNote = { id: crypto.randomUUID(), category, title, description, url, date, sourceType, sourceId, x, y };
+    (scenarioId: string, region: StrategyNoteRegion, direction: StrategyNoteDirection, title: string, description: string, x: number, y: number, url?: string, sourceType?: 'memo' | 'schedule', sourceId?: string, date?: string) => {
+      const note: StrategyNote = { id: crypto.randomUUID(), region, direction, title, description, url, date, sourceType, sourceId, x, y };
       updateScenario(scenarioId, (notes, connections) => ({ notes: [...notes, note], connections }));
     },
     [updateScenario]

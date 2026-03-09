@@ -50,6 +50,7 @@ export const mockIndices: MarketItem[] = [
   makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 749.03, -28.50, 'JPY', 8, 'TSE:MOTHERS'),
   makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32951.41, -1850.00, 'JPY', 250, 'TVC:NI225'),
   makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1994.36, -32.80, 'JPY', 12, 'TSE:1398'),
+  makeItem('nikkei-futures', 'Nikkei 225 Futures', '日経225先物', 'japan', 51680.00, -3890.00, 'JPY', 600, 'CME:NKD1!'),
 
   // US (3/6 close)
   makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 47501.55, -453.19, 'USD', 200, 'TVC:DJI'),
@@ -186,6 +187,7 @@ export interface ChartSymbol {
 
 export const chartSymbols: ChartSymbol[] = [
   { id: 'nikkei225', name: 'Nikkei 225', nameJa: '日経平均株価', tvSymbol: 'TVC:NI225' },
+  { id: 'nikkei-futures', name: 'Nikkei 225 Futures', nameJa: '日経225先物', tvSymbol: 'CME:NKD1!' },
   { id: 'sp500', name: 'S&P 500', nameJa: 'S&P 500', tvSymbol: 'SP:SPX' },
   { id: 'nasdaq', name: 'NASDAQ', nameJa: 'NASDAQ総合', tvSymbol: 'NASDAQ:IXIC' },
 ];

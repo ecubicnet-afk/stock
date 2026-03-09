@@ -133,11 +133,13 @@ export interface TradeRecord {
 }
 
 // Strategy
-export type StrategyNoteCategory = 'macro' | 'internal' | 'technical' | 'psychology';
+export type StrategyNoteRegion = 'jp' | 'us' | 'other';
+export type StrategyNoteDirection = 'bullish' | 'bearish' | 'neutral';
 
 export interface StrategyNote {
   id: string;
-  category: StrategyNoteCategory;
+  region: StrategyNoteRegion;
+  direction: StrategyNoteDirection;
   title: string;
   description: string;
   url?: string;
