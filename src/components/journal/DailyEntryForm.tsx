@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { JournalEntry } from '../../types';
-import { ImageAttachment } from '../common/ImageAttachment';
 
 interface SaveData {
   marketOutlook: string;
@@ -52,6 +51,45 @@ function RatingSelector({ label, value, onChange, color }: { label: string; valu
   );
 }
 
+function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
+  images: string[];
+  currentIdx: number;
+  onClose: () => void;
+  onNavigate?: (idx: number) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <img
+          src={images[currentIdx]}
+          alt="拡大表示"
+          className="max-w-full max-h-[85vh] object-contain rounded-lg"
+        />
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 w-8 h-8 bg-bg-card border border-border rounded-full text-text-primary flex items-center justify-center hover:bg-bg-primary"
+        >
+          ×
+        </button>
+        {images.length > 1 && onNavigate && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => onNavigate(i)}
+                className={`w-2 h-2 rounded-full ${i === currentIdx ? 'bg-accent-cyan' : 'bg-white/40'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [conditionRating, setConditionRating] = useState(5);
   const [disciplineRating, setDisciplineRating] = useState(5);
@@ -60,6 +98,9 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [asExpectedRating, setAsExpectedRating] = useState(5);
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setConditionRating(entry?.conditionRating ?? 5);
@@ -69,6 +110,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     setAsExpectedRating(entry?.asExpectedRating ?? 5);
     setNotes(mergeNotes(entry));
     setImages(entry?.images ?? []);
+    setCurrentImageIdx(0);
   }, [entry, date]);
 
   const handleSave = () => {
@@ -90,11 +132,41 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const remaining = 5 - images.length;
+    const toProcess = files.slice(0, remaining);
+    toProcess.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setImages((prev) => {
+          const next = [...prev, result];
+          setCurrentImageIdx(next.length - 1);
+          return next;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const handleRemoveImage = (idx: number) => {
+    const next = images.filter((_, i) => i !== idx);
+    setImages(next);
+    if (currentImageIdx >= next.length) {
+      setCurrentImageIdx(Math.max(0, next.length - 1));
+    }
+  };
+
   const formatDate = (d: string) => {
     const dt = new Date(d + 'T00:00:00');
     const days = ['日', '月', '火', '水', '木', '金', '土'];
     return `${dt.getMonth() + 1}/${dt.getDate()} (${days[dt.getDay()]})`;
   };
+
+  const hasImages = images.length > 0;
 
   return (
     <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 space-y-3">
@@ -118,15 +190,97 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
         )}
       </div>
 
-      {/* Main content: small images left, text right */}
-      <div className="flex gap-2">
-        {/* Left: tiny image thumbnails */}
-        <div style={{ width: 52, minWidth: 52, maxWidth: 52 }}>
-          <ImageAttachment images={images} onChange={setImages} maxImages={5} />
-        </div>
+      {/* Split view: large image left, journal right */}
+      <div className={hasImages ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}>
+        {/* Left: Large image viewer */}
+        {hasImages && (
+          <div className="space-y-2">
+            {/* Main large image */}
+            <div
+              className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer border border-border"
+              onClick={() => setLightboxIdx(currentImageIdx)}
+            >
+              <img
+                src={images[currentImageIdx]}
+                alt={`チャート${currentImageIdx + 1}`}
+                className="w-full aspect-[4/3] object-contain"
+              />
+              {/* Navigation arrows for multiple images */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx - 1 + images.length) % images.length); }}
+                    className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx + 1) % images.length); }}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+              <div className="absolute top-1 right-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">
+                {currentImageIdx + 1}/{images.length}
+              </div>
+            </div>
 
-        {/* Right: text input + ratings */}
-        <div className="flex-1 min-w-0 space-y-2">
+            {/* Thumbnail strip for multiple images */}
+            {images.length > 1 && (
+              <div className="flex gap-1 overflow-x-auto">
+                {images.map((img, i) => (
+                  <div key={i} className="relative group shrink-0">
+                    <img
+                      src={img}
+                      alt={`サムネイル${i + 1}`}
+                      className={`w-12 h-12 rounded object-cover cursor-pointer border-2 transition-colors ${
+                        i === currentImageIdx ? 'border-accent-cyan' : 'border-border hover:border-accent-cyan/50'
+                      }`}
+                      onClick={() => setCurrentImageIdx(i)}
+                    />
+                    <button
+                      onClick={() => handleRemoveImage(i)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-black/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Single image: show remove button */}
+            {images.length === 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleRemoveImage(0)}
+                  className="text-[11px] text-text-secondary/50 hover:text-down transition-colors"
+                >
+                  画像を削除
+                </button>
+              </div>
+            )}
+
+            {/* Add more images button */}
+            {images.length < 5 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 text-xs text-text-secondary/60 hover:text-accent-cyan transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                </svg>
+                画像を追加
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Right: Text input + ratings */}
+        <div className="space-y-2">
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -134,7 +288,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             placeholder="相場観 / 所感 / 反省点 / 改善..."
           />
 
-          {/* Ratings inline */}
+          {/* Ratings */}
           <div className="space-y-1">
             <RatingSelector label="コンディション" value={conditionRating} onChange={setConditionRating} color="bg-accent-cyan" />
             <RatingSelector label="規律性" value={disciplineRating} onChange={setDisciplineRating} color="bg-up" />
@@ -143,15 +297,50 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             <RatingSelector label="想定通り" value={asExpectedRating} onChange={setAsExpectedRating} color="bg-accent-gold" />
           </div>
 
-          <button
-            onClick={handleSave}
-            className="px-4 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 transition-colors"
-          >
-            保存
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Upload button (when no images yet) */}
+            {!hasImages && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1 text-xs text-text-secondary/60 hover:text-accent-cyan transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                画像を添付
+              </button>
+            )}
+
+            <button
+              onClick={handleSave}
+              className="px-4 py-1.5 bg-accent-cyan/20 text-accent-cyan text-sm rounded-lg hover:bg-accent-cyan/30 transition-colors"
+            >
+              保存
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Lightbox */}
+      {lightboxIdx !== null && (
+        <LightboxModal
+          images={images}
+          currentIdx={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          onNavigate={images.length > 1 ? setLightboxIdx : undefined}
+        />
+      )}
     </div>
   );
 }
