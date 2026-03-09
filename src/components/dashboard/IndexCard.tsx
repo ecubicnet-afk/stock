@@ -1,6 +1,7 @@
 import type { MarketItem } from '../../types';
 import { formatNumber, formatChange, formatPercent, getChangeColor } from '../../utils/formatters';
 import { SparklineChart } from './SparklineChart';
+import { MiniTradingViewChart } from './MiniTradingViewChart';
 
 interface IndexCardProps {
   item: MarketItem;
@@ -33,9 +34,13 @@ export function IndexCard({ item }: IndexCardProps) {
         </span>
       </div>
 
-      {/* スパークライン */}
+      {/* チャート */}
       <div className="h-10">
-        <SparklineChart data={item.sparklineData} color={sparkColor} />
+        {item.tvSymbol ? (
+          <MiniTradingViewChart symbol={item.tvSymbol} height={60} />
+        ) : (
+          <SparklineChart data={item.sparklineData} color={sparkColor} />
+        )}
       </div>
     </div>
   );

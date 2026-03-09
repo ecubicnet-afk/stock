@@ -19,12 +19,23 @@ const ACCENT_COLORS: Record<string, string> = {
 };
 
 export function DashboardPage() {
-  const { indices, forex, commodities, crypto, subIndicators, fearGreed, marketSummary, isLoading } = useMarketData();
+  const { indices, forex, commodities, crypto, subIndicators, fearGreed, marketSummary, isLoading, lastUpdated } = useMarketData();
 
   return (
     <div className="space-y-6 py-4">
       {/* マーケットサマリー */}
       <MarketSummary data={marketSummary} />
+
+      {/* 最終更新日時 */}
+      <div className="flex items-center justify-end gap-2 -mt-4">
+        {isLoading ? (
+          <span className="text-text-secondary text-xs font-mono animate-pulse">更新中...</span>
+        ) : lastUpdated ? (
+          <span className="text-text-secondary text-xs font-mono">
+            最終更新: {new Date(lastUpdated).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+        ) : null}
+      </div>
 
       {/* 主要株価指数（地域別） */}
       {INDEX_CATEGORIES.map((category) => {

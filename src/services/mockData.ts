@@ -22,7 +22,8 @@ function makeItem(
   currentValue: number,
   change: number,
   currency: string,
-  volatility: number
+  volatility: number,
+  tvSymbol?: string
 ): MarketItem {
   const previousClose = currentValue - change;
   const changePercent = (change / previousClose) * 100;
@@ -38,34 +39,35 @@ function makeItem(
     sparklineData: generateSparkline(currentValue, volatility),
     currency,
     lastUpdated: new Date().toISOString(),
+    tvSymbol,
   };
 }
 
 export const mockIndices: MarketItem[] = [
   // Japan (3/9 intraday — 中東危機で暴落中)
-  makeItem('nikkei225', 'Nikkei 225', '日経平均株価', 'japan', 51905.00, -3716.00, 'JPY', 500),
-  makeItem('topix', 'TOPIX', 'TOPIX', 'japan', 3500.00, -217.00, 'JPY', 30),
-  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 749.03, -28.50, 'JPY', 8),
-  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32951.41, -1850.00, 'JPY', 250),
-  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1994.36, -32.80, 'JPY', 12),
+  makeItem('nikkei225', 'Nikkei 225', '日経平均株価', 'japan', 51905.00, -3716.00, 'JPY', 500, 'TVC:NI225'),
+  makeItem('topix', 'TOPIX', 'TOPIX', 'japan', 3500.00, -217.00, 'JPY', 30, 'TSE:TOPIX'),
+  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 749.03, -28.50, 'JPY', 8, 'TSE:MOTHERS'),
+  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32951.41, -1850.00, 'JPY', 250, 'TVC:NI225'),
+  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1994.36, -32.80, 'JPY', 12, 'TSE:1398'),
 
   // US (3/6 close)
-  makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 47501.55, -453.19, 'USD', 200),
-  makeItem('sp500', 'S&P 500', 'S&P 500', 'us', 6740.02, -90.69, 'USD', 35),
-  makeItem('nasdaq', 'NASDAQ', 'NASDAQ総合', 'us', 22387.68, -361.31, 'USD', 120),
-  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 24643.02, -376.85, 'USD', 130),
-  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2525.30, -60.30, 'USD', 20),
+  makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 47501.55, -453.19, 'USD', 200, 'TVC:DJI'),
+  makeItem('sp500', 'S&P 500', 'S&P 500', 'us', 6740.02, -90.69, 'USD', 35, 'SP:SPX'),
+  makeItem('nasdaq', 'NASDAQ', 'NASDAQ総合', 'us', 22387.68, -361.31, 'USD', 120, 'NASDAQ:IXIC'),
+  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 24643.02, -376.85, 'USD', 130, 'NASDAQ:NDX'),
+  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2525.30, -60.30, 'USD', 20, 'TVC:RUT'),
 
   // Europe (3/6)
-  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 10511.21, -56.15, 'GBP', 50),
-  makeItem('dax', 'DAX', 'DAX', 'europe', 23591.03, -225.40, 'EUR', 100),
-  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 7993.49, -52.30, 'EUR', 40),
+  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 10511.21, -56.15, 'GBP', 50, 'TVC:UKX'),
+  makeItem('dax', 'DAX', 'DAX', 'europe', 23591.03, -225.40, 'EUR', 100, 'XETR:DAX'),
+  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 7993.49, -52.30, 'EUR', 40, 'TVC:CAC40'),
 
   // Asia
-  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 4118.68, -35.20, 'CNY', 25),
-  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 25051.06, -715.80, 'HKD', 150),
-  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 5519.64, -445.00, 'KRW', 50),
-  makeItem('taiex', 'TAIEX', '台湾加権指数', 'asia', 33599.54, -73.40, 'TWD', 150),
+  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 4118.68, -35.20, 'CNY', 25, 'SSE:000001'),
+  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 25051.06, -715.80, 'HKD', 150, 'TVC:HSI'),
+  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 5519.64, -445.00, 'KRW', 50, 'KRX:KOSPI'),
+  makeItem('taiex', 'TAIEX', '台湾加権指数', 'asia', 33599.54, -73.40, 'TWD', 150, 'TWSE:TAIEX'),
 ];
 
 export const mockForex: MarketItem[] = [
@@ -179,12 +181,13 @@ export interface ChartSymbol {
   id: string;
   name: string;
   nameJa: string;
+  tvSymbol: string;
 }
 
 export const chartSymbols: ChartSymbol[] = [
-  { id: 'nikkei225', name: 'Nikkei 225', nameJa: '日経平均株価' },
-  { id: 'sp500', name: 'S&P 500', nameJa: 'S&P 500' },
-  { id: 'nasdaq', name: 'NASDAQ', nameJa: 'NASDAQ総合' },
+  { id: 'nikkei225', name: 'Nikkei 225', nameJa: '日経平均株価', tvSymbol: 'TVC:NI225' },
+  { id: 'sp500', name: 'S&P 500', nameJa: 'S&P 500', tvSymbol: 'SP:SPX' },
+  { id: 'nasdaq', name: 'NASDAQ', nameJa: 'NASDAQ総合', tvSymbol: 'NASDAQ:IXIC' },
 ];
 
 export const mockOHLCData: Record<string, OHLCDataPoint[]> = {
