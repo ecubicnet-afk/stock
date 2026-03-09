@@ -45,35 +45,35 @@ export const mockIndices: MarketItem[] = [
   // Japan (3/9 intraday — 中東危機で暴落中)
   makeItem('nikkei225', 'Nikkei 225', '日経平均株価', 'japan', 51905.00, -3716.00, 'JPY', 500),
   makeItem('topix', 'TOPIX', 'TOPIX', 'japan', 3500.00, -217.00, 'JPY', 30),
-  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 850.20, -35.40, 'JPY', 8),
-  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32500.00, -2100.00, 'JPY', 250),
-  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1820.30, -15.20, 'JPY', 10),
+  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 749.03, -28.50, 'JPY', 8),
+  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32951.41, -1850.00, 'JPY', 250),
+  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1994.36, -32.80, 'JPY', 12),
 
   // US (3/6 close)
   makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 47501.55, -453.19, 'USD', 200),
   makeItem('sp500', 'S&P 500', 'S&P 500', 'us', 6740.02, -90.69, 'USD', 35),
   makeItem('nasdaq', 'NASDAQ', 'NASDAQ総合', 'us', 22387.68, -361.31, 'USD', 120),
-  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 21500.00, -380.00, 'USD', 110),
-  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2180.00, -42.00, 'USD', 18),
+  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 24643.02, -376.85, 'USD', 130),
+  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2525.30, -60.30, 'USD', 20),
 
   // Europe (3/6)
-  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 8820.00, -85.30, 'GBP', 40),
-  makeItem('dax', 'DAX', 'DAX', 'europe', 23526.00, -225.40, 'EUR', 100),
-  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 8150.00, -98.50, 'EUR', 40),
+  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 10511.21, -56.15, 'GBP', 50),
+  makeItem('dax', 'DAX', 'DAX', 'europe', 23591.03, -225.40, 'EUR', 100),
+  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 7993.49, -52.30, 'EUR', 40),
 
   // Asia
-  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 3420.00, -32.50, 'CNY', 20),
-  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 25757.00, -1180.00, 'HKD', 150),
-  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 5140.00, -444.87, 'KRW', 50),
+  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 4118.68, -35.20, 'CNY', 25),
+  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 25051.06, -715.80, 'HKD', 150),
+  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 5519.64, -445.00, 'KRW', 50),
   makeItem('taiex', 'TAIEX', '台湾加権指数', 'asia', 33599.54, -73.40, 'TWD', 150),
 ];
 
 export const mockForex: MarketItem[] = [
   makeItem('usdjpy', 'USD/JPY', 'ドル円', 'forex', 158.72, 1.73, 'JPY', 0.8),
   makeItem('eurjpy', 'EUR/JPY', 'ユーロ円', 'forex', 184.49, 0.36, 'JPY', 0.6),
-  makeItem('gbpjpy', 'GBP/JPY', 'ポンド円', 'forex', 201.50, 1.85, 'JPY', 0.8),
-  makeItem('eurusd', 'EUR/USD', 'ユーロドル', 'forex', 1.1623, 0.0015, 'USD', 0.004),
-  makeItem('audjpy', 'AUD/JPY', '豪ドル円', 'forex', 100.00, 0.45, 'JPY', 0.4),
+  makeItem('gbpjpy', 'GBP/JPY', 'ポンド円', 'forex', 211.61, 2.15, 'JPY', 0.9),
+  makeItem('eurusd', 'EUR/USD', 'ユーロドル', 'forex', 1.1522, -0.0012, 'USD', 0.004),
+  makeItem('audjpy', 'AUD/JPY', '豪ドル円', 'forex', 110.50, 0.85, 'JPY', 0.5),
 ];
 
 export const mockCommodities: MarketItem[] = [
