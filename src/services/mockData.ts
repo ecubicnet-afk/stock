@@ -77,7 +77,7 @@ export const mockForex: MarketItem[] = [
 ];
 
 export const mockCommodities: MarketItem[] = [
-  makeItem('wti', 'WTI Crude', 'WTI原油', 'commodity', 90.90, 12.52, 'USD', 3),
+  makeItem('wti', 'WTI Crude', 'WTI原油', 'commodity', 115.32, 8.45, 'USD', 4),
   makeItem('gold', 'Gold', '金', 'commodity', 5090.00, 42.80, 'USD', 25),
   makeItem('silver', 'Silver', '銀', 'commodity', 85.29, 2.85, 'USD', 1),
   makeItem('copper', 'Copper', '銅', 'commodity', 6.660, 0.125, 'USD', 0.05),

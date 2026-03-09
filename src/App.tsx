@@ -4,6 +4,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ChartPage } from './pages/ChartPage';
 import { MemoPage } from './pages/MemoPage';
 import { SchedulePage } from './pages/SchedulePage';
+import { JournalPage } from './pages/JournalPage';
 import { WatchlistPage } from './pages/WatchlistPage';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/chart" element={<ChartPage />} />
           <Route path="/memo" element={<MemoPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/journal" element={<JournalPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
         </Route>
       </Routes>

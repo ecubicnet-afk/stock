@@ -15,6 +15,7 @@ export interface MarketItem {
   sparklineData: DataPoint[];
   currency: string;
   lastUpdated: string;
+  dataSource?: 'live' | 'mock';
 }
 
 export interface SubIndicator {
@@ -78,4 +79,53 @@ export interface ScheduleEvent {
   time: string;
   importance: 'high' | 'medium' | 'low';
   description?: string;
+}
+
+// Settings
+export interface Settings {
+  fmpApiKey: string;
+  autoRefreshInterval: number;
+  dataSource: 'auto' | 'mock';
+}
+
+// Journal
+export interface JournalEntry {
+  id: string;
+  date: string;
+  marketOutlook: string;
+  healthRating: number;
+  mentalRating: number;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TradeRecord {
+  id: string;
+  date: string;
+  ticker: string;
+  tickerName: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  totalAmount: number;
+  reason: string;
+  emotion: string;
+  pnl?: number;
+  tags: string[];
+  createdAt: string;
+}
+
+// Watchlist
+export interface WatchlistItem {
+  id: string;
+  ticker: string;
+  tickerName: string;
+  market: 'JP' | 'US' | 'other';
+  currentPrice?: number;
+  previousClose?: number;
+  notes: string;
+  events: ScheduleEvent[];
+  tags: string[];
+  addedAt: string;
 }
