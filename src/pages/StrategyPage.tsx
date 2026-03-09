@@ -3,7 +3,6 @@ import { useStrategy } from '../hooks/useStrategy';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { StrategyCanvas } from '../components/strategy/StrategyCanvas';
-import { PositionCalculator } from '../components/strategy/PositionCalculator';
 import type { StrategyNoteCategory } from '../types';
 
 const SCENARIO_TABS = [
@@ -20,19 +19,17 @@ const CATEGORY_OPTIONS: { value: StrategyNoteCategory; label: string; emoji: str
 ];
 
 export function StrategyPage() {
-  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updatePositionSizing } = useStrategy();
+  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary } = useStrategy();
   const { memos } = useMemos();
   const { events } = useSchedule();
 
   const [activeTab, setActiveTab] = useState<string>('bullish');
   const [showAddNote, setShowAddNote] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showCalc, setShowCalc] = useState(false);
-  const [newNote, setNewNote] = useState({ title: '', description: '', category: 'macro' as StrategyNoteCategory, url: '' });
+  const [newNote, setNewNote] = useState({ title: '', description: '', category: 'macro' as StrategyNoteCategory, url: '', date: '' });
 
   const activeScenario = useMemo(() => data.scenarios.find((s) => s.id === activeTab), [data.scenarios, activeTab]);
 
-  // Already imported source IDs for current scenario
   const importedSourceIds = useMemo(() => {
     if (!activeScenario) return new Set<string>();
     return new Set(activeScenario.notes.filter((n) => n.sourceId).map((n) => n.sourceId!));
@@ -40,25 +37,25 @@ export function StrategyPage() {
 
   const handleAddNote = useCallback(() => {
     if (!newNote.title.trim()) return;
-    // Place new note at a random-ish position
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, newNote.category, newNote.title, newNote.description, x, y, newNote.url || undefined);
-    setNewNote({ title: '', description: '', category: 'macro', url: '' });
+    addNote(activeTab, newNote.category, newNote.title, newNote.description, x, y, newNote.url || undefined, undefined, undefined, newNote.date || undefined);
+    setNewNote({ title: '', description: '', category: 'macro', url: '', date: '' });
     setShowAddNote(false);
   }, [activeTab, newNote, addNote]);
 
-  const handleImportMemo = useCallback((memoId: string, text: string) => {
+  const handleImportMemo = useCallback((memoId: string, text: string, createdAt: string) => {
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
     const title = text.length > 40 ? text.slice(0, 40) + '…' : text;
-    addNote(activeTab, 'psychology', title, text, x, y, undefined, 'memo', memoId);
+    const memoDate = createdAt.split('T')[0];
+    addNote(activeTab, 'psychology', title, text, x, y, undefined, 'memo', memoId, memoDate);
   }, [activeTab, addNote]);
 
-  const handleImportEvent = useCallback((eventId: string, title: string, description: string) => {
+  const handleImportEvent = useCallback((eventId: string, title: string, description: string, eventDate: string) => {
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, 'macro', title, description, x, y, undefined, 'schedule', eventId);
+    addNote(activeTab, 'macro', title, description, x, y, undefined, 'schedule', eventId, eventDate);
   }, [activeTab, addNote]);
 
   if (!activeScenario) return null;
@@ -83,12 +80,6 @@ export function StrategyPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showAddNote ? 'bg-accent-cyan/20 text-accent-cyan' : 'bg-accent-cyan text-black hover:bg-accent-cyan/80'}`}
           >
             ＋ ノート追加
-          </button>
-          <button
-            onClick={() => setShowCalc(!showCalc)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showCalc ? 'bg-accent-gold/20 text-accent-gold' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
-          >
-            🧮 ロット計算
           </button>
         </div>
       </div>
@@ -141,7 +132,7 @@ export function StrategyPage() {
         </div>
 
         {/* Side panels */}
-        <div className="flex flex-col flex-shrink-0 overflow-y-auto border-l border-primary/10" style={{ width: showAddNote || showImport || showCalc ? 320 : 0, transition: 'width 0.2s' }}>
+        <div className="flex flex-col flex-shrink-0 overflow-y-auto border-l border-primary/10" style={{ width: showAddNote || showImport ? 320 : 0, transition: 'width 0.2s' }}>
           <div className="p-3 space-y-4" style={{ width: 320 }}>
             {/* Add Note Panel */}
             {showAddNote && (
@@ -183,15 +174,26 @@ export function StrategyPage() {
                       className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan resize-none"
                     />
                   </div>
-                  <div>
-                    <label className="text-[10px] text-muted block mb-1">URL（任意）</label>
-                    <input
-                      type="text"
-                      value={newNote.url}
-                      onChange={(e) => setNewNote((n) => ({ ...n, url: e.target.value }))}
-                      placeholder="https://..."
-                      className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted block mb-1">日付（任意）</label>
+                      <input
+                        type="date"
+                        value={newNote.date}
+                        onChange={(e) => setNewNote((n) => ({ ...n, date: e.target.value }))}
+                        className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted block mb-1">URL（任意）</label>
+                      <input
+                        type="text"
+                        value={newNote.url}
+                        onChange={(e) => setNewNote((n) => ({ ...n, url: e.target.value }))}
+                        placeholder="https://..."
+                        className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
+                      />
+                    </div>
                   </div>
                   <button onClick={handleAddNote} className="w-full py-2 bg-accent-cyan text-black rounded-lg text-xs font-medium hover:bg-accent-cyan/80">
                     キャンバスに追加
@@ -215,7 +217,7 @@ export function StrategyPage() {
                       return (
                         <button
                           key={memo.id}
-                          onClick={() => !alreadyImported && handleImportMemo(memo.id, memo.text)}
+                          onClick={() => !alreadyImported && handleImportMemo(memo.id, memo.text, memo.createdAt)}
                           disabled={alreadyImported}
                           className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-amber-400/10 text-secondary hover:bg-amber-400/20 border border-amber-400/10'}`}
                         >
@@ -237,7 +239,7 @@ export function StrategyPage() {
                       return (
                         <button
                           key={event.id}
-                          onClick={() => !alreadyImported && handleImportEvent(event.id, event.title, event.description || '')}
+                          onClick={() => !alreadyImported && handleImportEvent(event.id, event.title, event.description || '', event.date)}
                           disabled={alreadyImported}
                           className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-blue-500/10 text-secondary hover:bg-blue-500/20 border border-blue-500/10'}`}
                         >
@@ -253,14 +255,6 @@ export function StrategyPage() {
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Position Calculator */}
-            {showCalc && (
-              <PositionCalculator
-                sizing={data.positionSizing}
-                onChange={updatePositionSizing}
-              />
             )}
           </div>
         </div>

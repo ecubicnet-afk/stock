@@ -141,6 +141,7 @@ export interface StrategyNote {
   title: string;
   description: string;
   url?: string;
+  date?: string;
   sourceType?: 'memo' | 'schedule';
   sourceId?: string;
   x: number;
