@@ -1,5 +1,44 @@
 import { useState, useRef } from 'react';
 
+function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
+  images: string[];
+  currentIdx: number;
+  onClose: () => void;
+  onNavigate?: (idx: number) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <img
+          src={images[currentIdx]}
+          alt="拡大表示"
+          className="max-w-full max-h-[85vh] object-contain rounded-lg"
+        />
+        <button
+          onClick={onClose}
+          className="absolute -top-3 -right-3 w-8 h-8 bg-bg-card border border-border rounded-full text-text-primary flex items-center justify-center hover:bg-bg-primary"
+        >
+          ×
+        </button>
+        {images.length > 1 && onNavigate && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => onNavigate(i)}
+                className={`w-2 h-2 rounded-full ${i === currentIdx ? 'bg-accent-cyan' : 'bg-white/40'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   images: string[];
   onChange: (images: string[]) => void;
@@ -36,11 +75,10 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
   return (
     <>
       <div className="space-y-2">
-        {/* Thumbnail grid */}
         {images.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-1.5">
             {images.map((img, i) => (
-              <div key={i} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-border">
+              <div key={i} className="relative group w-[72px] h-[72px] rounded-lg overflow-hidden border border-border">
                 <img
                   src={img}
                   alt={`添付${i + 1}`}
@@ -58,7 +96,6 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
           </div>
         )}
 
-        {/* Add button */}
         {images.length < maxImages && (
           <>
             <button
@@ -83,37 +120,13 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
         )}
       </div>
 
-      {/* Lightbox modal */}
       {lightboxIdx !== null && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setLightboxIdx(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={images[lightboxIdx]}
-              alt="拡大表示"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-            <button
-              onClick={() => setLightboxIdx(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 bg-bg-card border border-border rounded-full text-text-primary flex items-center justify-center hover:bg-bg-primary"
-            >
-              ×
-            </button>
-            {images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                {images.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setLightboxIdx(i)}
-                    className={`w-2 h-2 rounded-full ${i === lightboxIdx ? 'bg-accent-cyan' : 'bg-white/40'}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <LightboxModal
+          images={images}
+          currentIdx={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          onNavigate={setLightboxIdx}
+        />
       )}
     </>
   );
@@ -138,24 +151,12 @@ export function ImageThumbnails({ images }: { images?: string[] }) {
         ))}
       </div>
       {lightboxIdx !== null && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setLightboxIdx(null)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={images[lightboxIdx]}
-              alt="拡大表示"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-            <button
-              onClick={() => setLightboxIdx(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 bg-bg-card border border-border rounded-full text-text-primary flex items-center justify-center hover:bg-bg-primary"
-            >
-              ×
-            </button>
-          </div>
-        </div>
+        <LightboxModal
+          images={images}
+          currentIdx={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          onNavigate={images.length > 1 ? setLightboxIdx : undefined}
+        />
       )}
     </>
   );

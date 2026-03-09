@@ -28,7 +28,7 @@ export function readFileAsText(file: File): Promise<string> {
 /**
  * CSVテキストを行・カラムに分割
  */
-function parseCSVLines(text: string): string[][] {
+export function parseCSVLines(text: string): string[][] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
   return lines.map((line) => {
     // 簡易CSVパーサー（ダブルクォート対応）
@@ -60,6 +60,83 @@ function parseCSVLines(text: string): string[][] {
     result.push(current.trim());
     return result;
   });
+}
+
+export interface AnalysisTrade {
+  key: string;
+  date: string;
+  month: string;
+  name: string;
+  ticker: string;
+  profit: number;
+  quantity: number;
+  price: number;
+  source: string;
+}
+
+/**
+ * CSVテキストから取引分析用データをパース（TradeAnalysis用）
+ */
+export function parseTradeAnalysisCSV(text: string, fileName: string): AnalysisTrade[] {
+  const allRows = parseCSVLines(text);
+  let headerIdx = -1;
+  let detectedHeaders: string[] = [];
+  for (let i = 0; i < Math.min(allRows.length, 20); i++) {
+    if (allRows[i].some((cell) => cell.includes('約定日') || cell.includes('実現損益'))) {
+      headerIdx = i;
+      detectedHeaders = allRows[i];
+      break;
+    }
+  }
+  if (headerIdx === -1) return [];
+
+  const profitIdx = detectedHeaders.findIndex(
+    (h) => h.includes('実現損益［円］') || h.includes('実現損益[円]') || h === '実現損益'
+  );
+  let dateIdx = detectedHeaders.findIndex((h) => h.includes('約定日'));
+  if (dateIdx === -1) dateIdx = 0;
+  const nameIdx = detectedHeaders.findIndex(
+    (h) => h === '銘柄' || h.includes('銘柄名') || h.includes('ファンド')
+  );
+  const tickerIdx = detectedHeaders.findIndex(
+    (h) => h.includes('銘柄コード') || h === 'コード' || h.includes('ティッカー')
+  );
+  const quantityIdx = detectedHeaders.findIndex(
+    (h) => h.includes('数量')
+  );
+  const priceIdx = detectedHeaders.findIndex(
+    (h) => h.includes('決済単価') || h.includes('約定単価') || (h.includes('売却') && h.includes('単価'))
+  );
+  const finalProfitIdx = profitIdx !== -1 ? profitIdx : 11;
+  const finalNameIdx = nameIdx !== -1 ? nameIdx : finalProfitIdx > 2 ? 1 : 0;
+  const finalTickerIdx = tickerIdx !== -1 ? tickerIdx : -1;
+
+  return allRows
+    .slice(headerIdx + 1)
+    .map((row, idx) => {
+      const profitRaw = row[finalProfitIdx]?.replace(/[^-0-9.]/g, '') || '';
+      const profit = parseFloat(profitRaw);
+      if (isNaN(profit) || profit === 0) return null;
+      const dateStr = row[dateIdx] || '';
+      const month = dateStr.substring(0, 7);
+      const ticker = finalTickerIdx !== -1 ? row[finalTickerIdx] : '';
+      const qtyRaw = quantityIdx !== -1 ? row[quantityIdx]?.replace(/[^-0-9.]/g, '') : '';
+      const qty = qtyRaw ? parseFloat(qtyRaw) : 0;
+      const prcRaw = priceIdx !== -1 ? row[priceIdx]?.replace(/[^-0-9.]/g, '') : '';
+      const prc = prcRaw ? parseFloat(prcRaw) : 0;
+      return {
+        key: `${dateStr}-${row[finalNameIdx]}-${profit}-${idx}`,
+        date: dateStr,
+        month,
+        name: row[finalNameIdx] || '不明',
+        ticker,
+        profit,
+        quantity: isNaN(qty) ? 0 : qty,
+        price: isNaN(prc) ? 0 : prc,
+        source: fileName,
+      };
+    })
+    .filter((t): t is AnalysisTrade => t !== null);
 }
 
 /**
