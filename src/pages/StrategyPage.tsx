@@ -1,15 +1,9 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useStrategy } from '../hooks/useStrategy';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { StrategyCanvas } from '../components/strategy/StrategyCanvas';
 import type { StrategyNoteRegion, StrategyNoteDirection } from '../types';
-
-const SCENARIO_TABS = [
-  { id: 'bullish', label: '楽観シナリオ', emoji: '🟢', desc: '順張り・ベースライン継続' },
-  { id: 'bearish', label: '悲観シナリオ', emoji: '🟡', desc: '調整・初押しの回復効果' },
-  { id: 'crisis', label: '最悪シナリオ', emoji: '🔴', desc: '破産回避・絶対撤退ライン' },
-] as const;
 
 const REGION_OPTIONS: { value: StrategyNoteRegion; label: string; emoji: string }[] = [
   { value: 'jp', label: '日本', emoji: '🇯🇵' },
@@ -23,17 +17,44 @@ const DIRECTION_OPTIONS: { value: StrategyNoteDirection; label: string; emoji: s
   { value: 'neutral', label: '中立', emoji: '―' },
 ];
 
+function resizeImage(file: File, maxWidth: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function StrategyPage() {
-  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary } = useStrategy();
+  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription } = useStrategy();
   const { memos } = useMemos();
   const { events } = useSchedule();
 
-  const [activeTab, setActiveTab] = useState<string>('bullish');
+  const scenarioId = data.scenarios[0]?.id ?? 'main';
+  const activeScenario = data.scenarios[0];
+
   const [showAddNote, setShowAddNote] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showScenario, setShowScenario] = useState(true);
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
+  const [newUrl, setNewUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeScenario = useMemo(() => data.scenarios.find((s) => s.id === activeTab), [data.scenarios, activeTab]);
+  const desc = data.scenarioDescription;
 
   const importedSourceIds = useMemo(() => {
     if (!activeScenario) return new Set<string>();
@@ -44,24 +65,43 @@ export function StrategyPage() {
     if (!newNote.title.trim()) return;
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, newNote.region, newNote.direction, newNote.title, newNote.description, x, y, newNote.url || undefined, undefined, undefined, newNote.date || undefined);
+    addNote(scenarioId, newNote.region, newNote.direction, newNote.title, newNote.description, x, y, newNote.url || undefined, undefined, undefined, newNote.date || undefined);
     setNewNote({ title: '', description: '', region: 'jp', direction: 'neutral', url: '', date: '' });
     setShowAddNote(false);
-  }, [activeTab, newNote, addNote]);
+  }, [scenarioId, newNote, addNote]);
 
   const handleImportMemo = useCallback((memoId: string, text: string, createdAt: string) => {
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
     const title = text.length > 40 ? text.slice(0, 40) + '…' : text;
     const memoDate = createdAt.split('T')[0];
-    addNote(activeTab, 'jp', 'neutral', title, text, x, y, undefined, 'memo', memoId, memoDate);
-  }, [activeTab, addNote]);
+    addNote(scenarioId, 'jp', 'neutral', title, text, x, y, undefined, 'memo', memoId, memoDate);
+  }, [scenarioId, addNote]);
 
   const handleImportEvent = useCallback((eventId: string, title: string, description: string, eventDate: string) => {
     const x = 100 + Math.random() * 600;
     const y = 100 + Math.random() * 400;
-    addNote(activeTab, 'jp', 'neutral', title, description, x, y, undefined, 'schedule', eventId, eventDate);
-  }, [activeTab, addNote]);
+    addNote(scenarioId, 'jp', 'neutral', title, description, x, y, undefined, 'schedule', eventId, eventDate);
+  }, [scenarioId, addNote]);
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await resizeImage(file, 800);
+    updateScenarioDescription({ imageDataUrl: dataUrl });
+    e.target.value = '';
+  }, [updateScenarioDescription]);
+
+  const handleAddUrl = useCallback(() => {
+    const trimmed = newUrl.trim();
+    if (!trimmed) return;
+    updateScenarioDescription({ urls: [...desc.urls, trimmed] });
+    setNewUrl('');
+  }, [newUrl, desc.urls, updateScenarioDescription]);
+
+  const handleRemoveUrl = useCallback((index: number) => {
+    updateScenarioDescription({ urls: desc.urls.filter((_, i) => i !== index) });
+  }, [desc.urls, updateScenarioDescription]);
 
   if (!activeScenario) return null;
 
@@ -74,6 +114,12 @@ export function StrategyPage() {
           <p className="text-xs text-muted">Nikkei MacroWave Canvas — 日経マクロウェーブ作戦司令室</p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowScenario(!showScenario)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showScenario ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+          >
+            📋 想定シナリオ
+          </button>
           <button
             onClick={() => setShowImport(!showImport)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showImport ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
@@ -89,27 +135,65 @@ export function StrategyPage() {
         </div>
       </div>
 
-      {/* Scenario Tabs */}
-      <div className="flex border-b border-primary/10 flex-shrink-0">
-        {SCENARIO_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
-              activeTab === tab.id
-                ? 'text-primary border-accent-cyan bg-accent-cyan/5'
-                : 'text-muted border-transparent hover:text-secondary hover:bg-primary/5'
-            }`}
-          >
-            <span className="mr-1">{tab.emoji}</span>
-            {tab.label}
-            <span className="text-[10px] text-muted ml-2 hidden sm:inline">{tab.desc}</span>
-            <span className="text-[10px] text-muted ml-2">
-              ({data.scenarios.find((s) => s.id === tab.id)?.notes.length || 0})
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Scenario Description Panel */}
+      {showScenario && (
+        <div className="flex-shrink-0 border-b border-primary/10 px-4 py-3 bg-amber-500/5">
+          <div className="flex items-start gap-4">
+            <div className="flex-1 space-y-2">
+              <h3 className="text-xs font-semibold text-amber-300 mb-1">想定シナリオ</h3>
+              <textarea
+                value={desc.text}
+                onChange={(e) => updateScenarioDescription({ text: e.target.value })}
+                placeholder="直近の想定シナリオを記入... 例: 米CPIが上振れし利下げ期待後退、日経は調整局面入りの可能性。36000円台サポート確認後の反発を想定。"
+                rows={3}
+                className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-xs text-primary focus:outline-none focus:border-amber-400/50 resize-none"
+              />
+              {/* URLs */}
+              <div className="space-y-1">
+                {desc.urls.map((url, i) => (
+                  <div key={i} className="flex items-center gap-1 text-xs">
+                    <span className="text-muted">🔗</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-accent-cyan hover:underline truncate flex-1">{url}</a>
+                    <button onClick={() => handleRemoveUrl(i)} className="text-muted hover:text-red-400 text-xs px-1">×</button>
+                  </div>
+                ))}
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddUrl()}
+                    placeholder="URL を追加..."
+                    className="flex-1 px-2 py-1 bg-primary/5 border border-primary/10 rounded text-xs text-primary focus:outline-none focus:border-amber-400/50"
+                  />
+                  <button onClick={handleAddUrl} className="px-2 py-1 bg-primary/10 text-muted hover:text-primary rounded text-xs">追加</button>
+                </div>
+              </div>
+            </div>
+            {/* Image area */}
+            <div className="flex-shrink-0 w-48">
+              {desc.imageDataUrl ? (
+                <div className="relative group">
+                  <img src={desc.imageDataUrl} alt="scenario" className="w-full rounded-lg border border-primary/10" />
+                  <button
+                    onClick={() => updateScenarioDescription({ imageDataUrl: undefined })}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  >×</button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-24 border-2 border-dashed border-primary/20 rounded-lg flex flex-col items-center justify-center text-muted hover:border-amber-400/30 hover:text-amber-300 transition-colors"
+                >
+                  <span className="text-lg">📷</span>
+                  <span className="text-[10px] mt-1">画像を添付</span>
+                </button>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
@@ -118,18 +202,18 @@ export function StrategyPage() {
           <StrategyCanvas
             notes={activeScenario.notes}
             connections={activeScenario.connections}
-            onUpdateNote={(noteId, updates) => updateNote(activeTab, noteId, updates)}
-            onRemoveNote={(noteId) => removeNote(activeTab, noteId)}
-            onAddConnection={(fromId, toId, direction) => addConnection(activeTab, fromId, toId, direction)}
-            onRemoveConnection={(connId) => removeConnection(activeTab, connId)}
+            onUpdateNote={(noteId, updates) => updateNote(scenarioId, noteId, updates)}
+            onRemoveNote={(noteId) => removeNote(scenarioId, noteId)}
+            onAddConnection={(fromId, toId, direction) => addConnection(scenarioId, fromId, toId, direction)}
+            onRemoveConnection={(connId) => removeConnection(scenarioId, connId)}
           />
 
           {/* Summary */}
           <div className="flex-shrink-0 border-t border-primary/10 px-4 py-2">
             <textarea
               value={activeScenario.summary}
-              onChange={(e) => updateSummary(activeTab, e.target.value)}
-              placeholder={`${SCENARIO_TABS.find((t) => t.id === activeTab)?.label}のサマリーを記入...`}
+              onChange={(e) => updateSummary(scenarioId, e.target.value)}
+              placeholder="サマリーを記入..."
               rows={2}
               className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-xs text-primary focus:outline-none focus:border-accent-cyan resize-none"
             />

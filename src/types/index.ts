@@ -161,10 +161,16 @@ export interface StrategyConnection {
 export interface StrategyScenario {
   id: string;
   name: string;
-  type: 'bullish' | 'bearish' | 'crisis';
+  type: string;
   notes: StrategyNote[];
   connections: StrategyConnection[];
   summary: string;
+}
+
+export interface ScenarioDescription {
+  text: string;
+  imageDataUrl?: string;
+  urls: string[];
 }
 
 export interface PositionSizing {
@@ -177,6 +183,7 @@ export interface PositionSizing {
 export interface StrategyData {
   scenarios: StrategyScenario[];
   positionSizing: PositionSizing;
+  scenarioDescription: ScenarioDescription;
 }
 
 // Watchlist
