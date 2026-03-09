@@ -42,95 +42,95 @@ function makeItem(
 }
 
 export const mockIndices: MarketItem[] = [
-  // Japan
-  makeItem('nikkei225', 'Nikkei 225', '日経平均株価', 'japan', 41250.80, 285.32, 'JPY', 180),
-  makeItem('topix', 'TOPIX', 'TOPIX', 'japan', 2885.20, 15.80, 'JPY', 12),
-  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 725.30, -5.20, 'JPY', 5),
-  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 23180.50, 98.40, 'JPY', 90),
-  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1685.45, -4.30, 'JPY', 8),
+  // Japan (3/9 intraday — 中東危機で暴落中)
+  makeItem('nikkei225', 'Nikkei 225', '日経平均株価', 'japan', 51905.00, -3716.00, 'JPY', 500),
+  makeItem('topix', 'TOPIX', 'TOPIX', 'japan', 3500.00, -217.00, 'JPY', 30),
+  makeItem('growth250', 'Growth 250', 'グロース250', 'japan', 850.20, -35.40, 'JPY', 8),
+  makeItem('jpx400', 'JPX Nikkei 400', 'JPX日経400', 'japan', 32500.00, -2100.00, 'JPY', 250),
+  makeItem('tse-reit', 'TSE REIT', '東証REIT指数', 'japan', 1820.30, -15.20, 'JPY', 10),
 
-  // US
-  makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 44850.25, 165.80, 'USD', 150),
-  makeItem('sp500', 'S&P 500', 'S&P 500', 'us', 6280.45, 28.15, 'USD', 25),
-  makeItem('nasdaq', 'NASDAQ', 'NASDAQ総合', 'us', 20450.80, -62.35, 'USD', 80),
-  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 21680.30, -95.20, 'USD', 85),
-  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2320.15, 18.40, 'USD', 15),
+  // US (3/6 close)
+  makeItem('djia', 'Dow Jones', 'NYダウ', 'us', 47501.55, -453.19, 'USD', 200),
+  makeItem('sp500', 'S&P 500', 'S&P 500', 'us', 6740.02, -90.69, 'USD', 35),
+  makeItem('nasdaq', 'NASDAQ', 'NASDAQ総合', 'us', 22387.68, -361.31, 'USD', 120),
+  makeItem('nasdaq100', 'NASDAQ 100', 'NASDAQ 100', 'us', 21500.00, -380.00, 'USD', 110),
+  makeItem('russell2000', 'Russell 2000', 'Russell 2000', 'us', 2180.00, -42.00, 'USD', 18),
 
-  // Europe
-  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 8450.60, 32.50, 'GBP', 35),
-  makeItem('dax', 'DAX', 'DAX', 'europe', 22150.80, -55.30, 'EUR', 75),
-  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 8280.45, 22.80, 'EUR', 35),
+  // Europe (3/6)
+  makeItem('ftse100', 'FTSE 100', 'FTSE 100', 'europe', 8820.00, -85.30, 'GBP', 40),
+  makeItem('dax', 'DAX', 'DAX', 'europe', 23526.00, -225.40, 'EUR', 100),
+  makeItem('cac40', 'CAC 40', 'CAC 40', 'europe', 8150.00, -98.50, 'EUR', 40),
 
   // Asia
-  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 3380.25, -8.50, 'CNY', 18),
-  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 22850.60, 210.45, 'HKD', 100),
-  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 2780.35, 16.20, 'KRW', 15),
-  makeItem('taiex', 'TAIEX', '台湾加権指数', 'asia', 23450.80, 120.65, 'TWD', 95),
+  makeItem('shanghai', 'Shanghai Comp.', '上海総合指数', 'asia', 3420.00, -32.50, 'CNY', 20),
+  makeItem('hangseng', 'Hang Seng', 'ハンセン指数', 'asia', 25757.00, -1180.00, 'HKD', 150),
+  makeItem('kospi', 'KOSPI', 'KOSPI', 'asia', 5140.00, -444.87, 'KRW', 50),
+  makeItem('taiex', 'TAIEX', '台湾加権指数', 'asia', 33599.54, -73.40, 'TWD', 150),
 ];
 
 export const mockForex: MarketItem[] = [
-  makeItem('usdjpy', 'USD/JPY', 'ドル円', 'forex', 150.85, 0.42, 'JPY', 0.3),
-  makeItem('eurjpy', 'EUR/JPY', 'ユーロ円', 'forex', 163.42, -0.18, 'JPY', 0.3),
-  makeItem('gbpjpy', 'GBP/JPY', 'ポンド円', 'forex', 192.15, 0.55, 'JPY', 0.4),
-  makeItem('eurusd', 'EUR/USD', 'ユーロドル', 'forex', 1.0832, -0.0018, 'USD', 0.003),
-  makeItem('audjpy', 'AUD/JPY', '豪ドル円', 'forex', 98.65, 0.22, 'JPY', 0.2),
+  makeItem('usdjpy', 'USD/JPY', 'ドル円', 'forex', 158.72, 1.73, 'JPY', 0.8),
+  makeItem('eurjpy', 'EUR/JPY', 'ユーロ円', 'forex', 184.49, 0.36, 'JPY', 0.6),
+  makeItem('gbpjpy', 'GBP/JPY', 'ポンド円', 'forex', 201.50, 1.85, 'JPY', 0.8),
+  makeItem('eurusd', 'EUR/USD', 'ユーロドル', 'forex', 1.1623, 0.0015, 'USD', 0.004),
+  makeItem('audjpy', 'AUD/JPY', '豪ドル円', 'forex', 100.00, 0.45, 'JPY', 0.4),
 ];
 
 export const mockCommodities: MarketItem[] = [
-  makeItem('wti', 'WTI Crude', 'WTI原油', 'commodity', 72.35, -0.85, 'USD', 0.5),
-  makeItem('gold', 'Gold', '金', 'commodity', 3050.40, 18.60, 'USD', 12),
-  makeItem('silver', 'Silver', '銀', 'commodity', 34.20, 0.45, 'USD', 0.2),
-  makeItem('copper', 'Copper', '銅', 'commodity', 4.850, 0.032, 'USD', 0.02),
-  makeItem('natgas', 'Natural Gas', '天然ガス', 'commodity', 3.820, -0.045, 'USD', 0.03),
+  makeItem('wti', 'WTI Crude', 'WTI原油', 'commodity', 90.90, 12.52, 'USD', 3),
+  makeItem('gold', 'Gold', '金', 'commodity', 5090.00, 42.80, 'USD', 25),
+  makeItem('silver', 'Silver', '銀', 'commodity', 85.29, 2.85, 'USD', 1),
+  makeItem('copper', 'Copper', '銅', 'commodity', 6.660, 0.125, 'USD', 0.05),
+  makeItem('natgas', 'Natural Gas', '天然ガス', 'commodity', 3.190, -0.085, 'USD', 0.04),
 ];
 
 export const mockCrypto: MarketItem[] = [
-  makeItem('btc', 'Bitcoin', 'BTC', 'crypto', 98450.20, 1850.60, 'USD', 500),
-  makeItem('eth', 'Ethereum', 'ETH', 'crypto', 4250.80, -35.20, 'USD', 25),
-  makeItem('xrp', 'XRP', 'XRP', 'crypto', 2.4520, 0.0380, 'USD', 0.02),
-  makeItem('sol', 'Solana', 'SOL', 'crypto', 185.30, 6.80, 'USD', 3),
-  makeItem('bnb', 'BNB', 'BNB', 'crypto', 720.50, -9.20, 'USD', 5),
+  makeItem('btc', 'Bitcoin', 'BTC', 'crypto', 67340.00, -2850.00, 'USD', 800),
+  makeItem('eth', 'Ethereum', 'ETH', 'crypto', 1982.00, -68.50, 'USD', 30),
+  makeItem('xrp', 'XRP', 'XRP', 'crypto', 1.3700, -0.0520, 'USD', 0.03),
+  makeItem('sol', 'Solana', 'SOL', 'crypto', 84.50, -5.80, 'USD', 3),
+  makeItem('bnb', 'BNB', 'BNB', 'crypto', 615.00, -18.50, 'USD', 6),
 ];
 
 export const mockSubIndicators: SubIndicator[] = [
   // Volatility
-  { id: 'nikkei-vi', name: 'Nikkei VI', nameJa: '日経VI', category: 'volatility', value: 20.15, change: -0.65, changePercent: -3.12, unit: 'pt', signal: 'neutral' },
-  { id: 'vix', name: 'VIX', nameJa: 'VIX (恐怖指数)', category: 'volatility', value: 16.80, change: -0.35, changePercent: -2.04, unit: 'pt', signal: 'neutral' },
+  { id: 'nikkei-vi', name: 'Nikkei VI', nameJa: '日経VI', category: 'volatility', value: 42.00, change: 12.50, changePercent: 42.37, unit: 'pt', signal: 'bearish' },
+  { id: 'vix', name: 'VIX', nameJa: 'VIX (恐怖指数)', category: 'volatility', value: 29.49, change: 5.62, changePercent: 23.55, unit: 'pt', signal: 'bearish' },
 
   // Sentiment
-  { id: 'advance-decline', name: 'Advance/Decline Ratio', nameJa: '騰落レシオ (25日)', category: 'sentiment', value: 108.5, change: 3.2, changePercent: 3.04, unit: '%', signal: 'neutral' },
-  { id: 'new-highs', name: 'New Highs', nameJa: '新高値銘柄数', category: 'sentiment', value: 52, change: 8, changePercent: 18.18, unit: '', signal: 'bullish' },
-  { id: 'new-lows', name: 'New Lows', nameJa: '新安値銘柄数', category: 'sentiment', value: 15, change: -3, changePercent: -16.67, unit: '', signal: 'bullish' },
+  { id: 'advance-decline', name: 'Advance/Decline Ratio', nameJa: '騰落レシオ (25日)', category: 'sentiment', value: 78.5, change: -18.2, changePercent: -18.82, unit: '%', signal: 'bearish' },
+  { id: 'new-highs', name: 'New Highs', nameJa: '新高値銘柄数', category: 'sentiment', value: 8, change: -35, changePercent: -81.40, unit: '', signal: 'bearish' },
+  { id: 'new-lows', name: 'New Lows', nameJa: '新安値銘柄数', category: 'sentiment', value: 285, change: 248, changePercent: 670.27, unit: '', signal: 'bearish' },
 
   // Trading
-  { id: 'short-sell-ratio', name: 'Short Sell Ratio', nameJa: '空売り比率', category: 'trading', value: 41.8, change: 0.8, changePercent: 1.95, unit: '%', signal: 'neutral' },
-  { id: 'margin-buy', name: 'Margin Buy', nameJa: '信用買い残', category: 'trading', value: 4.05, change: 0.08, changePercent: 2.02, unit: '兆円', signal: 'neutral' },
-  { id: 'margin-sell', name: 'Margin Sell', nameJa: '信用売り残', category: 'trading', value: 0.92, change: -0.03, changePercent: -3.16, unit: '兆円', signal: 'neutral' },
+  { id: 'short-sell-ratio', name: 'Short Sell Ratio', nameJa: '空売り比率', category: 'trading', value: 48.5, change: 5.8, changePercent: 13.58, unit: '%', signal: 'bearish' },
+  { id: 'margin-buy', name: 'Margin Buy', nameJa: '信用買い残', category: 'trading', value: 4.25, change: -0.15, changePercent: -3.41, unit: '兆円', signal: 'neutral' },
+  { id: 'margin-sell', name: 'Margin Sell', nameJa: '信用売り残', category: 'trading', value: 1.05, change: 0.12, changePercent: 12.90, unit: '兆円', signal: 'bearish' },
 
   // Valuation
-  { id: 'nikkei-per', name: 'Nikkei PER', nameJa: '日経平均PER', category: 'valuation', value: 16.2, change: 0.15, changePercent: 0.93, unit: '倍', signal: 'neutral' },
-  { id: 'nikkei-pbr', name: 'Nikkei PBR', nameJa: '日経平均PBR', category: 'valuation', value: 1.42, change: 0.01, changePercent: 0.71, unit: '倍', signal: 'neutral' },
-  { id: 'nikkei-eps', name: 'Nikkei EPS', nameJa: '日経平均EPS', category: 'valuation', value: 2545.80, change: 15.20, changePercent: 0.60, unit: '円', signal: 'bullish' },
+  { id: 'nikkei-per', name: 'Nikkei PER', nameJa: '日経平均PER', category: 'valuation', value: 16.50, change: -1.20, changePercent: -6.78, unit: '倍', signal: 'neutral' },
+  { id: 'nikkei-pbr', name: 'Nikkei PBR', nameJa: '日経平均PBR', category: 'valuation', value: 1.52, change: -0.10, changePercent: -6.17, unit: '倍', signal: 'neutral' },
+  { id: 'nikkei-eps', name: 'Nikkei EPS', nameJa: '日経平均EPS', category: 'valuation', value: 3145.80, change: 0.00, changePercent: 0.00, unit: '円', signal: 'neutral' },
 
   // Bonds
-  { id: 'jp10y', name: 'Japan 10Y', nameJa: '日本10年国債利回り', category: 'bonds', value: 1.425, change: 0.020, changePercent: 1.42, unit: '%', signal: 'neutral' },
-  { id: 'us10y', name: 'US 10Y', nameJa: '米国10年国債利回り', category: 'bonds', value: 4.050, change: -0.025, changePercent: -0.61, unit: '%', signal: 'neutral' },
-  { id: 'rate-spread', name: 'US-JP Spread', nameJa: '日米金利差', category: 'bonds', value: 2.625, change: -0.045, changePercent: -1.69, unit: '%', signal: 'neutral' },
+  { id: 'jp10y', name: 'Japan 10Y', nameJa: '日本10年国債利回り', category: 'bonds', value: 2.220, change: 0.085, changePercent: 3.98, unit: '%', signal: 'bearish' },
+  { id: 'us10y', name: 'US 10Y', nameJa: '米国10年国債利回り', category: 'bonds', value: 4.150, change: 0.200, changePercent: 5.06, unit: '%', signal: 'bearish' },
+  { id: 'rate-spread', name: 'US-JP Spread', nameJa: '日米金利差', category: 'bonds', value: 1.930, change: 0.115, changePercent: 6.34, unit: '%', signal: 'neutral' },
 
   // Other
-  { id: 'nt-ratio', name: 'NT Ratio', nameJa: 'NT倍率', category: 'other', value: 14.30, change: 0.03, changePercent: 0.21, unit: '倍', signal: 'neutral' },
-  { id: 'nikkei-usd', name: 'Nikkei USD', nameJa: 'ドル建て日経平均', category: 'other', value: 273.50, change: 2.15, changePercent: 0.79, unit: 'USD', signal: 'bullish' },
-  { id: 'arb-buy', name: 'Arbitrage Buy', nameJa: '裁定買い残', category: 'other', value: 1.38, change: 0.06, changePercent: 4.55, unit: '兆円', signal: 'neutral' },
+  { id: 'nt-ratio', name: 'NT Ratio', nameJa: 'NT倍率', category: 'other', value: 14.83, change: -0.05, changePercent: -0.34, unit: '倍', signal: 'neutral' },
+  { id: 'nikkei-usd', name: 'Nikkei USD', nameJa: 'ドル建て日経平均', category: 'other', value: 327.00, change: -25.50, changePercent: -7.23, unit: 'USD', signal: 'bearish' },
+  { id: 'arb-buy', name: 'Arbitrage Buy', nameJa: '裁定買い残', category: 'other', value: 1.42, change: -0.18, changePercent: -11.25, unit: '兆円', signal: 'bearish' },
 ];
 
 export const mockFearGreed: FearGreedData = {
-  value: 58,
-  label: 'Greed',
-  vix: 16.80,
+  value: 22,
+  label: 'Extreme Fear',
+  vix: 29.49,
 };
 
 export const mockMarketSummary: MarketSummary = {
-  text: '日経平均は前日比+285円の41,250円。NYダウ先物は+165ドル。ドル円は150.85円で推移。VIXは16.80と安定的水準。',
+  text: '日経平均は前日比-3,716円の51,905円と暴落。中東危機でWTI原油は90ドル台に急騰。ドル円は158.72円。VIXは29.49と急上昇。',
   timestamp: new Date().toISOString(),
 };
 
@@ -188,7 +188,7 @@ export const chartSymbols: ChartSymbol[] = [
 ];
 
 export const mockOHLCData: Record<string, OHLCDataPoint[]> = {
-  nikkei225: generateOHLCData(40200, 0.012, 60),
-  sp500: generateOHLCData(6150, 0.010, 60),
-  nasdaq: generateOHLCData(20000, 0.015, 60),
+  nikkei225: generateOHLCData(50000, 0.012, 60),
+  sp500: generateOHLCData(6500, 0.010, 60),
+  nasdaq: generateOHLCData(22000, 0.015, 60),
 };
