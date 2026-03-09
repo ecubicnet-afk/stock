@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { useTrades } from '../hooks/useTrades';
+import { LinkifiedText } from '../components/common/LinkifiedText';
 import type { WatchlistItem, ScheduleEvent } from '../types';
 
 function formatDate(d: string) {
@@ -135,7 +136,7 @@ export function WatchlistPage() {
                           onClick={() => { setEditingNotesId(item.id); setNotesDraft(item.notes); }}
                           className="min-h-[3rem] bg-bg-primary/30 rounded-lg p-2 text-sm text-text-primary cursor-text"
                         >
-                          {item.notes || <span className="text-text-secondary/50">クリックしてメモを追加...</span>}
+                          {item.notes ? <span className="whitespace-pre-wrap"><LinkifiedText text={item.notes} /></span> : <span className="text-text-secondary/50">クリックしてメモを追加...</span>}
                         </div>
                       )}
                     </div>

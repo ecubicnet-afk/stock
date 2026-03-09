@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ImageAttachment, ImageThumbnails } from '../common/ImageAttachment';
+import { LinkifiedText } from '../common/LinkifiedText';
 import type { MemoEntry } from '../../types';
 
 function formatDateTime(iso: string) {
@@ -64,7 +65,7 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
               </>
             ) : (
               <>
-                <p className="text-sm text-text-primary whitespace-pre-wrap">{memo.text}</p>
+                <p className="text-sm text-text-primary whitespace-pre-wrap"><LinkifiedText text={memo.text} /></p>
                 <ImageThumbnails images={memo.images} />
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-xs text-text-secondary/60">{formatDateTime(memo.updatedAt)}</span>

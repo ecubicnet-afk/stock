@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
+import { useWatchlist } from '../hooks/useWatchlist';
 import { ScheduleCalendar } from '../components/schedule/ScheduleCalendar';
 import { ImageAttachment } from '../components/common/ImageAttachment';
 import { EventCard } from '../components/memo/EventCard';
@@ -18,6 +19,20 @@ type RegionType = ScheduleEvent['region'];
 export function MemoPage() {
   const { memos, addMemo, updateMemo, deleteMemo } = useMemos();
   const { events, addEvent, updateEvent, deleteEvent } = useSchedule();
+  const { items: watchlistItems } = useWatchlist();
+
+  // Merge watchlist events into schedule events for calendar display
+  const allEvents = useMemo(() => {
+    const watchlistEvents: ScheduleEvent[] = watchlistItems.flatMap((item) =>
+      item.events.map((e) => ({
+        ...e,
+        title: `[${item.tickerName}] ${e.title}`,
+      }))
+    );
+    return [...events, ...watchlistEvents].sort((a, b) =>
+      `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)
+    );
+  }, [events, watchlistItems]);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -75,11 +90,13 @@ export function MemoPage() {
   };
 
   const filteredEvents = selectedDate
-    ? events.filter((e) => e.date === selectedDate)
-    : events.filter((e) => {
+    ? allEvents.filter((e) => e.date === selectedDate)
+    : allEvents.filter((e) => {
         const monthPrefix = `${calYear}-${String(calMonth + 1).padStart(2, '0')}`;
         return e.date.startsWith(monthPrefix);
       });
+
+  const scheduleEventIds = useMemo(() => new Set(events.map((e) => e.id)), [events]);
 
   const grouped = filteredEvents.reduce<Record<string, ScheduleEvent[]>>((acc, e) => {
     (acc[e.date] ||= []).push(e);
@@ -192,7 +209,7 @@ export function MemoPage() {
       <ScheduleCalendar
         year={calYear}
         month={calMonth}
-        events={events}
+        events={allEvents}
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
         onChangeMonth={handleChangeMonth}
@@ -232,7 +249,13 @@ export function MemoPage() {
               )}
               <div className="space-y-2">
                 {grouped[date].sort((a, b) => a.time.localeCompare(b.time)).map((event) => (
-                  <EventCard key={event.id} event={event} onUpdate={updateEvent} onDelete={deleteEvent} />
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onUpdate={scheduleEventIds.has(event.id) ? updateEvent : () => {}}
+                    onDelete={scheduleEventIds.has(event.id) ? deleteEvent : () => {}}
+                    readOnly={!scheduleEventIds.has(event.id)}
+                  />
                 ))}
               </div>
             </div>
