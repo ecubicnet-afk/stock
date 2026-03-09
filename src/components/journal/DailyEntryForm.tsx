@@ -203,7 +203,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
               <img
                 src={images[currentImageIdx]}
                 alt={`チャート${currentImageIdx + 1}`}
-                className="w-full aspect-[4/3] object-contain"
+                className="w-full aspect-[16/10] object-contain"
               />
               {/* Navigation arrows for multiple images */}
               {images.length > 1 && (

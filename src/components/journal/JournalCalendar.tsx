@@ -33,18 +33,18 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
 
   return (
     <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-3 py-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <span className="text-sm font-bold text-text-primary">{monthLabel}</span>
-        <button onClick={() => onChangeMonth(1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
+        <span className="text-base font-bold text-text-primary">{monthLabel}</span>
+        <button onClick={() => onChangeMonth(1)} className="text-text-secondary hover:text-text-primary px-3 py-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
         {WEEKDAYS.map((d, i) => (
-          <div key={d} className={`text-xs font-semibold py-1.5 ${i === 5 ? 'text-accent-cyan/70' : i === 6 ? 'text-down/70' : 'text-text-secondary/60'}`}>{d}</div>
+          <div key={d} className={`text-xs font-bold py-2 ${i === 5 ? 'text-accent-cyan/70' : i === 6 ? 'text-down/70' : 'text-text-secondary/60'}`}>{d}</div>
         ))}
         {cells.map((cell, i) => {
           if (!cell) return <div key={`empty-${i}`} />;
@@ -61,9 +61,9 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
             <button
               key={cell.dateStr}
               onClick={() => onSelectDate(cell.dateStr)}
-              className={`relative text-sm py-2.5 rounded-lg transition-all font-mono ${
+              className={`relative text-sm py-3 rounded-lg transition-all font-mono ${
                 isSelected
-                  ? 'bg-accent-cyan/20 text-accent-cyan font-bold ring-1 ring-accent-cyan/40'
+                  ? 'bg-accent-cyan/20 text-accent-cyan font-bold ring-2 ring-accent-cyan/50'
                   : isToday
                     ? 'bg-bg-primary text-text-primary font-bold ring-1 ring-text-secondary/30'
                   : hasCsvTrade
@@ -88,15 +88,15 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
         })}
       </div>
       {/* Legend */}
-      <div className="flex gap-3 mt-3 pt-2 border-t border-border/50 justify-center">
-        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />日誌
+      <div className="flex gap-4 mt-3 pt-2 border-t border-border/50 justify-end">
+        <div className="flex items-center gap-1 text-[11px] text-text-secondary/60">
+          <span className="w-2 h-2 rounded-full bg-accent-cyan" />日誌
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-gold" />記録
+        <div className="flex items-center gap-1 text-[11px] text-text-secondary/60">
+          <span className="w-2 h-2 rounded-full bg-accent-gold" />記録
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
-          <span className="w-1.5 h-1.5 rounded-full bg-up" />CSV
+        <div className="flex items-center gap-1 text-[11px] text-text-secondary/60">
+          <span className="w-2 h-2 rounded-full bg-up" />CSV
         </div>
       </div>
     </div>
