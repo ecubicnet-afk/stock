@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { ChartPage } from './pages/ChartPage';
@@ -6,7 +6,6 @@ import { MemoPage } from './pages/MemoPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { JournalPage } from './pages/JournalPage';
 import { WatchlistPage } from './pages/WatchlistPage';
-import { TradeAnalysisPage } from './pages/TradeAnalysisPage';
 import { PortfolioPage } from './pages/PortfolioPage';
 
 export default function App() {
@@ -20,7 +19,7 @@ export default function App() {
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} />
-          <Route path="/trade-analysis" element={<TradeAnalysisPage />} />
+          <Route path="/trade-analysis" element={<Navigate to="/journal" replace />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
         </Route>
       </Routes>
