@@ -199,6 +199,9 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
             ))}
           </div>
         )}
+        {connectMode && !connectFrom && (
+          <span className="text-xs text-muted">ノートをクリックで接続開始 / 線クリックで削除</span>
+        )}
         {connectFrom && (
           <span className="text-xs text-accent-cyan animate-pulse">接続元を選択済み → 接続先のノートをクリック</span>
         )}
@@ -288,12 +291,17 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
                 >
                   {formatDateLabel(col.date)}
                 </text>
-                {/* Today marker */}
-                {i === 0 && (
-                  <text x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4} fill="rgba(0,210,255,0.4)" fontSize={9} textAnchor="middle" fontFamily="monospace">
-                    TODAY
-                  </text>
-                )}
+                {/* Bottom date label */}
+                <text
+                  x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4}
+                  fill={i === 0 ? 'rgba(0,210,255,0.5)' : col.isWeekend ? 'rgba(255,255,255,0.12)' : col.isMonday ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.22)'}
+                  fontSize={10}
+                  textAnchor="middle"
+                  fontFamily="monospace"
+                  fontWeight={col.isMonday || i === 0 ? 'bold' : 'normal'}
+                >
+                  {i === 0 ? `TODAY ${formatDateLabel(col.date)}` : formatDateLabel(col.date)}
+                </text>
               </g>
             ))}
           </svg>
@@ -311,7 +319,13 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
                     x1={from.x} y1={from.y} x2={to.x} y2={to.y}
                     stroke="transparent" strokeWidth="12"
                     style={{ pointerEvents: 'stroke', cursor: 'pointer' }}
-                    onClick={() => setSelectedConnection(isSelected ? null : conn.id)}
+                    onClick={() => {
+                      if (connectMode) {
+                        onRemoveConnection(conn.id);
+                      } else {
+                        setSelectedConnection(isSelected ? null : conn.id);
+                      }
+                    }}
                   />
                   <line
                     x1={from.x} y1={from.y} x2={to.x} y2={to.y}
