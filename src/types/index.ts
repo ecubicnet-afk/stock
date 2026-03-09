@@ -171,6 +171,8 @@ export interface ScenarioDescription {
   text: string;
   imageDataUrl?: string;
   urls: string[];
+  fontSize?: 'xs' | 'sm' | 'base';
+  fontColor?: string;
 }
 
 export interface PositionSizing {
