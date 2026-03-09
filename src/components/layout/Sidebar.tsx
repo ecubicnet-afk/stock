@@ -54,8 +54,8 @@ const ICONS: Record<string, ReactNode> = {
 
 const SAMPLE_EVENTS = [
   { time: '08:50', name: '日本GDP速報値', importance: 'high' },
-  { time: '21:30', name: '米雇用統計', importance: 'high' },
-  { time: '03:00', name: 'FOMC議事録', importance: 'medium' },
+  { time: '22:30', name: '米雇用統計', importance: 'high' },
+  { time: '03:00', name: 'FOMC政策声明', importance: 'high' },
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {

@@ -1,15 +1,9 @@
 import type { ScheduleEvent } from '../types';
 import { useLocalStorage } from './useLocalStorage';
-
-const DEFAULT_EVENTS: ScheduleEvent[] = [
-  { id: 'default-1', title: '日本GDP速報値', date: '2026-03-10', time: '08:50', importance: 'high' },
-  { id: 'default-2', title: '米雇用統計', date: '2026-03-13', time: '21:30', importance: 'high' },
-  { id: 'default-3', title: 'FOMC議事録', date: '2026-03-18', time: '03:00', importance: 'medium' },
-  { id: 'default-4', title: '日銀金融政策決定会合', date: '2026-03-20', time: '12:00', importance: 'high' },
-];
+import { DEFAULT_ECONOMIC_EVENTS } from '../data/economicEvents';
 
 export function useSchedule() {
-  const [events, setEvents] = useLocalStorage<ScheduleEvent[]>('stock-app-schedule', DEFAULT_EVENTS);
+  const [events, setEvents] = useLocalStorage<ScheduleEvent[]>('stock-app-schedule-v4', DEFAULT_ECONOMIC_EVENTS);
 
   const addEvent = (event: Omit<ScheduleEvent, 'id'>) => {
     const newEvent: ScheduleEvent = {
