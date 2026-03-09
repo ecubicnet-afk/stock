@@ -25,8 +25,8 @@ export function useStrategy() {
   );
 
   const addNote = useCallback(
-    (scenarioId: string, category: StrategyNoteCategory, title: string, description: string, x: number, y: number, url?: string, sourceType?: 'memo' | 'schedule', sourceId?: string) => {
-      const note: StrategyNote = { id: crypto.randomUUID(), category, title, description, url, sourceType, sourceId, x, y };
+    (scenarioId: string, category: StrategyNoteCategory, title: string, description: string, x: number, y: number, url?: string, sourceType?: 'memo' | 'schedule', sourceId?: string, date?: string) => {
+      const note: StrategyNote = { id: crypto.randomUUID(), category, title, description, url, date, sourceType, sourceId, x, y };
       updateScenario(scenarioId, (notes, connections) => ({ notes: [...notes, note], connections }));
     },
     [updateScenario]
