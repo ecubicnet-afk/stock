@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useStrategy } from '../hooks/useStrategy';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
@@ -53,8 +53,18 @@ export function StrategyPage() {
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [newUrl, setNewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const desc = data.scenarioDescription;
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    }
+  }, [desc.text, showScenario]);
 
   const importedSourceIds = useMemo(() => {
     if (!activeScenario) return new Set<string>();
@@ -138,15 +148,44 @@ export function StrategyPage() {
       {/* Scenario Description Panel */}
       {showScenario && (
         <div className="flex-shrink-0 border-b border-primary/10 px-4 py-3 bg-amber-500/5">
-          <div className="flex items-start gap-4">
-            <div className="flex-1 space-y-2">
-              <h3 className="text-xs font-semibold text-amber-300 mb-1">想定シナリオ</h3>
+          <div className="flex items-stretch gap-4">
+            {/* Text side */}
+            <div className="flex-1 space-y-2 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-xs font-semibold text-amber-300">想定シナリオ</h3>
+                {/* Font size */}
+                <div className="flex gap-0.5 ml-2">
+                  {([['xs', '小'], ['sm', '中'], ['base', '大']] as const).map(([size, label]) => (
+                    <button key={size}
+                      onClick={() => updateScenarioDescription({ fontSize: size })}
+                      className={`px-1.5 py-0.5 rounded text-[10px] ${(desc.fontSize || 'sm') === size ? 'bg-amber-500/20 text-amber-300' : 'text-muted hover:text-primary'}`}
+                    >{label}</button>
+                  ))}
+                </div>
+                {/* Font color */}
+                <div className="flex gap-1 ml-1">
+                  {[
+                    { value: '', label: '白', cls: 'bg-white' },
+                    { value: 'text-amber-300', label: '黄', cls: 'bg-amber-300' },
+                    { value: 'text-red-400', label: '赤', cls: 'bg-red-400' },
+                    { value: 'text-emerald-400', label: '緑', cls: 'bg-emerald-400' },
+                    { value: 'text-cyan-400', label: '青', cls: 'bg-cyan-400' },
+                  ].map((c) => (
+                    <button key={c.value}
+                      onClick={() => updateScenarioDescription({ fontColor: c.value })}
+                      className={`w-4 h-4 rounded-full ${c.cls} ${(desc.fontColor || '') === c.value ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-[#0a0a14]' : 'opacity-50 hover:opacity-80'}`}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
               <textarea
+                ref={textareaRef}
                 value={desc.text}
                 onChange={(e) => updateScenarioDescription({ text: e.target.value })}
                 placeholder="直近の想定シナリオを記入... 例: 米CPIが上振れし利下げ期待後退、日経は調整局面入りの可能性。36000円台サポート確認後の反発を想定。"
-                rows={3}
-                className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-xs text-primary focus:outline-none focus:border-amber-400/50 resize-none"
+                className={`w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg ${desc.fontColor || 'text-primary'} focus:outline-none focus:border-amber-400/50 resize-none overflow-hidden ${desc.fontSize === 'xs' ? 'text-xs' : desc.fontSize === 'base' ? 'text-base' : 'text-sm'}`}
+                style={{ minHeight: '80px' }}
               />
               {/* URLs */}
               <div className="space-y-1">
@@ -170,23 +209,30 @@ export function StrategyPage() {
                 </div>
               </div>
             </div>
-            {/* Image area */}
-            <div className="flex-shrink-0 w-48">
+            {/* Image area - 50:50 */}
+            <div className="flex-1 min-w-0">
               {desc.imageDataUrl ? (
-                <div className="relative group">
-                  <img src={desc.imageDataUrl} alt="scenario" className="w-full rounded-lg border border-primary/10" />
-                  <button
-                    onClick={() => updateScenarioDescription({ imageDataUrl: undefined })}
-                    className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                  >×</button>
+                <div className="relative group h-full">
+                  <img src={desc.imageDataUrl} alt="scenario" className="w-full h-full object-contain rounded-lg border border-primary/10" />
+                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/90"
+                      title="画像を変更"
+                    >📷</button>
+                    <button
+                      onClick={() => updateScenarioDescription({ imageDataUrl: undefined })}
+                      className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600/80"
+                    >×</button>
+                  </div>
                 </div>
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-primary/20 rounded-lg flex flex-col items-center justify-center text-muted hover:border-amber-400/30 hover:text-amber-300 transition-colors"
+                  className="w-full h-full min-h-[120px] border-2 border-dashed border-primary/20 rounded-lg flex flex-col items-center justify-center text-muted hover:border-amber-400/30 hover:text-amber-300 transition-colors"
                 >
-                  <span className="text-lg">📷</span>
-                  <span className="text-[10px] mt-1">画像を添付</span>
+                  <span className="text-2xl">📷</span>
+                  <span className="text-xs mt-1">画像を添付</span>
                 </button>
               )}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
