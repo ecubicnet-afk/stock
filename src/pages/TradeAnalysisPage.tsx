@@ -512,6 +512,8 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
                     <th className="px-4 py-2.5">約定日</th>
                     <th className="px-4 py-2.5 text-center">コード</th>
                     <th className="px-4 py-2.5">銘柄</th>
+                    <th className="px-4 py-2.5 text-right">数量</th>
+                    <th className="px-4 py-2.5 text-right">単価</th>
                     <th className="px-4 py-2.5 text-right">損益[円]</th>
                   </tr>
                 </thead>
@@ -525,6 +527,8 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
                       <td className="px-4 py-2.5 text-text-secondary font-mono">{t.date}</td>
                       <td className="px-4 py-2.5 text-center font-mono text-text-secondary">{t.ticker || '-'}</td>
                       <td className="px-4 py-2.5 text-text-primary">{t.name}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-text-secondary">{t.quantity > 0 ? t.quantity.toLocaleString() : '-'}</td>
+                      <td className="px-4 py-2.5 text-right font-mono text-text-secondary">{t.price > 0 ? t.price.toLocaleString() : '-'}</td>
                       <td className={`px-4 py-2.5 text-right font-mono font-bold ${t.profit > 0 ? 'text-up' : 'text-down'}`}>
                         {t.profit > 0 ? '+' : ''}
                         {t.profit.toLocaleString()}
