@@ -23,7 +23,7 @@ const IMPORTANCE_STYLES: Record<ScheduleEvent['importance'], string> = {
 
 export function MemoPage() {
   const { memos, addMemo, updateMemo, deleteMemo } = useMemos();
-  const { events, addEvent, deleteEvent } = useSchedule();
+  const { events, addEvent, updateEvent, deleteEvent } = useSchedule();
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -39,6 +39,18 @@ export function MemoPage() {
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
   const [newImportance, setNewImportance] = useState<ScheduleEvent['importance']>('medium');
+  const [newDescription, setNewDescription] = useState('');
+
+  // Event editing state
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState('');
+  const [editEventDate, setEditEventDate] = useState('');
+  const [editEventTime, setEditEventTime] = useState('');
+  const [editEventImportance, setEditEventImportance] = useState<ScheduleEvent['importance']>('medium');
+  const [editEventDescription, setEditEventDescription] = useState('');
+
+  // Expanded event for showing description
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Auto-populate date when selecting a calendar date
   useEffect(() => {
@@ -78,11 +90,39 @@ export function MemoPage() {
       date: newDate,
       time: newTime || '00:00',
       importance: newImportance,
+      description: newDescription.trim() || undefined,
     });
     setNewTitle('');
     setNewDate('');
     setNewTime('');
     setNewImportance('medium');
+    setNewDescription('');
+  };
+
+  const handleStartEditEvent = (event: ScheduleEvent) => {
+    setEditingEventId(event.id);
+    setEditEventTitle(event.title);
+    setEditEventDate(event.date);
+    setEditEventTime(event.time);
+    setEditEventImportance(event.importance);
+    setEditEventDescription(event.description || '');
+  };
+
+  const handleSaveEventEdit = () => {
+    if (editingEventId && editEventTitle.trim() && editEventDate) {
+      updateEvent(editingEventId, {
+        title: editEventTitle.trim(),
+        date: editEventDate,
+        time: editEventTime || '00:00',
+        importance: editEventImportance,
+        description: editEventDescription.trim() || undefined,
+      });
+    }
+    setEditingEventId(null);
+  };
+
+  const handleCancelEventEdit = () => {
+    setEditingEventId(null);
   };
 
   // Filter events: selected date or current month
@@ -201,6 +241,12 @@ export function MemoPage() {
                 placeholder="イベント名"
                 className="col-span-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 placeholder:text-text-secondary/50"
               />
+              <textarea
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="詳細メモ（任意）"
+                className="col-span-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 placeholder:text-text-secondary/50 h-16"
+              />
               <input
                 type="date"
                 value={newDate}
@@ -266,16 +312,88 @@ export function MemoPage() {
                   )}
                   <div className="space-y-1.5">
                     {grouped[date].sort((a, b) => a.time.localeCompare(b.time)).map((event) => (
-                      <div key={event.id} className="bg-bg-primary/30 border border-border/50 rounded-lg px-3 py-2 flex items-center gap-3">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${IMPORTANCE_STYLES[event.importance]}`} />
-                        <span className="font-mono text-xs text-text-secondary w-12 shrink-0">{event.time}</span>
-                        <span className="text-sm text-text-primary flex-1">{event.title}</span>
-                        {!event.id.startsWith('econ-') && (
-                          <button onClick={() => deleteEvent(event.id)} className="text-text-secondary/40 hover:text-down transition-colors shrink-0">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
+                      <div key={event.id}>
+                        {editingEventId === event.id ? (
+                          /* Edit Event Form */
+                          <div className="bg-bg-primary/50 border border-accent-gold/30 rounded-lg p-3 space-y-2">
+                            <input
+                              type="text"
+                              value={editEventTitle}
+                              onChange={(e) => setEditEventTitle(e.target.value)}
+                              className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50"
+                              autoFocus
+                            />
+                            <textarea
+                              value={editEventDescription}
+                              onChange={(e) => setEditEventDescription(e.target.value)}
+                              placeholder="詳細メモ（任意）"
+                              className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 h-16"
+                            />
+                            <div className="grid grid-cols-3 gap-2">
+                              <input
+                                type="date"
+                                value={editEventDate}
+                                onChange={(e) => setEditEventDate(e.target.value)}
+                                className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+                              />
+                              <input
+                                type="time"
+                                value={editEventTime}
+                                onChange={(e) => setEditEventTime(e.target.value)}
+                                className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+                              />
+                              <select
+                                value={editEventImportance}
+                                onChange={(e) => setEditEventImportance(e.target.value as ScheduleEvent['importance'])}
+                                className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+                              >
+                                <option value="high">高</option>
+                                <option value="medium">中</option>
+                                <option value="low">低</option>
+                              </select>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={handleSaveEventEdit} className="px-3 py-1 bg-accent-gold/20 text-accent-gold text-xs rounded-lg hover:bg-accent-gold/30">保存</button>
+                              <button onClick={handleCancelEventEdit} className="px-3 py-1 bg-bg-primary text-text-secondary text-xs rounded-lg hover:text-text-primary">キャンセル</button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Event Display */
+                          <div className="bg-bg-primary/30 border border-border/50 rounded-lg px-3 py-2">
+                            <div className="flex items-center gap-3">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${IMPORTANCE_STYLES[event.importance]}`} />
+                              <span className="font-mono text-xs text-text-secondary w-12 shrink-0">{event.time}</span>
+                              <button
+                                onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
+                                className="text-sm text-text-primary flex-1 text-left hover:text-accent-gold transition-colors"
+                              >
+                                {event.title}
+                                {event.description && (
+                                  <svg className={`w-3 h-3 inline-block ml-1 text-text-secondary/40 transition-transform ${expandedEventId === event.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                )}
+                              </button>
+                              <div className="flex gap-1 shrink-0">
+                                <button onClick={() => handleStartEditEvent(event)} className="text-text-secondary/40 hover:text-accent-cyan transition-colors">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                                <button onClick={() => deleteEvent(event.id)} className="text-text-secondary/40 hover:text-down transition-colors">
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                            {/* Description expandable */}
+                            {expandedEventId === event.id && event.description && (
+                              <div className="mt-2 ml-[4.25rem] text-xs text-text-secondary/80 whitespace-pre-wrap border-l-2 border-accent-gold/30 pl-2">
+                                {event.description}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     ))}

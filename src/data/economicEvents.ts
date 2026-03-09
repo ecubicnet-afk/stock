@@ -18,6 +18,13 @@ export const DEFAULT_ECONOMIC_EVENTS: ScheduleEvent[] = [
   { id: 'econ-1113-sq', title: 'SQ（11月限）', date: '2026-11-13', time: '09:00', importance: 'medium' },
   { id: 'econ-1211-sq', title: 'メジャーSQ（12月限）', date: '2026-12-11', time: '09:00', importance: 'high' },
 
+  // ===== 投資・イベントスケジュール（2026年〜2027年） =====
+  { id: 'invest-0319-takaichi', title: '高市氏訪米：レアアース関連・データセンター関連の宣言', date: '2026-03-19', time: '00:00', importance: 'high', description: '株価注目。訪米に伴う軍事費増額：軍事関連銘柄、銅箔（三菱マテリアル、DOWAなど）の注目' },
+  { id: 'invest-0427-softbank', title: 'ソフトバンク：半年経過、上昇のタイミングか', date: '2026-04-27', time: '00:00', importance: 'medium', description: 'ソフトバンク株の動向を注視' },
+  { id: 'invest-q2-cerebras', title: 'Cerebras Systems（セレブラス）IPO再申請の目標時期', date: '2026-04-01', time: '00:00', importance: 'high', description: '第2四半期（4月〜6月）にIPO（上場）再申請の見込み' },
+  { id: 'invest-06-buyback', title: '自社株買い・配当金による買い支え上昇期間の開始', date: '2026-06-01', time: '00:00', importance: 'high', description: '6月〜7月上旬：日本市場は自社株買いおよび配当金による買い支えで上昇しやすい時期' },
+  { id: 'invest-h2-rubin', title: 'ルービン（Rubin）買い替え期：半導体関連数値悪化の可能性', date: '2026-07-01', time: '00:00', importance: 'high', description: '2026年後半：一時的に半導体関連の数値が悪化する可能性。光コネクタ採用により関連銘柄は上昇しやすい' },
+
   // ===== 3月 =====
   { id: 'econ-0306-nfp', title: '米雇用統計（2月分）', date: '2026-03-06', time: '22:30', importance: 'high' },
   { id: 'econ-0310-household', title: '家計調査（1月分）', date: '2026-03-10', time: '08:30', importance: 'low' },
