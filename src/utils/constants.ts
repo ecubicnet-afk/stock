@@ -4,9 +4,8 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', labelJa: 'ダッシュボード', icon: 'dashboard' },
   { path: '/chart', label: 'Chart', labelJa: 'チャート', icon: 'chart' },
   { path: '/memo', label: 'Notes & Schedule', labelJa: 'メモ & スケジュール', icon: 'memo' },
-  { path: '/journal', label: 'Journal', labelJa: 'トレード日誌', icon: 'journal' },
+  { path: '/journal', label: 'Trade', labelJa: 'トレード', icon: 'tradeAnalysis' },
   { path: '/watchlist', label: 'Watchlist', labelJa: 'ウォッチリスト', icon: 'watchlist' },
-  { path: '/trade-analysis', label: 'Trade Analysis', labelJa: 'トレード管理', icon: 'tradeAnalysis' },
   { path: '/portfolio', label: 'Portfolio', labelJa: '資産管理', icon: 'portfolio' },
 ];
 

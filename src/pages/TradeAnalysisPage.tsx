@@ -107,7 +107,7 @@ function parseCSVData(text: string, fileName: string): Trade[] {
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(val);
 
-export function TradeAnalysisPage() {
+export function TradeAnalysisContent() {
   const [data, setData] = useLocalStorage<Trade[]>('stock-app-trade-analysis', []);
   const [loadedFiles, setLoadedFiles] = useLocalStorage<FileInfo[]>('stock-app-trade-files', []);
   const [error, setError] = useState('');
@@ -264,17 +264,9 @@ export function TradeAnalysisPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {/* CSV Toolbar */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-            <svg className="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            トレード管理
-          </h1>
-          <p className="text-xs text-text-secondary mt-0.5">楽天証券CSV統合：約定日ベース分析</p>
-        </div>
+        <p className="text-xs text-text-secondary">楽天証券CSV統合：約定日ベース分析</p>
         <div className="flex gap-2">
           {data.length > 0 && (
             <button
