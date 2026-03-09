@@ -6,6 +6,7 @@ import {
 import { useSettings } from '../hooks/useSettings';
 import { fetchSectorClassification, fetchIndexData } from '../services/geminiApi';
 import { saveSnapshot, loadSnapshots, deleteSnapshot } from '../services/firebase';
+import { readFileAsText } from '../utils/csvParser';
 
 // --- Types ---
 interface HoldingItem {
@@ -54,22 +55,6 @@ function splitCSVLine(line: string): string[] {
 
 const COLORS = ['#22d3ee', '#a78bfa', '#f472b6', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#818cf8', '#c084fc', '#f43f5e', '#94a3b8'];
 
-function readFileAsShiftJIS(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const decoder = new TextDecoder('shift-jis');
-        resolve(decoder.decode(reader.result as ArrayBuffer));
-      } catch {
-        const decoder = new TextDecoder('utf-8');
-        resolve(decoder.decode(reader.result as ArrayBuffer));
-      }
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
-}
 
 // --- Custom Pie Label ---
 function CustomPieLabel({ cx, cy, midAngle, outerRadius, percent, name }: any) {
@@ -191,7 +176,7 @@ export function PortfolioPage() {
       newFiles[type] = file;
 
       try {
-        const text = await readFileAsShiftJIS(file);
+        const text = await readFileAsText(file);
         parseFile(text, type);
       } catch (err) {
         addLog(`Error: ${file.name} の読み込みに失敗`);

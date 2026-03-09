@@ -8,6 +8,7 @@ import { TradeList } from '../components/journal/TradeList';
 import { TradeForm } from '../components/journal/TradeForm';
 import { TradeAnalysisContent } from './TradeAnalysisPage';
 import type { SelectedCsvTrade } from './TradeAnalysisPage';
+import type { AnalysisTrade } from '../utils/csvParser';
 
 export interface PrefillData {
   date?: string;
@@ -17,18 +18,6 @@ export interface PrefillData {
   pnl?: number;
   quantity?: number;
   price?: number;
-}
-
-interface CsvTrade {
-  key: string;
-  date: string;
-  month: string;
-  name: string;
-  ticker: string;
-  profit: number;
-  quantity: number;
-  price: number;
-  source: string;
 }
 
 export function JournalPage() {
@@ -45,7 +34,7 @@ export function JournalPage() {
   const { trades, addTrade, deleteTrade, getTradesByDate } = useTrades();
 
   // Read CSV trade data from localStorage (shared with TradeAnalysisContent)
-  const [csvTradeData] = useLocalStorage<CsvTrade[]>('stock-app-trade-analysis', []);
+  const [csvTradeData] = useLocalStorage<AnalysisTrade[]>('stock-app-trade-analysis', []);
 
   // Build CSV trade dates set and filter for selected date
   const csvTradeDates = useMemo(() => {
@@ -95,7 +84,7 @@ export function JournalPage() {
     }, 100);
   };
 
-  const handleCsvRowClick = (t: CsvTrade) => {
+  const handleCsvRowClick = (t: AnalysisTrade) => {
     setPrefill({
       date: selectedDate,
       ticker: t.ticker,

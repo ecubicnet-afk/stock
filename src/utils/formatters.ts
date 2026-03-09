@@ -36,6 +36,10 @@ export function formatCurrency(value: number, currency: string): string {
   return formatNumber(value);
 }
 
+export function formatJPY(value: number): string {
+  return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(value);
+}
+
 export function getChangeColor(value: number): string {
   if (value > 0) return 'text-up';
   if (value < 0) return 'text-down';
