@@ -325,8 +325,14 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted block mb-1">日付（任意）</label>
-                  <input type="date" value={editForm.date} onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[#12121e] border border-primary/20 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan" />
+                  <div className="relative">
+                    <input type="date" value={editForm.date} onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
+                      className="w-full px-3 py-2 pr-8 bg-[#12121e] border border-primary/20 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan" />
+                    {editForm.date && (
+                      <button type="button" onClick={() => setEditForm((f) => ({ ...f, date: '' }))}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-primary text-sm">×</button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-muted block mb-1">URL（任意）</label>
