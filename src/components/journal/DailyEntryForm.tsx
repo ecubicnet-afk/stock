@@ -13,6 +13,15 @@ interface SaveData {
   images?: string[];
 }
 
+// Merge legacy separate fields into single notes
+function mergeNotes(entry: JournalEntry | undefined): string {
+  if (!entry) return '';
+  const outlook = entry.marketOutlook?.trim() ?? '';
+  const notes = entry.notes?.trim() ?? '';
+  if (outlook && notes) return `${outlook}\n\n${notes}`;
+  return outlook || notes;
+}
+
 interface Props {
   date: string;
   entry: JournalEntry | undefined;
@@ -44,7 +53,6 @@ function RatingSelector({ label, value, onChange, color }: { label: string; valu
 }
 
 export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
-  const [marketOutlook, setMarketOutlook] = useState('');
   const [conditionRating, setConditionRating] = useState(5);
   const [disciplineRating, setDisciplineRating] = useState(5);
   const [volatilityRating, setVolatilityRating] = useState(5);
@@ -54,19 +62,18 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [images, setImages] = useState<string[]>([]);
 
   useEffect(() => {
-    setMarketOutlook(entry?.marketOutlook ?? '');
     setConditionRating(entry?.conditionRating ?? 5);
     setDisciplineRating(entry?.disciplineRating ?? 5);
     setVolatilityRating(entry?.volatilityRating ?? 5);
     setFearRating(entry?.fearRating ?? 5);
     setAsExpectedRating(entry?.asExpectedRating ?? 5);
-    setNotes(entry?.notes ?? '');
+    setNotes(mergeNotes(entry));
     setImages(entry?.images ?? []);
   }, [entry, date]);
 
   const handleSave = () => {
     onSave(date, {
-      marketOutlook,
+      marketOutlook: '',
       conditionRating,
       disciplineRating,
       volatilityRating,
@@ -118,26 +125,14 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
           <ImageAttachment images={images} onChange={setImages} maxImages={5} />
         </div>
 
-        {/* Right: text inputs */}
-        <div className="flex-1 space-y-2 min-w-0">
-          <div>
-            <label className="block text-xs text-text-secondary mb-1">相場観・マーケット所感</label>
-            <textarea
-              value={marketOutlook}
-              onChange={(e) => setMarketOutlook(e.target.value)}
-              className="w-full h-16 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
-              placeholder="今日のマーケットの見通しや所感..."
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-text-secondary mb-1">メモ・反省点</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full h-16 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
-              placeholder="今日の反省点、気づき、次回への教訓..."
-            />
-          </div>
+        {/* Right: single text input */}
+        <div className="flex-1 min-w-0">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full min-h-[6rem] bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-y focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
+            placeholder="相場観 / 所感 / 反省点 / 改善..."
+          />
         </div>
       </div>
 
