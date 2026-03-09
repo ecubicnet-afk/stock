@@ -33,18 +33,18 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
 
   return (
     <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
         </button>
-        <span className="text-sm font-semibold text-text-primary">{monthLabel}</span>
+        <span className="text-sm font-bold text-text-primary">{monthLabel}</span>
         <button onClick={() => onChangeMonth(1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="text-xs text-text-secondary/60 py-1">{d}</div>
+        {WEEKDAYS.map((d, i) => (
+          <div key={d} className={`text-xs font-semibold py-1.5 ${i === 5 ? 'text-accent-cyan/70' : i === 6 ? 'text-down/70' : 'text-text-secondary/60'}`}>{d}</div>
         ))}
         {cells.map((cell, i) => {
           if (!cell) return <div key={`empty-${i}`} />;
@@ -53,29 +53,51 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
           const hasTrade = tradeDates.has(cell.dateStr);
           const hasCsvTrade = csvTradeDates?.has(cell.dateStr) ?? false;
           const isToday = cell.dateStr === new Date().toISOString().split('T')[0];
+          const dow = (startDow + cell.day - 1) % 7;
+          const isSat = dow === 5;
+          const isSun = dow === 6;
+
           return (
             <button
               key={cell.dateStr}
               onClick={() => onSelectDate(cell.dateStr)}
-              className={`relative text-xs py-1.5 rounded-lg transition-all ${
+              className={`relative text-sm py-2.5 rounded-lg transition-all font-mono ${
                 isSelected
-                  ? 'bg-accent-cyan/20 text-accent-cyan font-bold'
+                  ? 'bg-accent-cyan/20 text-accent-cyan font-bold ring-1 ring-accent-cyan/40'
                   : isToday
-                    ? 'bg-bg-primary text-text-primary font-semibold'
-                    : 'text-text-secondary hover:bg-bg-primary/50 hover:text-text-primary'
+                    ? 'bg-bg-primary text-text-primary font-bold ring-1 ring-text-secondary/30'
+                  : hasCsvTrade
+                    ? 'bg-up/5 text-text-primary hover:bg-up/10'
+                    : isSat
+                      ? 'text-accent-cyan/70 hover:bg-bg-primary/50'
+                      : isSun
+                        ? 'text-down/70 hover:bg-bg-primary/50'
+                        : 'text-text-secondary hover:bg-bg-primary/50 hover:text-text-primary'
               }`}
             >
               {cell.day}
               {(hasEntry || hasTrade || hasCsvTrade) && (
                 <div className="flex gap-0.5 justify-center absolute bottom-0.5 left-0 right-0">
-                  {hasEntry && <span className="w-1 h-1 rounded-full bg-accent-cyan" />}
-                  {hasTrade && <span className="w-1 h-1 rounded-full bg-accent-gold" />}
-                  {hasCsvTrade && <span className="w-1 h-1 rounded-full bg-up" />}
+                  {hasEntry && <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />}
+                  {hasTrade && <span className="w-1.5 h-1.5 rounded-full bg-accent-gold" />}
+                  {hasCsvTrade && !hasTrade && <span className="w-1.5 h-1.5 rounded-full bg-up" />}
                 </div>
               )}
             </button>
           );
         })}
+      </div>
+      {/* Legend */}
+      <div className="flex gap-3 mt-3 pt-2 border-t border-border/50 justify-center">
+        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan" />日誌
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent-gold" />記録
+        </div>
+        <div className="flex items-center gap-1 text-[10px] text-text-secondary/60">
+          <span className="w-1.5 h-1.5 rounded-full bg-up" />CSV
+        </div>
       </div>
     </div>
   );
