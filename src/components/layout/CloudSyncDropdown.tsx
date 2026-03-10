@@ -62,66 +62,66 @@ export function CloudSyncDropdown() {
             </div>
           </div>
 
-          {!isConfigured ? (
-            <div className="px-4 py-4 text-xs text-text-secondary">
-              設定画面でFirebaseの設定を入力してください
-            </div>
-          ) : (
-            <div className="p-3 space-y-2">
-              <button
-                onClick={saveAll}
-                disabled={busy}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {syncStatus.isSaving ? (
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                )}
-                クラウドに保存
-              </button>
-
-              <button
-                onClick={handleLoad}
-                disabled={busy}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-bg-card text-text-secondary hover:text-text-primary hover:bg-bg-card/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {syncStatus.isLoading ? (
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3" />
-                  </svg>
-                )}
-                クラウドから読込
-              </button>
-
-              <div className="pt-1 text-[10px] text-text-secondary/60 space-y-0.5">
-                <div>最終保存: {formatTime(syncStatus.lastSavedAt)}</div>
-                <div>最終読込: {formatTime(syncStatus.lastLoadedAt)}</div>
+          <div className="p-3 space-y-2">
+            {!isConfigured && (
+              <div className="px-1 py-2 text-xs text-amber-400/80 bg-amber-400/5 rounded text-center">
+                設定画面でFirebaseの3項目を入力し、接続テストを実行してください
               </div>
+            )}
 
-              {syncStatus.result && (
-                <div
-                  className={`text-xs text-center py-1 rounded ${
-                    syncStatus.result === 'success'
-                      ? 'text-up bg-up/10'
-                      : 'text-down bg-down/10'
-                  }`}
-                >
-                  {syncStatus.result === 'success' ? '完了' : syncStatus.error || 'エラー'}
-                </div>
+            <button
+              onClick={saveAll}
+              disabled={busy}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {syncStatus.isSaving ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
               )}
+              クラウドに保存
+            </button>
+
+            <button
+              onClick={handleLoad}
+              disabled={busy}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md bg-bg-card text-text-secondary hover:text-text-primary hover:bg-bg-card/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {syncStatus.isLoading ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3" />
+                </svg>
+              )}
+              クラウドから読込
+            </button>
+
+            <div className="pt-1 text-[10px] text-text-secondary/60 space-y-0.5">
+              <div>最終保存: {formatTime(syncStatus.lastSavedAt)}</div>
+              <div>最終読込: {formatTime(syncStatus.lastLoadedAt)}</div>
             </div>
-          )}
+
+            {syncStatus.result && (
+              <div
+                className={`text-xs py-1.5 px-2 rounded ${
+                  syncStatus.result === 'success'
+                    ? 'text-up bg-up/10 text-center'
+                    : 'text-down bg-down/10'
+                }`}
+              >
+                {syncStatus.result === 'success' ? '完了' : syncStatus.error || 'エラーが発生しました'}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

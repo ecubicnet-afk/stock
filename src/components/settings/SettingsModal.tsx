@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSettings } from '../../hooks/useSettings';
 import { testFmpConnection } from '../../services/api';
+import { testFirebaseConnection, isFirebaseConfigured } from '../../services/firebase';
 import type { FmpTestResult } from '../../services/api';
 import type { Settings } from '../../types';
 
@@ -13,10 +14,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings, updateSettings } = useSettings();
   const [testResult, setTestResult] = useState<FmpTestResult | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [firebaseTestResult, setFirebaseTestResult] = useState<{ success: boolean; error?: string } | null>(null);
+  const [isFirebaseTesting, setIsFirebaseTesting] = useState(false);
 
   if (!isOpen) return null;
 
   const hasFmpKey = settings.fmpApiKey.length >= 10;
+  const hasFirebaseConfig = isFirebaseConfigured(settings);
+
+  const handleFirebaseTest = async () => {
+    setIsFirebaseTesting(true);
+    setFirebaseTestResult(null);
+    const result = await testFirebaseConnection(settings);
+    setFirebaseTestResult(result);
+    setIsFirebaseTesting(false);
+  };
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -169,41 +181,92 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">Firebase Project ID（任意）</label>
-                  <input
-                    type="text"
-                    value={settings.firebaseProjectId}
-                    onChange={(e) => updateSettings({ firebaseProjectId: e.target.value })}
-                    placeholder="日次スナップショット保存に使用"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
-                  />
-                </div>
+                <div className="p-3 bg-bg-primary/30 border border-border/50 rounded-lg space-y-3">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">
+                      Firebase Project ID
+                      {hasFirebaseConfig && (
+                        <span className="ml-2 inline-flex items-center gap-1">
+                          {firebaseTestResult?.success ? (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                          ) : firebaseTestResult && !firebaseTestResult.success ? (
+                            <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                          ) : (
+                            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                          )}
+                          <span className="text-xs">
+                            {firebaseTestResult?.success ? '接続済み' : firebaseTestResult ? 'エラー' : '未テスト'}
+                          </span>
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.firebaseProjectId}
+                      onChange={(e) => {
+                        updateSettings({ firebaseProjectId: e.target.value });
+                        setFirebaseTestResult(null);
+                      }}
+                      placeholder="クラウド同期に使用"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">Firebase APIキー（任意）</label>
-                  <input
-                    type="password"
-                    value={settings.firebaseApiKey}
-                    onChange={(e) => updateSettings({ firebaseApiKey: e.target.value })}
-                    placeholder="Firebase Web APIキー"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">Firebase APIキー</label>
+                    <input
+                      type="password"
+                      value={settings.firebaseApiKey}
+                      onChange={(e) => {
+                        updateSettings({ firebaseApiKey: e.target.value });
+                        setFirebaseTestResult(null);
+                      }}
+                      placeholder="Firebase Web APIキー"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">Firebase App ID（任意）</label>
-                  <input
-                    type="text"
-                    value={settings.firebaseAppId}
-                    onChange={(e) => updateSettings({ firebaseAppId: e.target.value })}
-                    placeholder="Firebase App ID"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
-                  />
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">Firebase App ID</label>
+                    <input
+                      type="text"
+                      value={settings.firebaseAppId}
+                      onChange={(e) => {
+                        updateSettings({ firebaseAppId: e.target.value });
+                        setFirebaseTestResult(null);
+                      }}
+                      placeholder="Firebase App ID"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                  </div>
+
+                  {hasFirebaseConfig && (
+                    <div>
+                      <button
+                        onClick={handleFirebaseTest}
+                        disabled={isFirebaseTesting}
+                        className="w-full py-1.5 bg-accent-cyan/10 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/20 transition-colors disabled:opacity-50"
+                      >
+                        {isFirebaseTesting ? 'テスト中...' : 'Firebase接続テスト'}
+                      </button>
+
+                      {firebaseTestResult && (
+                        <div className={`mt-2 p-2 rounded text-xs ${firebaseTestResult.success ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
+                          {firebaseTestResult.success
+                            ? '接続成功 - クラウド同期が利用可能です'
+                            : firebaseTestResult.error || '接続に失敗しました'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-text-secondary/60">
+                    Firebase設定を入力するとクラウド同期（全デバイス間のデータ共有）が有効になります。
+                    Firebaseコンソールで「匿名認証」を有効にしてください。
+                  </p>
                 </div>
 
                 <p className="text-xs text-text-secondary/60">
-                  Firebase設定を入力すると日次スナップショット保存機能が有効になります。
                   Gemini APIキーを入力するとセクター分析・指数比較が利用可能です。
                 </p>
               </div>
