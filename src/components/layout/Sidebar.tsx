@@ -70,6 +70,7 @@ const IMPORTANCE_DOT: Record<string, string> = {
   high: 'bg-red-500',
   medium: 'bg-amber-400',
   low: 'bg-cyan-400',
+  scenario: 'bg-violet-400',
 };
 
 function formatJPY(value: number): string {
