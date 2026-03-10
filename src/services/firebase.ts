@@ -107,9 +107,12 @@ export async function testFirebaseConnection(
 
     // APIキー無効（コードが複数パターンあるため部分一致）
     if (code.includes('api-key') || msg.includes('api-key') || code === 'auth/invalid-api-key') {
+      const keyPreview = settings.firebaseApiKey
+        ? `${settings.firebaseApiKey.slice(0, 7)}...${settings.firebaseApiKey.slice(-4)}`
+        : '(空)';
       return {
         success: false,
-        error: 'APIキーが無効です。Firebaseコンソール >「プロジェクトの設定」>「全般」>「マイアプリ」に表示されるapiKeyを使用してください。',
+        error: `APIキーが無効です [${code}]。現在のキー: ${keyPreview}。Firebaseコンソール >「プロジェクトの設定」>「全般」>「マイアプリ」に表示されるapiKeyを確認してください。`,
       };
     }
     // 承認済みドメイン未登録（GitHub Pages等）
@@ -136,7 +139,7 @@ export async function testFirebaseConnection(
     }
     return {
       success: false,
-      error: msg || '接続に失敗しました。ブラウザのコンソール(F12)で詳細を確認してください。',
+      error: `接続エラー [${code || 'unknown'}]: ${msg || '不明なエラー'}`,
     };
   }
 }
