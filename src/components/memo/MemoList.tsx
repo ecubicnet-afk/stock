@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageAttachment, ImageThumbnails } from '../common/ImageAttachment';
-import { LinkifiedText } from '../common/LinkifiedText';
+import { RichTextEditor } from '../common/RichTextEditor';
+import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { MemoEntry } from '../../types';
 
 function formatDateTime(iso: string) {
@@ -49,11 +50,12 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
           <div key={memo.id} className="bg-bg-primary/30 border border-border/50 rounded-lg p-3">
             {editingId === memo.id ? (
               <>
-                <textarea
+                <RichTextEditor
                   value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50"
-                  autoFocus
+                  onChange={setEditText}
+                  placeholder="メモを入力..."
+                  minHeight="80px"
+                  accentColor="cyan"
                 />
                 <div className="mt-2">
                   <ImageAttachment images={editImages} onChange={setEditImages} maxImages={5} />
@@ -65,7 +67,7 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
               </>
             ) : (
               <>
-                <p className="text-sm text-text-primary whitespace-pre-wrap"><LinkifiedText text={memo.text} /></p>
+                <RichTextDisplay html={memo.text} className="text-sm text-text-primary" />
                 <ImageThumbnails images={memo.images} />
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-xs text-text-secondary/60">{formatDateTime(memo.updatedAt)}</span>

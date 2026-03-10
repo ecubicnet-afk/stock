@@ -1,8 +1,9 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useStrategy } from '../hooks/useStrategy';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { StrategyCanvas } from '../components/strategy/StrategyCanvas';
+import { RichTextEditor } from '../components/common/RichTextEditor';
 import type { StrategyNoteRegion, StrategyNoteDirection } from '../types';
 
 const REGION_OPTIONS: { value: StrategyNoteRegion; label: string; emoji: string }[] = [
@@ -17,19 +18,6 @@ const DIRECTION_OPTIONS: { value: StrategyNoteDirection; label: string; emoji: s
   { value: 'neutral', label: '中立', emoji: '―' },
 ];
 
-const FONT_SIZES = [
-  { label: '小', cmd: '1', px: '12px' },
-  { label: '中', cmd: '3', px: '14px' },
-  { label: '大', cmd: '5', px: '18px' },
-];
-
-const FONT_COLORS = [
-  { label: '白', hex: '#e2e8f0', cls: 'bg-slate-200' },
-  { label: '黄', hex: '#fcd34d', cls: 'bg-amber-300' },
-  { label: '赤', hex: '#f87171', cls: 'bg-red-400' },
-  { label: '緑', hex: '#34d399', cls: 'bg-emerald-400' },
-  { label: '青', hex: '#22d3ee', cls: 'bg-cyan-400' },
-];
 
 function resizeImage(file: File, maxWidth: number): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -53,22 +41,6 @@ function resizeImage(file: File, maxWidth: number): Promise<string> {
   });
 }
 
-/** Apply execCommand and convert generated <font> tags to <span style> */
-function applyFontSize(cmdSize: string, pxSize: string) {
-  document.execCommand('fontSize', false, cmdSize);
-  // Convert <font size="X"> to <span style="font-size:...">
-  const fonts = document.querySelectorAll(`font[size="${cmdSize}"]`);
-  fonts.forEach((font) => {
-    const span = document.createElement('span');
-    span.style.fontSize = pxSize;
-    span.innerHTML = font.innerHTML;
-    font.parentNode?.replaceChild(span, font);
-  });
-}
-
-function applyFontColor(hex: string) {
-  document.execCommand('foreColor', false, hex);
-}
 
 export function StrategyPage() {
   const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription } = useStrategy();
@@ -84,25 +56,9 @@ export function StrategyPage() {
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [newUrl, setNewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
 
   const desc = data.scenarioDescription;
   const zoom = desc.imageZoom ?? 100;
-
-  // Initialize contentEditable with saved HTML
-  useEffect(() => {
-    if (editorRef.current && !initializedRef.current) {
-      editorRef.current.innerHTML = desc.text || '';
-      initializedRef.current = true;
-    }
-  }, [showScenario]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleEditorInput = useCallback(() => {
-    if (editorRef.current) {
-      updateScenarioDescription({ text: editorRef.current.innerHTML });
-    }
-  }, [updateScenarioDescription]);
 
   const importedSourceIds = useMemo(() => {
     if (!activeScenario) return new Set<string>();
@@ -151,14 +107,20 @@ export function StrategyPage() {
     updateScenarioDescription({ urls: desc.urls.filter((_, i) => i !== index) });
   }, [desc.urls, updateScenarioDescription]);
 
+  const getPlainText = useCallback(() => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = desc.text || '';
+    return tmp.textContent || tmp.innerText || '';
+  }, [desc.text]);
+
   const handleSaveToMemo = useCallback(() => {
-    const plainText = editorRef.current?.innerText || '';
+    const plainText = getPlainText();
     if (!plainText.trim()) return;
     addMemo(plainText);
-  }, [addMemo]);
+  }, [addMemo, getPlainText]);
 
   const handleSaveToSchedule = useCallback(() => {
-    const plainText = editorRef.current?.innerText || '';
+    const plainText = getPlainText();
     if (!plainText.trim() || !desc.date) return;
     addEvent({
       title: '想定シナリオ',
@@ -182,7 +144,7 @@ export function StrategyPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { setShowScenario(!showScenario); initializedRef.current = false; }}
+            onClick={() => setShowScenario(!showScenario)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showScenario ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
           >
             📋 想定シナリオ
@@ -205,33 +167,10 @@ export function StrategyPage() {
       {/* Scenario Description Panel */}
       {showScenario && (
         <div className="flex-shrink-0 border-b border-primary/10 px-4 py-3 bg-amber-500/5">
-          {/* Toolbar */}
+          {/* Header bar with date + save buttons */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <h3 className="text-xs font-semibold text-amber-300">想定シナリオ</h3>
             <div className="h-4 w-px bg-primary/20" />
-            {/* Font size */}
-            <div className="flex gap-0.5">
-              {FONT_SIZES.map((s) => (
-                <button key={s.label}
-                  onMouseDown={(e) => { e.preventDefault(); applyFontSize(s.cmd, s.px); handleEditorInput(); }}
-                  className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-primary hover:bg-primary/10"
-                  title={`フォントサイズ: ${s.label}`}
-                >{s.label}</button>
-              ))}
-            </div>
-            <div className="h-4 w-px bg-primary/20" />
-            {/* Font color */}
-            <div className="flex gap-1">
-              {FONT_COLORS.map((c) => (
-                <button key={c.hex}
-                  onMouseDown={(e) => { e.preventDefault(); applyFontColor(c.hex); handleEditorInput(); }}
-                  className={`w-4 h-4 rounded-full ${c.cls} opacity-60 hover:opacity-100 transition-opacity`}
-                  title={c.label}
-                />
-              ))}
-            </div>
-            <div className="h-4 w-px bg-primary/20" />
-            {/* Date */}
             <div className="flex items-center gap-1">
               <span className="text-[10px] text-muted">📅</span>
               <input
@@ -245,7 +184,6 @@ export function StrategyPage() {
               )}
             </div>
             <div className="flex-1" />
-            {/* Save buttons */}
             <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] hover:bg-amber-500/20">
               📝 メモに保存
             </button>
@@ -261,13 +199,11 @@ export function StrategyPage() {
           <div className="flex items-stretch gap-4">
             {/* Rich text editor */}
             <div className="flex-1 space-y-2 min-w-0">
-              <div
-                ref={editorRef}
-                contentEditable
-                onInput={handleEditorInput}
-                className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-amber-400/50"
-                style={{ minHeight: '80px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
-                data-placeholder="直近の想定シナリオを記入..."
+              <RichTextEditor
+                value={desc.text}
+                onChange={(html) => updateScenarioDescription({ text: html })}
+                placeholder="直近の想定シナリオを記入..."
+                accentColor="amber"
               />
               {/* URLs */}
               <div className="space-y-1">

@@ -5,7 +5,8 @@ import { useWatchlist } from '../hooks/useWatchlist';
 import { useTrades } from '../hooks/useTrades';
 import { ScheduleCalendar } from '../components/schedule/ScheduleCalendar';
 import { ImageAttachment } from '../components/common/ImageAttachment';
-import { LinkifiedText } from '../components/common/LinkifiedText';
+import { RichTextEditor } from '../components/common/RichTextEditor';
+import { RichTextDisplay } from '../components/common/RichTextDisplay';
 import { EventCard } from '../components/memo/EventCard';
 import { MemoList } from '../components/memo/MemoList';
 import type { ScheduleEvent, WatchlistItem } from '../types';
@@ -202,14 +203,12 @@ export function MemoPage() {
             </svg>
             投資メモ
           </h2>
-          <textarea
+          <RichTextEditor
             value={newMemoText}
-            onChange={(e) => setNewMemoText(e.target.value)}
-            className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-3 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50 placeholder:text-text-secondary/50"
-            placeholder="投資に関するメモを入力...&#10;例: 決算情報、市場分析、銘柄メモなど"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddMemo();
-            }}
+            onChange={setNewMemoText}
+            placeholder="投資に関するメモを入力..."
+            minHeight="80px"
+            accentColor="cyan"
           />
           <ImageAttachment images={newMemoImages} onChange={setNewMemoImages} maxImages={5} />
           <button
@@ -267,12 +266,15 @@ export function MemoPage() {
               <option value="US">🇺🇸 米国</option>
               <option value="other">その他</option>
             </select>
-            <textarea
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="詳細メモ（任意）"
-              className="col-span-2 bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 placeholder:text-text-secondary/50 h-12"
-            />
+            <div className="col-span-2">
+              <RichTextEditor
+                value={newDescription}
+                onChange={setNewDescription}
+                placeholder="詳細メモ（任意）"
+                minHeight="48px"
+                accentColor="gold"
+              />
+            </div>
             <div className="col-span-2">
               <ImageAttachment images={newEventImages} onChange={setNewEventImages} maxImages={3} />
             </div>
@@ -426,11 +428,12 @@ export function MemoPage() {
                         <h4 className="text-xs font-semibold text-text-secondary mb-1">メモ</h4>
                         {wlEditingNotesId === item.id ? (
                           <div>
-                            <textarea
+                            <RichTextEditor
                               value={wlNotesDraft}
-                              onChange={(e) => setWlNotesDraft(e.target.value)}
-                              className="w-full h-20 bg-bg-primary/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-cyan/50"
-                              autoFocus
+                              onChange={setWlNotesDraft}
+                              placeholder="メモを入力..."
+                              minHeight="80px"
+                              accentColor="cyan"
                             />
                             <div className="flex gap-2 mt-1">
                               <button onClick={() => { updateWatchlistNotes(item.id, wlNotesDraft); setWlEditingNotesId(null); }} className="text-xs text-accent-cyan">保存</button>
@@ -442,7 +445,7 @@ export function MemoPage() {
                             onClick={() => { setWlEditingNotesId(item.id); setWlNotesDraft(item.notes); }}
                             className="min-h-[3rem] bg-bg-primary/30 rounded-lg p-2 text-sm text-text-primary cursor-text"
                           >
-                            {item.notes ? <span className="whitespace-pre-wrap"><LinkifiedText text={item.notes} /></span> : <span className="text-text-secondary/50">クリックしてメモを追加...</span>}
+                            {item.notes ? <RichTextDisplay html={item.notes} className="text-sm text-text-primary" /> : <span className="text-text-secondary/50">クリックしてメモを追加...</span>}
                           </div>
                         )}
                       </div>
