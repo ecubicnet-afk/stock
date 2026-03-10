@@ -169,23 +169,41 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
       (async () => {
         const cached = getCached<MarketItem[]>('fmp-indices', FMP_TTL);
         if (cached) return cached;
-        const data = await fetchFmpIndices(fmpApiKey, sparklineMap ?? undefined);
-        setCache('fmp-indices', data);
-        return data;
+        try {
+          const data = await fetchFmpIndices(fmpApiKey, sparklineMap ?? undefined);
+          if (data.length > 0) setCache('fmp-indices', data);
+          console.info(`[FMP] Indices: ${data.length} items fetched`);
+          return data;
+        } catch (err) {
+          console.warn('[FMP] Indices fetch failed:', err);
+          return [];
+        }
       })(),
       (async () => {
         const cached = getCached<MarketItem[]>('fmp-commodities', FMP_TTL);
         if (cached) return cached;
-        const data = await fetchFmpCommodities(fmpApiKey, sparklineMap ?? undefined);
-        setCache('fmp-commodities', data);
-        return data;
+        try {
+          const data = await fetchFmpCommodities(fmpApiKey, sparklineMap ?? undefined);
+          if (data.length > 0) setCache('fmp-commodities', data);
+          console.info(`[FMP] Commodities: ${data.length} items fetched`);
+          return data;
+        } catch (err) {
+          console.warn('[FMP] Commodities fetch failed:', err);
+          return [];
+        }
       })(),
       (async () => {
         const cached = getCached<SubIndicator[]>('fmp-sub', SUB_TTL);
         if (cached) return cached;
-        const data = await fetchFmpSubIndicators(fmpApiKey);
-        setCache('fmp-sub', data);
-        return data;
+        try {
+          const data = await fetchFmpSubIndicators(fmpApiKey);
+          if (data.length > 0) setCache('fmp-sub', data);
+          console.info(`[FMP] SubIndicators: ${data.length} items fetched`);
+          return data;
+        } catch (err) {
+          console.warn('[FMP] SubIndicators fetch failed:', err);
+          return [];
+        }
       })(),
     ]);
 
