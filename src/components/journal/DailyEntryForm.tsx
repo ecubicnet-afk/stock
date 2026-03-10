@@ -92,6 +92,45 @@ function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
   );
 }
 
+function organizeJournalText(html: string): string {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const plainText = tmp.textContent || tmp.innerText || '';
+  if (!plainText.trim()) return html;
+
+  const lines = plainText.split(/[\n。]+/).map((l) => l.trim()).filter(Boolean);
+
+  const sections = [
+    { title: '市場概況', keywords: ['相場', '市場', '指数', '日経', 'ダウ', 'S&P', 'ナスダック', '為替', 'ドル円', '金利', '原油', '上昇', '下落', '暴落', '急騰', '株価', 'VIX', '先物', '寄り', '引け', 'GD', 'GU'], lines: [] as string[] },
+    { title: 'トレード振り返り', keywords: ['トレード', '売買', '約定', 'エントリー', 'ロング', 'ショート', '買い', '売り', '利確', '損切', 'ポジション', '建玉', '利益', '損失', 'pips', '枚', '株'], lines: [] as string[] },
+    { title: '反省点', keywords: ['反省', '失敗', 'ミス', '改善', '課題', 'できなかった', 'すべきだった', '遅かった', '早かった', '焦', '感情', 'ルール違反', '後悔'], lines: [] as string[] },
+    { title: '明日の計画', keywords: ['明日', '計画', '予定', '戦略', '注目', 'ウォッチ', '狙い', '目標', 'シナリオ', '来週', '今後', '方針'], lines: [] as string[] },
+  ];
+
+  for (const line of lines) {
+    let assigned = false;
+    for (const section of sections) {
+      if (section.keywords.some((kw) => line.includes(kw))) {
+        section.lines.push(line);
+        assigned = true;
+        break;
+      }
+    }
+    if (!assigned) sections[0].lines.push(line);
+  }
+
+  let result = '';
+  for (const section of sections) {
+    if (section.lines.length === 0) continue;
+    result += `<div style="margin-bottom:12px"><div style="font-size:14px;font-weight:bold;color:#22d3ee;margin-bottom:4px">■ ${section.title}</div>`;
+    for (const line of section.lines) {
+      result += `<div style="font-size:12px">・${line}</div>`;
+    }
+    result += '</div>';
+  }
+  return result || html;
+}
+
 export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [conditionRating, setConditionRating] = useState(5);
   const [disciplineRating, setDisciplineRating] = useState(5);
@@ -330,6 +369,21 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
                 画像を添付
               </button>
             )}
+
+            <button
+              onClick={() => {
+                const organized = organizeJournalText(notes);
+                setNotes(organized);
+              }}
+              disabled={!notes.trim()}
+              className={`px-4 py-1.5 text-sm rounded-lg transition-colors ${
+                notes.trim()
+                  ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                  : 'bg-bg-primary/30 text-text-secondary/30 cursor-not-allowed'
+              }`}
+            >
+              整理する
+            </button>
 
             <button
               onClick={handleSave}

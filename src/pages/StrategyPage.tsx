@@ -284,9 +284,9 @@ export function StrategyPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex">
+      <div className="flex min-h-[700px]">
         {/* Canvas */}
-        <div className="flex-1 flex flex-col min-h-[700px]">
+        <div className="flex-1 flex flex-col">
           <StrategyCanvas
             notes={activeScenario.notes}
             connections={activeScenario.connections}
@@ -310,7 +310,7 @@ export function StrategyPage() {
 
         {/* Side panels */}
         <div className="flex flex-col flex-shrink-0 border-l border-primary/10 overflow-hidden" style={{ width: showAddNote || showImport ? 320 : 0, transition: 'width 0.2s' }}>
-          <div className="p-3 space-y-4" style={{ width: 320 }}>
+          <div className="p-3 space-y-4 overflow-y-auto" style={{ width: 320, maxHeight: 700 }}>
             {/* Add Note Panel */}
             {showAddNote && (
               <div className="bg-card border border-primary/10 rounded-xl p-4">
