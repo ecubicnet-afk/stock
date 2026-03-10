@@ -29,6 +29,7 @@ export interface SubIndicator {
   changePercent: number;
   unit: string;
   signal: 'bullish' | 'bearish' | 'neutral';
+  dataSource?: 'live' | 'mock';
 }
 
 export interface FearGreedData {

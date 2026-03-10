@@ -1,3 +1,3 @@
 export { fetchCryptoData } from './cryptoApi';
 export { fetchForexData } from './forexApi';
-export { fetchFmpIndices, fetchFmpCommodities } from './fmpApi';
+export { fetchFmpIndices, fetchFmpCommodities, fetchFmpSparklines, fetchFmpSubIndicators } from './fmpApi';
