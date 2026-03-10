@@ -7,8 +7,11 @@ import { JournalPage } from './pages/JournalPage';
 
 import { PortfolioPage } from './pages/PortfolioPage';
 import { StrategyPage } from './pages/StrategyPage';
+import { useFirebaseSync } from './hooks/useFirebaseSync';
 
 export default function App() {
+  useFirebaseSync();
+
   return (
     <HashRouter>
       <Routes>

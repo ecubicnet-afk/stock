@@ -35,7 +35,7 @@ export function isFirebaseConfigured(settings: Settings): boolean {
   return !!(settings.firebaseProjectId && settings.firebaseApiKey && settings.firebaseAppId);
 }
 
-async function initFirebase(settings: Settings) {
+export async function initFirebase(settings: Settings) {
   if (firebaseApp) return { db: firestoreDb, auth: firebaseAuth };
 
   const { initializeApp } = await import('firebase/app');
