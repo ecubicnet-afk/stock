@@ -95,7 +95,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* オーバーレイ背景（モバイル） */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -103,7 +103,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* サイドバー本体 */}
       <aside
         className={`fixed top-16 md:top-[124px] left-0 bottom-0 z-40 w-64 bg-bg-secondary/95 backdrop-blur-md border-r border-border transform transition-transform duration-300 overflow-y-auto
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         {/* ナビゲーション（モバイルのみ） */}
         <nav className="p-4 space-y-1 md:hidden">
