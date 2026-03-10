@@ -69,6 +69,7 @@ function GroupRows({ label, items }: { label: string; items: SubIndicator[] }) {
             </td>
             <td className="px-4 py-2 text-right font-mono text-text-primary">
               {item.value.toLocaleString()}{item.unit && <span className="text-text-secondary text-xs ml-1">{item.unit}</span>}
+              {item.dataSource === 'mock' && <span className="text-text-secondary/50 text-[10px] ml-1">(参考値)</span>}
             </td>
             <td className={`px-4 py-2 text-right font-mono ${color}`}>
               {formatChange(item.change)}
