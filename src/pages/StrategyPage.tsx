@@ -1,9 +1,11 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useStrategy } from '../hooks/useStrategy';
+import { useSettings } from '../hooks/useSettings';
 import { useMemos } from '../hooks/useMemos';
 import { useSchedule } from '../hooks/useSchedule';
 import { StrategyCanvas } from '../components/strategy/StrategyCanvas';
 import { RichTextEditor } from '../components/common/RichTextEditor';
+import { callGemini } from '../services/geminiApi';
 import type { StrategyNoteRegion, StrategyNoteDirection } from '../types';
 
 const REGION_OPTIONS: { value: StrategyNoteRegion; label: string; emoji: string }[] = [
@@ -44,6 +46,7 @@ function resizeImage(file: File, maxWidth: number): Promise<string> {
 
 export function StrategyPage() {
   const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription } = useStrategy();
+  const { settings } = useSettings();
   const { memos, addMemo } = useMemos();
   const { events, addEvent } = useSchedule();
 
@@ -55,6 +58,7 @@ export function StrategyPage() {
   const [showScenario, setShowScenario] = useState(true);
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [newUrl, setNewUrl] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const desc = data.scenarioDescription;
@@ -133,6 +137,47 @@ export function StrategyPage() {
     });
   }, [addEvent, desc.date, desc.imageDataUrl, getPlainText]);
 
+  const handleAIAnalysis = useCallback(async () => {
+    if (!settings.geminiApiKey) {
+      alert('設定画面でGemini APIキーを入力してください');
+      return;
+    }
+    setIsAnalyzing(true);
+    try {
+      const notesText = activeScenario?.notes.map((n) =>
+        `[${n.region}/${n.direction}] ${n.title}: ${n.description}${n.date ? ` (${n.date})` : ''}`
+      ).join('\n') || 'ノートなし';
+
+      const scenarioText = desc.text ? (() => { const tmp = document.createElement('div'); tmp.innerHTML = desc.text; return tmp.textContent || ''; })() : '';
+
+      const prompt = `あなたは投資戦略アナリストです。以下のシナリオとノートを分析してください。
+
+## 想定シナリオ
+${scenarioText || '（未記入）'}
+
+## キャンバス上のノート
+${notesText}
+
+## 分析してほしいこと
+1. シナリオの整合性（矛盾するノートはないか）
+2. 見落としているリスク要因
+3. 注目すべきポイント
+4. 総合的な相場観の評価
+
+簡潔に、箇条書きで回答してください。HTMLで返してください。
+<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:bold;color:#f59e0b;margin-bottom:4px">■ セクション名</div><div style="font-size:12px">・内容</div></div>`;
+
+      const result = await callGemini(settings.geminiApiKey, prompt);
+      const separator = '<div style="margin:16px 0;border-top:1px solid rgba(245,158,11,0.3)"></div>';
+      const header = '<div style="font-size:11px;color:#f59e0b;margin-bottom:8px">--- AI分析結果 ---</div>';
+      updateScenarioDescription({ text: (desc.text || '') + separator + header + result });
+    } catch (err) {
+      alert('AI分析に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [settings.geminiApiKey, activeScenario, desc.text, updateScenarioDescription]);
+
   if (!activeScenario) return null;
 
   return (
@@ -185,8 +230,15 @@ export function StrategyPage() {
               )}
             </div>
             <div className="flex-1" />
+            <button
+              onClick={handleAIAnalysis}
+              disabled={isAnalyzing}
+              className={`px-2 py-0.5 rounded text-[10px] ${isAnalyzing ? 'bg-purple-500/10 text-purple-300/50 cursor-wait' : 'bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'}`}
+            >
+              {isAnalyzing ? 'AI分析中...' : 'AI分析'}
+            </button>
             <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] hover:bg-amber-500/20">
-              📝 メモに保存
+              メモに保存
             </button>
             <button
               onClick={handleSaveToSchedule}
@@ -284,9 +336,9 @@ export function StrategyPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex min-h-[700px]">
-        {/* Canvas */}
-        <div className="flex-1 flex flex-col">
+      <div className="relative min-h-[700px]">
+        {/* Canvas - full width */}
+        <div className="flex flex-col h-full">
           <StrategyCanvas
             notes={activeScenario.notes}
             connections={activeScenario.connections}
@@ -308,147 +360,159 @@ export function StrategyPage() {
           </div>
         </div>
 
-        {/* Side panels */}
-        <div className="flex flex-col flex-shrink-0 border-l border-primary/10 overflow-hidden" style={{ width: showAddNote || showImport ? 320 : 0, transition: 'width 0.2s' }}>
-          <div className="p-3 space-y-4 overflow-y-auto" style={{ width: 320, maxHeight: 700 }}>
-            {/* Add Note Panel */}
-            {showAddNote && (
-              <div className="bg-card border border-primary/10 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-primary mb-3">新規ノート</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] text-muted block mb-1">地域</label>
-                    <div className="flex gap-1">
-                      {REGION_OPTIONS.map((r) => (
-                        <button
-                          key={r.value}
-                          onClick={() => setNewNote((n) => ({ ...n, region: r.value }))}
-                          className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.region === r.value ? 'bg-accent-cyan/20 text-accent-cyan ring-1 ring-accent-cyan/30' : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
-                        >
-                          {r.emoji} {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted block mb-1">方向</label>
-                    <div className="flex gap-1">
-                      {DIRECTION_OPTIONS.map((d) => (
-                        <button
-                          key={d.value}
-                          onClick={() => setNewNote((n) => ({ ...n, direction: d.value }))}
-                          className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.direction === d.value ? (d.value === 'bullish' ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : d.value === 'bearish' ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30') : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
-                        >
-                          {d.emoji} {d.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted block mb-1">タイトル</label>
-                    <input
-                      type="text"
-                      value={newNote.title}
-                      onChange={(e) => setNewNote((n) => ({ ...n, title: e.target.value }))}
-                      placeholder="例: 米CPI上振れ"
-                      className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-muted block mb-1">説明</label>
-                    <textarea
-                      value={newNote.description}
-                      onChange={(e) => setNewNote((n) => ({ ...n, description: e.target.value }))}
-                      rows={2}
-                      placeholder="詳細な説明..."
-                      className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan resize-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
+        {/* Side panel - absolute overlay */}
+        {(showAddNote || showImport) && (
+          <div className="absolute top-0 right-0 bottom-0 w-80 bg-bg-secondary/95 backdrop-blur-md border-l border-primary/10 overflow-y-auto z-10 shadow-2xl">
+            <div className="p-3 space-y-4">
+              {/* Close button */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => { setShowAddNote(false); setShowImport(false); }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-primary/10 text-muted hover:text-primary hover:bg-primary/20 text-sm"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Add Note Panel */}
+              {showAddNote && (
+                <div className="bg-card border border-primary/10 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-primary mb-3">新規ノート</h3>
+                  <div className="space-y-3">
                     <div>
-                      <label className="text-[10px] text-muted block mb-1">日付（任意）</label>
-                      <input
-                        type="date"
-                        value={newNote.date}
-                        onChange={(e) => setNewNote((n) => ({ ...n, date: e.target.value }))}
-                        className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
-                      />
+                      <label className="text-[10px] text-muted block mb-1">地域</label>
+                      <div className="flex gap-1">
+                        {REGION_OPTIONS.map((r) => (
+                          <button
+                            key={r.value}
+                            onClick={() => setNewNote((n) => ({ ...n, region: r.value }))}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.region === r.value ? 'bg-accent-cyan/20 text-accent-cyan ring-1 ring-accent-cyan/30' : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
+                          >
+                            {r.emoji} {r.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div>
-                      <label className="text-[10px] text-muted block mb-1">URL（任意）</label>
+                      <label className="text-[10px] text-muted block mb-1">方向</label>
+                      <div className="flex gap-1">
+                        {DIRECTION_OPTIONS.map((d) => (
+                          <button
+                            key={d.value}
+                            onClick={() => setNewNote((n) => ({ ...n, direction: d.value }))}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.direction === d.value ? (d.value === 'bullish' ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : d.value === 'bearish' ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30') : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
+                          >
+                            {d.emoji} {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted block mb-1">タイトル</label>
                       <input
                         type="text"
-                        value={newNote.url}
-                        onChange={(e) => setNewNote((n) => ({ ...n, url: e.target.value }))}
-                        placeholder="https://..."
+                        value={newNote.title}
+                        onChange={(e) => setNewNote((n) => ({ ...n, title: e.target.value }))}
+                        placeholder="例: 米CPI上振れ"
                         className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                       />
                     </div>
-                  </div>
-                  <button onClick={handleAddNote} className="w-full py-2 bg-accent-cyan text-black rounded-lg text-xs font-medium hover:bg-accent-cyan/80">
-                    キャンバスに追加
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Import Panel */}
-            {showImport && (
-              <div className="bg-card border border-primary/10 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-primary mb-3">📎 メモ＆スケジュールからインポート</h3>
-
-                {/* Memos */}
-                <div className="mb-4">
-                  <h4 className="text-xs font-medium text-muted mb-2">メモ ({memos.length}件)</h4>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {memos.length === 0 && <p className="text-[10px] text-muted">メモがありません</p>}
-                    {memos.map((memo) => {
-                      const alreadyImported = importedSourceIds.has(memo.id);
-                      return (
-                        <button
-                          key={memo.id}
-                          onClick={() => !alreadyImported && handleImportMemo(memo.id, memo.text, memo.createdAt)}
-                          disabled={alreadyImported}
-                          className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-amber-400/10 text-secondary hover:bg-amber-400/20 border border-amber-400/10'}`}
-                        >
-                          <div className="truncate">{alreadyImported ? '✓ ' : '🟨 '}{memo.text}</div>
-                          <div className="text-[10px] text-muted">{new Date(memo.createdAt).toLocaleDateString('ja-JP')}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Schedule Events */}
-                <div>
-                  <h4 className="text-xs font-medium text-muted mb-2">スケジュール (直近30件)</h4>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {events.length === 0 && <p className="text-[10px] text-muted">イベントがありません</p>}
-                    {events.slice(0, 30).map((event) => {
-                      const alreadyImported = importedSourceIds.has(event.id);
-                      return (
-                        <button
-                          key={event.id}
-                          onClick={() => !alreadyImported && handleImportEvent(event.id, event.title, event.description || '', event.date)}
-                          disabled={alreadyImported}
-                          className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-blue-500/10 text-secondary hover:bg-blue-500/20 border border-blue-500/10'}`}
-                        >
-                          <div className="flex items-center gap-1">
-                            <span>{alreadyImported ? '✓' : '🟦'}</span>
-                            <span className="truncate flex-1">{event.title}</span>
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${event.importance === 'high' ? 'bg-red-500' : event.importance === 'medium' ? 'bg-amber-400' : 'bg-cyan-400'}`} />
-                          </div>
-                          <div className="text-[10px] text-muted">{event.date} {event.time}</div>
-                        </button>
-                      );
-                    })}
+                    <div>
+                      <label className="text-[10px] text-muted block mb-1">説明</label>
+                      <textarea
+                        value={newNote.description}
+                        onChange={(e) => setNewNote((n) => ({ ...n, description: e.target.value }))}
+                        rows={2}
+                        placeholder="詳細な説明..."
+                        className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan resize-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-muted block mb-1">日付（任意）</label>
+                        <input
+                          type="date"
+                          value={newNote.date}
+                          onChange={(e) => setNewNote((n) => ({ ...n, date: e.target.value }))}
+                          className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted block mb-1">URL（任意）</label>
+                        <input
+                          type="text"
+                          value={newNote.url}
+                          onChange={(e) => setNewNote((n) => ({ ...n, url: e.target.value }))}
+                          placeholder="https://..."
+                          className="w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none focus:border-accent-cyan"
+                        />
+                      </div>
+                    </div>
+                    <button onClick={handleAddNote} className="w-full py-2 bg-accent-cyan text-black rounded-lg text-xs font-medium hover:bg-accent-cyan/80">
+                      キャンバスに追加
+                    </button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Import Panel */}
+              {showImport && (
+                <div className="bg-card border border-primary/10 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-primary mb-3">メモ＆スケジュールからインポート</h3>
+
+                  {/* Memos */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-medium text-muted mb-2">メモ ({memos.length}件)</h4>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {memos.length === 0 && <p className="text-[10px] text-muted">メモがありません</p>}
+                      {memos.map((memo) => {
+                        const alreadyImported = importedSourceIds.has(memo.id);
+                        return (
+                          <button
+                            key={memo.id}
+                            onClick={() => !alreadyImported && handleImportMemo(memo.id, memo.text, memo.createdAt)}
+                            disabled={alreadyImported}
+                            className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-amber-400/10 text-secondary hover:bg-amber-400/20 border border-amber-400/10'}`}
+                          >
+                            <div className="truncate">{alreadyImported ? '✓ ' : ''}{memo.text}</div>
+                            <div className="text-[10px] text-muted">{new Date(memo.createdAt).toLocaleDateString('ja-JP')}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Schedule Events */}
+                  <div>
+                    <h4 className="text-xs font-medium text-muted mb-2">スケジュール (直近30件)</h4>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {events.length === 0 && <p className="text-[10px] text-muted">イベントがありません</p>}
+                      {events.slice(0, 30).map((event) => {
+                        const alreadyImported = importedSourceIds.has(event.id);
+                        return (
+                          <button
+                            key={event.id}
+                            onClick={() => !alreadyImported && handleImportEvent(event.id, event.title, event.description || '', event.date)}
+                            disabled={alreadyImported}
+                            className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-blue-500/10 text-secondary hover:bg-blue-500/20 border border-blue-500/10'}`}
+                          >
+                            <div className="flex items-center gap-1">
+                              <span>{alreadyImported ? '✓' : ''}</span>
+                              <span className="truncate flex-1">{event.title}</span>
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${event.importance === 'high' ? 'bg-red-500' : event.importance === 'medium' ? 'bg-amber-400' : 'bg-cyan-400'}`} />
+                            </div>
+                            <div className="text-[10px] text-muted">{event.date} {event.time}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
