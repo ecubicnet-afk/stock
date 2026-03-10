@@ -211,10 +211,16 @@ export function StrategyCanvas({ notes, connections, drawing, onUpdateDrawing, o
           ✏️ ペン
         </button>
         <button
+          onClick={() => { const next = drawingTool === 'strokeEraser' ? null : 'strokeEraser' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
+          className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${drawingTool === 'strokeEraser' ? 'bg-amber-500/30 text-amber-300' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+        >
+          🧹 消しゴム
+        </button>
+        <button
           onClick={() => { const next = drawingTool === 'eraser' ? null : 'eraser' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
           className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${drawingTool === 'eraser' ? 'bg-amber-500/30 text-amber-300' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
         >
-          🧹 消しゴム
+          ◯ 範囲消し
         </button>
         <button
           onClick={() => { const next = drawingTool === 'text' ? null : 'text' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
@@ -222,7 +228,7 @@ export function StrategyCanvas({ notes, connections, drawing, onUpdateDrawing, o
         >
           Aa テキスト
         </button>
-        {drawingTool && (
+        {drawingTool && drawingTool !== 'strokeEraser' && (
           <>
             <div className="flex items-center gap-1">
               {DRAWING_COLORS.map((c) => (
@@ -242,6 +248,9 @@ export function StrategyCanvas({ notes, connections, drawing, onUpdateDrawing, o
               </div>
             )}
           </>
+        )}
+        {drawingTool === 'strokeEraser' && (
+          <span className="text-xs text-muted">線をクリックで削除 / ドラッグで連続削除</span>
         )}
         {(drawing.paths.length > 0 || drawing.texts.length > 0) && (
           <button
