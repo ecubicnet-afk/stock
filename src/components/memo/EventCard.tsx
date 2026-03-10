@@ -8,6 +8,7 @@ const IMPORTANCE_STYLES: Record<ScheduleEvent['importance'], { dot: string }> = 
   high: { dot: 'bg-red-500' },
   medium: { dot: 'bg-amber-400' },
   low: { dot: 'bg-cyan-400' },
+  scenario: { dot: 'bg-violet-400' },
 };
 
 const REGION_FLAG: Record<string, string> = {
@@ -107,6 +108,7 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
             <option value="high">重要</option>
             <option value="medium">注目</option>
             <option value="low">参考</option>
+            <option value="scenario">シナリオ</option>
           </select>
           <select
             value={editRegion || ''}

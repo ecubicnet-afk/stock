@@ -79,7 +79,7 @@ export interface ScheduleEvent {
   title: string;
   date: string;
   time: string;
-  importance: 'high' | 'medium' | 'low';
+  importance: 'high' | 'medium' | 'low' | 'scenario';
   description?: string;
   region?: 'JP' | 'US' | 'other';
   images?: string[];

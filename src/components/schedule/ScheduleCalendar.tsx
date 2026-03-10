@@ -15,6 +15,7 @@ const IMPORTANCE_BORDER: Record<ScheduleEvent['importance'], string> = {
   high: 'border-l-red-500',
   medium: 'border-l-amber-400',
   low: 'border-l-cyan-400',
+  scenario: 'border-l-violet-400',
 };
 
 const REGION_FLAG: Record<string, string> = {
@@ -70,6 +71,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
         <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" />重要（高）</span>
         <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" />注目（中）</span>
         <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />参考（低）</span>
+        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-violet-400" />シナリオ</span>
         <span className="border-l border-border/50 pl-3 flex items-center gap-1">🇯🇵 日本</span>
         <span className="flex items-center gap-1">🇺🇸 米国</span>
       </div>
@@ -131,7 +133,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
                   <div
                     key={evt.id}
                     className={`text-[11px] leading-tight truncate rounded-sm pl-1 border-l-2 ${IMPORTANCE_BORDER[evt.importance]} ${
-                      evt.importance === 'high' ? 'bg-red-500/10' : evt.importance === 'medium' ? 'bg-amber-400/10' : 'bg-cyan-400/10'
+                      evt.importance === 'high' ? 'bg-red-500/10' : evt.importance === 'medium' ? 'bg-amber-400/10' : evt.importance === 'scenario' ? 'bg-violet-400/10' : 'bg-cyan-400/10'
                     }`}
                     title={`${evt.time} ${evt.title}${evt.region ? ` (${evt.region})` : ''}`}
                   >

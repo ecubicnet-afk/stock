@@ -14,6 +14,7 @@ const IMPORTANCE_DOT: Record<ScheduleEvent['importance'], string> = {
   high: 'bg-down',
   medium: 'bg-accent-gold',
   low: 'bg-accent-cyan',
+  scenario: 'bg-violet-400',
 };
 
 export function WatchlistPage() {
@@ -164,6 +165,7 @@ export function WatchlistPage() {
                           <option value="high">高</option>
                           <option value="medium">中</option>
                           <option value="low">低</option>
+                          <option value="scenario">シナリオ</option>
                         </select>
                         <button onClick={() => handleAddEvent(item.id)} className="text-xs text-accent-gold hover:text-accent-gold/80 px-2">追加</button>
                       </div>
