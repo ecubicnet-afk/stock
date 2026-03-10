@@ -52,6 +52,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <option value={60}>60秒</option>
                 <option value={120}>2分</option>
                 <option value={300}>5分</option>
+                <option value={600}>10分</option>
+                <option value={900}>15分</option>
+                <option value={1800}>30分</option>
               </select>
             </div>
 
