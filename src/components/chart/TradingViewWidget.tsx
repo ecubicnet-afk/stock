@@ -1,18 +1,59 @@
+import { useEffect, useRef } from 'react';
+
 interface TradingViewWidgetProps {
   symbol: string;
   height?: number;
 }
 
 export function TradingViewWidget({ symbol, height = 500 }: TradingViewWidgetProps) {
-  const src = `https://s.tradingview.com/widgetembed/?frameElementId=tv_widget&symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&locale=ja&timezone=Asia%2FTokyo&allow_symbol_change=1&hide_volume=0&calendar=0&withdateranges=1`;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const widgetDiv = document.createElement('div');
+    widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.style.height = '100%';
+    widgetDiv.style.width = '100%';
+    container.appendChild(widgetDiv);
+
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbol,
+      width: '100%',
+      height,
+      locale: 'ja',
+      colorTheme: 'dark',
+      timezone: 'Asia/Tokyo',
+      style: '1',
+      interval: 'D',
+      allow_symbol_change: true,
+      hide_volume: false,
+      calendar: false,
+      withdateranges: true,
+      support_host: 'https://www.tradingview.com',
+    });
+
+    container.appendChild(script);
+
+    return () => {
+      if (container) {
+        container.innerHTML = '';
+      }
+    };
+  }, [symbol, height]);
 
   return (
-    <iframe
-      src={src}
-      style={{ width: '100%', height: `${height}px`, border: 'none' }}
-      allow="autoplay; fullscreen"
-      sandbox="allow-scripts allow-same-origin allow-popups"
-      title={`TradingView Chart - ${symbol}`}
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{ height: `${height}px`, width: '100%' }}
     />
   );
 }
