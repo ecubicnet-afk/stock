@@ -47,24 +47,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-bg-secondary/80 backdrop-blur-md border-b border-border">
         <div className="h-16 flex items-center px-4 gap-4">
-          {/* ハンバーガーメニュー（モバイル） */}
+          {/* ハンバーガーメニュー（lg未満） */}
           <button
             onClick={onMenuToggle}
-            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
+            className="lg:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {/* サイドパネルトグル（デスクトップ） */}
-          <button
-            onClick={onMenuToggle}
-            className="hidden md:block p-2 text-text-secondary hover:text-text-primary transition-colors"
-            title="パネル開閉"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h18v18H3V3zm6 0v18" />
             </svg>
           </button>
 
