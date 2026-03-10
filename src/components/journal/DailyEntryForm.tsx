@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { JournalEntry } from '../../types';
+import { useSettings } from '../../hooks/useSettings';
 
 interface SaveData {
   marketOutlook: string;
@@ -92,46 +93,54 @@ function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
   );
 }
 
-function organizeJournalText(html: string): string {
+async function organizeJournalTextWithAI(html: string, geminiApiKey: string): Promise<string> {
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   const plainText = tmp.textContent || tmp.innerText || '';
   if (!plainText.trim()) return html;
 
-  const lines = plainText.split(/[\n。]+/).map((l) => l.trim()).filter(Boolean);
+  const prompt = `あなたは投資ジャーナルの整理アシスタントです。以下のテキストを読み、適切なセクションに分類して見やすく整理してください。
 
-  const sections = [
-    { title: '市場概況', keywords: ['相場', '市場', '指数', '日経', 'ダウ', 'S&P', 'ナスダック', '為替', 'ドル円', '金利', '原油', '上昇', '下落', '暴落', '急騰', '株価', 'VIX', '先物', '寄り', '引け', 'GD', 'GU'], lines: [] as string[] },
-    { title: 'トレード振り返り', keywords: ['トレード', '売買', '約定', 'エントリー', 'ロング', 'ショート', '買い', '売り', '利確', '損切', 'ポジション', '建玉', '利益', '損失', 'pips', '枚', '株'], lines: [] as string[] },
-    { title: '反省点', keywords: ['反省', '失敗', 'ミス', '改善', '課題', 'できなかった', 'すべきだった', '遅かった', '早かった', '焦', '感情', 'ルール違反', '後悔'], lines: [] as string[] },
-    { title: '明日の計画', keywords: ['明日', '計画', '予定', '戦略', '注目', 'ウォッチ', '狙い', '目標', 'シナリオ', '来週', '今後', '方針'], lines: [] as string[] },
-  ];
+## ルール
+- 以下のセクションに分類してください（該当する内容がないセクションは省略）:
+  - 市場概況: 相場状況、指数の動き、為替、金利など
+  - トレード振り返り: 実際の売買、エントリー・決済の判断
+  - 反省点: ミス、改善点、感情的な判断
+  - 明日の計画: 今後の戦略、注目銘柄、シナリオ
+  - その他: 上記に当てはまらない重要事項
+- 元の内容を変えず、整理・要約してください
+- 箇条書きで見やすくしてください
 
-  for (const line of lines) {
-    let assigned = false;
-    for (const section of sections) {
-      if (section.keywords.some((kw) => line.includes(kw))) {
-        section.lines.push(line);
-        assigned = true;
-        break;
-      }
+## 出力形式（HTMLで返してください）
+<div style="margin-bottom:12px"><div style="font-size:14px;font-weight:bold;color:#22d3ee;margin-bottom:4px">■ セクション名</div><div style="font-size:12px">・内容1</div><div style="font-size:12px">・内容2</div></div>
+
+## 入力テキスト
+${plainText}`;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+      }),
     }
-    if (!assigned) sections[0].lines.push(line);
-  }
+  );
 
-  let result = '';
-  for (const section of sections) {
-    if (section.lines.length === 0) continue;
-    result += `<div style="margin-bottom:12px"><div style="font-size:14px;font-weight:bold;color:#22d3ee;margin-bottom:4px">■ ${section.title}</div>`;
-    for (const line of section.lines) {
-      result += `<div style="font-size:12px">・${line}</div>`;
-    }
-    result += '</div>';
-  }
-  return result || html;
+  if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Empty response from Gemini');
+
+  // Extract HTML content (remove markdown code blocks if present)
+  const cleaned = text.replace(/```html?\n?/g, '').replace(/```\n?/g, '').trim();
+  return cleaned;
 }
 
 export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
+  const { settings } = useSettings();
   const [conditionRating, setConditionRating] = useState(5);
   const [disciplineRating, setDisciplineRating] = useState(5);
   const [volatilityRating, setVolatilityRating] = useState(5);
@@ -142,6 +151,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isOrganizing, setIsOrganizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -371,18 +381,29 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             )}
 
             <button
-              onClick={() => {
-                const organized = organizeJournalText(notes);
-                setNotes(organized);
+              onClick={async () => {
+                if (!settings.geminiApiKey) {
+                  alert('設定画面でGemini APIキーを入力してください');
+                  return;
+                }
+                setIsOrganizing(true);
+                try {
+                  const organized = await organizeJournalTextWithAI(notes, settings.geminiApiKey);
+                  setNotes(organized);
+                } catch (err) {
+                  alert('整理に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'));
+                } finally {
+                  setIsOrganizing(false);
+                }
               }}
-              disabled={!notes.trim()}
+              disabled={!notes.trim() || isOrganizing}
               className={`px-4 py-1.5 text-sm rounded-lg transition-colors ${
-                notes.trim()
+                notes.trim() && !isOrganizing
                   ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                   : 'bg-bg-primary/30 text-text-secondary/30 cursor-not-allowed'
               }`}
             >
-              整理する
+              {isOrganizing ? 'AI整理中...' : 'AI整理'}
             </button>
 
             <button
