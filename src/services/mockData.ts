@@ -187,9 +187,7 @@ export interface ChartSymbol {
 
 export const chartSymbols: ChartSymbol[] = [
   { id: 'nikkei225', name: 'Nikkei 225 Futures', nameJa: '日経225先物', tvSymbol: 'OSE:NK2251!' },
-  { id: 'nikkei-mini', name: 'Nikkei 225 Mini Futures', nameJa: '日経225ミニ先物', tvSymbol: 'OSE:NK225M1!' },
-  { id: 'sp500', name: 'E-mini S&P 500 Futures', nameJa: 'S&P 500先物', tvSymbol: 'CME:ES1!' },
-  { id: 'nasdaq', name: 'E-mini Nasdaq-100 Futures', nameJa: 'NASDAQ 100先物', tvSymbol: 'CME:NQ1!' },
+  { id: 'topix', name: 'TOPIX Futures', nameJa: 'TOPIX先物', tvSymbol: 'OSE:TOPIX1!' },
 ];
 
 export const mockOHLCData: Record<string, OHLCDataPoint[]> = {
