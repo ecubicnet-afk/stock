@@ -17,6 +17,7 @@ let firebaseApp: any = null;
 let firestoreDb: any = null;
 let firebaseAuth: any = null;
 let lastConfigKey = '';
+let initPromise: Promise<{ db: any; auth: any }> | null = null;
 
 const SNAPSHOT_CACHE_KEY = 'stock-app-snapshots';
 
@@ -43,13 +44,27 @@ function getConfigKey(settings: Settings): string {
 export async function initFirebase(settings: Settings) {
   const configKey = getConfigKey(settings);
 
-  // Return cached instance if config hasn't changed
-  if (firebaseApp && configKey === lastConfigKey) {
+  // Return cached instance if config hasn't changed AND user is still authenticated
+  if (firebaseApp && configKey === lastConfigKey && firebaseAuth?.currentUser) {
     return { db: firestoreDb, auth: firebaseAuth };
   }
 
+  // If already initializing, wait for that promise (prevents race condition)
+  if (initPromise) {
+    return initPromise;
+  }
+
+  initPromise = doInitFirebase(settings, configKey);
+  try {
+    return await initPromise;
+  } finally {
+    initPromise = null;
+  }
+}
+
+async function doInitFirebase(settings: Settings, configKey: string) {
   // Config changed — re-initialize
-  if (firebaseApp) {
+  if (firebaseApp && configKey !== lastConfigKey) {
     try {
       const { deleteApp } = await import('firebase/app');
       await deleteApp(firebaseApp);
@@ -59,27 +74,36 @@ export async function initFirebase(settings: Settings) {
     firebaseApp = null;
     firestoreDb = null;
     firebaseAuth = null;
+    lastConfigKey = '';
   }
 
-  const { initializeApp } = await import('firebase/app');
-  const { getAuth, signInAnonymously } = await import('firebase/auth');
-  const { getFirestore } = await import('firebase/firestore');
+  // Initialize app if needed
+  if (!firebaseApp) {
+    const { initializeApp } = await import('firebase/app');
+    const { getAuth } = await import('firebase/auth');
+    const { getFirestore } = await import('firebase/firestore');
 
-  const config = {
-    apiKey: settings.firebaseApiKey.trim(),
-    authDomain: `${settings.firebaseProjectId.trim()}.firebaseapp.com`,
-    projectId: settings.firebaseProjectId.trim(),
-    storageBucket: `${settings.firebaseProjectId.trim()}.appspot.com`,
-    appId: settings.firebaseAppId.trim(),
-  };
+    const config = {
+      apiKey: settings.firebaseApiKey.trim(),
+      authDomain: `${settings.firebaseProjectId.trim()}.firebaseapp.com`,
+      projectId: settings.firebaseProjectId.trim(),
+      storageBucket: `${settings.firebaseProjectId.trim()}.appspot.com`,
+      appId: settings.firebaseAppId.trim(),
+    };
 
-  firebaseApp = initializeApp(config);
-  firebaseAuth = getAuth(firebaseApp);
-  firestoreDb = getFirestore(firebaseApp);
+    firebaseApp = initializeApp(config);
+    firebaseAuth = getAuth(firebaseApp);
+    firestoreDb = getFirestore(firebaseApp);
+  }
+
+  // Always ensure user is authenticated before returning
+  if (!firebaseAuth.currentUser) {
+    const { signInAnonymously } = await import('firebase/auth');
+    await signInAnonymously(firebaseAuth);
+  }
+
+  // Set config key AFTER successful auth (prevents race condition)
   lastConfigKey = configKey;
-
-  // Auth failure should propagate — don't swallow
-  await signInAnonymously(firebaseAuth);
 
   return { db: firestoreDb, auth: firebaseAuth };
 }
@@ -95,11 +119,42 @@ export async function testFirebaseConnection(
   try {
     // Force re-init to test with current settings
     lastConfigKey = '';
-    const { auth } = await initFirebase(settings);
+    initPromise = null;
+    const { db, auth } = await initFirebase(settings);
     const uid = auth.currentUser?.uid;
     if (!uid) {
       return { success: false, error: '匿名認証に失敗しました。Firebaseコンソールで匿名認証を有効にしてください。' };
     }
+
+    // Also test Firestore access (write + delete)
+    try {
+      const { doc, setDoc, deleteDoc } = await import('firebase/firestore');
+      const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
+      const testRef = doc(db, 'artifacts', appId, 'users', uid, 'sync', '__connection_test__');
+      await setDoc(testRef, { test: true, timestamp: Date.now() });
+      await deleteDoc(testRef);
+    } catch (fsErr: any) {
+      const fsCode = (fsErr?.code || '') as string;
+      const fsMsg = (fsErr?.message || '') as string;
+
+      if (fsCode.includes('permission-denied')) {
+        return {
+          success: false,
+          error: '認証は成功しましたが、Firestoreへのアクセスが拒否されました。Firebaseコンソール > Firestore > ルール でセキュリティルールを確認してください。',
+        };
+      }
+      if (fsCode.includes('not-found') || fsCode.includes('failed-precondition')) {
+        return {
+          success: false,
+          error: '認証は成功しましたが、Firestoreデータベースが見つかりません。Firebaseコンソール > Firestore Database >「データベースを作成」を実行してください。',
+        };
+      }
+      return {
+        success: false,
+        error: `認証は成功しましたが、Firestoreアクセスに失敗しました [${fsCode || 'unknown'}]: ${fsMsg || '不明なエラー'}。Google CloudコンソールでAPIキーの制限にCloud Firestore APIが含まれているか確認してください。`,
+      };
+    }
+
     return { success: true };
   } catch (err: any) {
     const code = (err?.code || '') as string;
