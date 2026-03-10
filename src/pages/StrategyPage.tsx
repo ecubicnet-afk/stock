@@ -136,7 +136,7 @@ export function StrategyPage() {
   if (!activeScenario) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-primary/10 flex-shrink-0">
         <div>
@@ -284,9 +284,9 @@ export function StrategyPage() {
       )}
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex">
         {/* Canvas */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-[700px]">
           <StrategyCanvas
             notes={activeScenario.notes}
             connections={activeScenario.connections}
@@ -309,7 +309,7 @@ export function StrategyPage() {
         </div>
 
         {/* Side panels */}
-        <div className="flex flex-col flex-shrink-0 overflow-y-auto border-l border-primary/10" style={{ width: showAddNote || showImport ? 320 : 0, transition: 'width 0.2s' }}>
+        <div className="flex flex-col flex-shrink-0 border-l border-primary/10 overflow-hidden" style={{ width: showAddNote || showImport ? 320 : 0, transition: 'width 0.2s' }}>
           <div className="p-3 space-y-4" style={{ width: 320 }}>
             {/* Add Note Panel */}
             {showAddNote && (
