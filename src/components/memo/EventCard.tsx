@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageThumbnails } from '../common/ImageAttachment';
-import { LinkifiedText } from '../common/LinkifiedText';
+import { RichTextEditor } from '../common/RichTextEditor';
+import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { ScheduleEvent } from '../../types';
 
 const IMPORTANCE_STYLES: Record<ScheduleEvent['importance'], { dot: string }> = {
@@ -78,11 +79,12 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
           className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50"
           autoFocus
         />
-        <textarea
+        <RichTextEditor
           value={editDescription}
-          onChange={(e) => setEditDescription(e.target.value)}
+          onChange={setEditDescription}
           placeholder="詳細メモ（任意）"
-          className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 h-16"
+          minHeight="64px"
+          accentColor="gold"
         />
         <div className="grid grid-cols-4 gap-2">
           <input
@@ -150,8 +152,8 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
       </div>
 
       {event.description && !memoEditing && (
-        <div className="mt-1.5 ml-[3.75rem] text-xs text-text-secondary/80 whitespace-pre-wrap border-l-2 border-accent-gold/30 pl-2">
-          <LinkifiedText text={event.description} />
+        <div className="mt-1.5 ml-[3.75rem] text-xs text-text-secondary/80 border-l-2 border-accent-gold/30 pl-2">
+          <RichTextDisplay html={event.description} />
         </div>
       )}
       {event.images && event.images.length > 0 && !memoEditing && (
@@ -162,12 +164,12 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
 
       {memoEditing ? (
         <div className="mt-2 ml-[3.75rem]">
-          <textarea
+          <RichTextEditor
             value={memoText}
-            onChange={(e) => setMemoText(e.target.value)}
-            className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-xs text-text-primary resize-none focus:outline-none focus:border-accent-gold/50 h-20"
+            onChange={setMemoText}
             placeholder="このイベントについてメモを入力..."
-            autoFocus
+            minHeight="80px"
+            accentColor="gold"
           />
           <div className="flex gap-2 mt-1.5">
             <button onClick={saveMemo} className="px-3 py-1 bg-accent-gold/20 text-accent-gold text-xs rounded-lg hover:bg-accent-gold/30">保存</button>
