@@ -7,6 +7,9 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/journal', label: 'Trade', labelJa: 'トレード', icon: 'tradeAnalysis' },
   { path: '/strategy', label: 'Strategy', labelJa: '戦略立案', icon: 'strategy' },
   { path: '/portfolio', label: 'Portfolio', labelJa: '資産管理', icon: 'portfolio' },
+  { path: '/vision', label: 'Vision Map', labelJa: 'ビジョンマップ', icon: 'vision' },
+  { path: '/assignment', label: 'Assignment', labelJa: '課題提出', icon: 'assignment' },
+  { path: '/trade-methods', label: 'Trade Methods', labelJa: 'トレード手法', icon: 'tradeMethods' },
 ];
 
 export const MARKET_HOURS = {

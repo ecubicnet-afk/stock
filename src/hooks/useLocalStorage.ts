@@ -16,6 +16,9 @@ export const SYNC_KEYS: Record<string, string> = {
   'stock-app-memos': 'memos',
   'stock-app-journal': 'journal',
   'stock-app-portfolio': 'portfolio',
+  'stock-app-vision-map': 'vision-map',
+  'stock-app-assignments': 'assignments',
+  'stock-app-trade-methods': 'trade-methods',
 };
 
 export const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
