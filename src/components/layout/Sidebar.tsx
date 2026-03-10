@@ -5,6 +5,7 @@ import { useSchedule } from '../../hooks/useSchedule';
 import { useTrades } from '../../hooks/useTrades';
 import { useSettings } from '../../hooks/useSettings';
 import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
+import { useSidebarTodos, useSidebarPrinciples } from '../../hooks/useSidebarNotes';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -84,6 +85,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { trades } = useTrades();
   const { settings } = useSettings();
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
+  const { todos, addTodo, toggleTodo, deleteTodo } = useSidebarTodos();
+  const { principles, setPrinciples } = useSidebarPrinciples();
+  const [newTodoText, setNewTodoText] = useState('');
 
   useEffect(() => {
     loadSnapshots(settings).then(setSnapshots).catch(() => {});
@@ -227,6 +231,63 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Todoリスト */}
+        <div className="p-4 border-t border-border">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            Todoリスト
+          </h3>
+          <div className="space-y-1.5">
+            {todos.map((todo) => (
+              <div key={todo.id} className="flex items-center gap-2 group">
+                <input
+                  type="checkbox"
+                  checked={todo.done}
+                  onChange={() => toggleTodo(todo.id)}
+                  className="w-3.5 h-3.5 rounded border-border bg-transparent accent-accent-cyan shrink-0 cursor-pointer"
+                />
+                <span className={`text-xs flex-1 ${todo.done ? 'line-through text-text-secondary/50' : 'text-text-primary'}`}>
+                  {todo.text}
+                </span>
+                <button
+                  onClick={() => deleteTodo(todo.id)}
+                  className="text-text-secondary/30 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2">
+            <input
+              type="text"
+              value={newTodoText}
+              onChange={(e) => setNewTodoText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newTodoText.trim()) {
+                  addTodo(newTodoText);
+                  setNewTodoText('');
+                }
+              }}
+              placeholder="+ 新しいTodo..."
+              className="w-full bg-transparent border border-border/50 rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:border-accent-cyan/50"
+            />
+          </div>
+        </div>
+
+        {/* 投資で意識すること */}
+        <div className="p-4 border-t border-border">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+            投資で意識すること
+          </h3>
+          <textarea
+            value={principles}
+            onChange={(e) => setPrinciples(e.target.value)}
+            placeholder="投資ルールや心得を記入..."
+            rows={5}
+            className="w-full bg-transparent border border-border/50 rounded px-2 py-1.5 text-xs text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:border-accent-cyan/50 resize-y leading-relaxed"
+          />
         </div>
       </aside>
     </>
