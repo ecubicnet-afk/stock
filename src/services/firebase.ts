@@ -102,19 +102,41 @@ export async function testFirebaseConnection(
     }
     return { success: true };
   } catch (err: any) {
-    const code = err?.code || '';
-    if (code === 'auth/configuration-not-found' || code === 'auth/invalid-api-key') {
-      return { success: false, error: 'APIキーが無効です。Firebase設定を確認してください。' };
+    const code = (err?.code || '') as string;
+    const msg = (err?.message || '') as string;
+
+    // APIキー無効（コードが複数パターンあるため部分一致）
+    if (code.includes('api-key') || msg.includes('api-key') || code === 'auth/invalid-api-key') {
+      return {
+        success: false,
+        error: 'APIキーが無効です。Firebaseコンソール >「プロジェクトの設定」>「全般」>「マイアプリ」に表示されるapiKeyを使用してください。',
+      };
     }
+    // 承認済みドメイン未登録（GitHub Pages等）
+    if (code.includes('unauthorized-domain') || msg.includes('unauthorized-domain')) {
+      return {
+        success: false,
+        error: '未承認ドメインです。Firebaseコンソール > Authentication > 設定 >「承認済みドメイン」にこのサイトのドメインを追加してください。',
+      };
+    }
+    // 匿名認証が無効
     if (code === 'auth/operation-not-allowed') {
-      return { success: false, error: '匿名認証が無効です。Firebaseコンソールで有効にしてください。' };
+      return {
+        success: false,
+        error: '匿名認証が無効です。Firebaseコンソール > Authentication > Sign-in method >「匿名」を有効にしてください。',
+      };
     }
+    // ネットワークエラー
     if (code === 'auth/network-request-failed') {
       return { success: false, error: 'ネットワークエラー。インターネット接続を確認してください。' };
     }
+    // プロジェクトが見つからない
+    if (code === 'auth/configuration-not-found' || code === 'auth/project-not-found') {
+      return { success: false, error: 'Firebaseプロジェクトが見つかりません。Project IDを確認してください。' };
+    }
     return {
       success: false,
-      error: err instanceof Error ? err.message : '接続に失敗しました',
+      error: msg || '接続に失敗しました。ブラウザのコンソール(F12)で詳細を確認してください。',
     };
   }
 }
