@@ -1,4 +1,5 @@
 export function formatNumber(value: number, decimals?: number): string {
+  if (value == null || isNaN(value)) return '---';
   const d = decimals ?? (value >= 100 ? 2 : value >= 1 ? 2 : 4);
   return value.toLocaleString('en-US', {
     minimumFractionDigits: d,
@@ -7,6 +8,7 @@ export function formatNumber(value: number, decimals?: number): string {
 }
 
 export function formatChange(value: number, decimals?: number): string {
+  if (value == null || isNaN(value)) return '---';
   const d = decimals ?? 2;
   const prefix = value > 0 ? '+' : '';
   return `${prefix}${value.toLocaleString('en-US', {
@@ -16,6 +18,7 @@ export function formatChange(value: number, decimals?: number): string {
 }
 
 export function formatPercent(value: number): string {
+  if (value == null || isNaN(value)) return '---';
   const prefix = value > 0 ? '+' : '';
   return `${prefix}${value.toFixed(2)}%`;
 }
@@ -41,12 +44,14 @@ export function formatJPY(value: number): string {
 }
 
 export function getChangeColor(value: number): string {
+  if (value == null || isNaN(value)) return 'text-text-secondary';
   if (value > 0) return 'text-up';
   if (value < 0) return 'text-down';
   return 'text-text-secondary';
 }
 
 export function getChangeBgColor(value: number): string {
+  if (value == null || isNaN(value)) return 'bg-text-secondary/10';
   if (value > 0) return 'bg-up/10';
   if (value < 0) return 'bg-down/10';
   return 'bg-text-secondary/10';
