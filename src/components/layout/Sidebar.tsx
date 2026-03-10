@@ -86,9 +86,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   // Get today's important events (high and medium)
   const todayStr = new Date().toISOString().split('T')[0];
+  const IMPORTANCE_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2, scenario: 3 };
+  const IMPORTANCE_LABEL: Record<string, { text: string; className: string }> = {
+    high: { text: '重要', className: 'bg-red-500/20 text-red-400' },
+    medium: { text: '中', className: 'bg-amber-400/20 text-amber-400' },
+    low: { text: '低', className: 'bg-cyan-400/20 text-cyan-400' },
+    scenario: { text: 'シナリオ', className: 'bg-violet-400/20 text-violet-400' },
+  };
   const todayEvents = events
-    .filter((e) => e.date === todayStr && (e.importance === 'high' || e.importance === 'medium'))
-    .sort((a, b) => a.time.localeCompare(b.time));
+    .filter((e) => e.date === todayStr)
+    .sort((a, b) => (IMPORTANCE_ORDER[a.importance] ?? 9) - (IMPORTANCE_ORDER[b.importance] ?? 9) || a.time.localeCompare(b.time));
 
   return (
     <>
@@ -129,26 +136,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* 本日の重要イベント */}
         <div className="p-4 border-t border-border">
           <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            本日の重要イベント
+            本日のイベント
           </h3>
           <div className="space-y-2">
             {todayEvents.length === 0 && (
               <p className="text-text-secondary/50 text-xs">本日のイベントはありません</p>
             )}
-            {todayEvents.map((event) => (
-              <div key={event.id} className="flex items-start gap-1.5 text-xs">
-                <span className="font-mono text-text-secondary whitespace-nowrap">
-                  {event.time}
-                </span>
-                <span
-                  className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${IMPORTANCE_DOT[event.importance]}`}
-                />
-                <span className="text-text-primary">
-                  {event.region && REGION_FLAG[event.region] ? <span className="text-[10px] mr-0.5">{REGION_FLAG[event.region]}</span> : null}
-                  {event.title}
-                </span>
-              </div>
-            ))}
+            {todayEvents.map((event) => {
+              const badge = IMPORTANCE_LABEL[event.importance];
+              return (
+                <div key={event.id} className="flex items-start gap-1.5">
+                  <span className="font-mono text-text-secondary whitespace-nowrap text-xs mt-0.5">
+                    {event.time}
+                  </span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${IMPORTANCE_DOT[event.importance]}`}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      {event.region && REGION_FLAG[event.region] ? <span className="text-[10px]">{REGION_FLAG[event.region]}</span> : null}
+                      <span className="text-sm text-text-primary truncate">{event.title}</span>
+                      {badge && <span className={`text-[9px] px-1 py-0.5 rounded shrink-0 ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                    {event.description && (
+                      <p className="text-xs text-text-secondary/70 line-clamp-1 mt-0.5">{event.description}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

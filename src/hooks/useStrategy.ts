@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing, ScenarioDescription } from '../types';
+import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing, ScenarioDescription, StrategyDrawing } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 
 const DEFAULT_STRATEGY: StrategyData = {
@@ -8,6 +8,7 @@ const DEFAULT_STRATEGY: StrategyData = {
   ],
   positionSizing: { capital: 1000000, riskPercent: 2, entryPrice: 38000, stopLossPrice: 37500 },
   scenarioDescription: { text: '', urls: [] },
+  drawing: { paths: [], texts: [] },
 };
 
 export function useStrategy() {
@@ -96,11 +97,19 @@ export function useStrategy() {
     [setData]
   );
 
-  // Backward compat: ensure scenarioDescription exists
+  const updateDrawing = useCallback(
+    (drawing: StrategyDrawing) => {
+      setData((prev) => ({ ...prev, drawing }));
+    },
+    [setData]
+  );
+
+  // Backward compat: ensure scenarioDescription and drawing exist
   const safeData: StrategyData = {
     ...data,
     scenarioDescription: data.scenarioDescription || { text: '', urls: [] },
+    drawing: data.drawing || { paths: [], texts: [] },
   };
 
-  return { data: safeData, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updatePositionSizing, updateScenarioDescription };
+  return { data: safeData, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updatePositionSizing, updateScenarioDescription, updateDrawing };
 }

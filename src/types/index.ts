@@ -183,10 +183,33 @@ export interface PositionSizing {
   stopLossPrice: number;
 }
 
+export interface DrawingPath {
+  id: string;
+  points: { x: number; y: number }[];
+  color: string;
+  width: number;
+  isEraser?: boolean;
+}
+
+export interface DrawingText {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  fontSize: number;
+}
+
+export interface StrategyDrawing {
+  paths: DrawingPath[];
+  texts: DrawingText[];
+}
+
 export interface StrategyData {
   scenarios: StrategyScenario[];
   positionSizing: PositionSizing;
   scenarioDescription: ScenarioDescription;
+  drawing?: StrategyDrawing;
 }
 
 // Watchlist
