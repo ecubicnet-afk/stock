@@ -148,9 +148,10 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
   const forex = forexResult.status === 'fulfilled' ? forexResult.value : mockForex;
 
   // FMP API: indices, commodities, sparklines, sub-indicators
-  let indices: MarketItem[] = mockIndices;
-  let commodities: MarketItem[] = mockCommodities;
-  let subIndicators: SubIndicator[] = mockSubIndicators;
+  // デフォルトはモック — dataSource: 'mock' を必ず付与してフィルタ対象にする
+  let indices: MarketItem[] = mockIndices.map((m) => ({ ...m, dataSource: 'mock' as const }));
+  let commodities: MarketItem[] = mockCommodities.map((m) => ({ ...m, dataSource: 'mock' as const }));
+  let subIndicators: SubIndicator[] = mockSubIndicators.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let fearGreed = mockFearGreed;
 
   if (fmpApiKey) {
