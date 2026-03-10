@@ -1,5 +1,4 @@
 import { useMarketData } from '../hooks/useMarketData';
-import { MarketSummary } from '../components/dashboard/MarketSummary';
 import { IndexCard } from '../components/dashboard/IndexCard';
 import { IndexCardSkeleton } from '../components/dashboard/IndexCardSkeleton';
 import { SubIndicatorTable } from '../components/dashboard/SubIndicatorTable';
@@ -19,7 +18,7 @@ const DASHBOARD_IDS = [
 ];
 
 export function DashboardPage() {
-  const { indices, forex, commodities, subIndicators, fearGreed, marketSummary, isLoading, lastUpdated, fmpStatus } = useMarketData();
+  const { indices, forex, commodities, subIndicators, fearGreed, isLoading, lastUpdated, fmpStatus } = useMarketData();
 
   // 全データソースから8シンボルを集めて表示順にソート
   const allItems = [...indices, ...forex, ...commodities];
@@ -35,18 +34,28 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6 py-4">
-      {/* マーケットサマリー */}
-      <MarketSummary data={marketSummary} />
-
-      {/* 最終更新日時 */}
-      <div className="flex items-center justify-end gap-2 -mt-4">
-        {isLoading ? (
-          <span className="text-text-secondary text-xs font-mono animate-pulse">更新中...</span>
-        ) : lastUpdated ? (
-          <span className="text-text-secondary text-xs font-mono">
-            最終更新: {new Date(lastUpdated).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-          </span>
-        ) : null}
+      {/* FMPステータス + 最終更新日時 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {fmpStatus === 'partial' && (
+            <span className="text-xs font-mono px-2 py-1 rounded bg-up/10 text-up">FMP API: ライブ取得中</span>
+          )}
+          {fmpStatus === 'failed' && (
+            <span className="text-xs font-mono px-2 py-1 rounded bg-down/10 text-down">FMP API: 接続失敗（モック表示中）</span>
+          )}
+          {fmpStatus === 'not-configured' && (
+            <span className="text-xs font-mono px-2 py-1 rounded bg-text-secondary/10 text-text-secondary">APIキー未設定（モック表示中）</span>
+          )}
+        </div>
+        <div>
+          {isLoading ? (
+            <span className="text-text-secondary text-xs font-mono animate-pulse">更新中...</span>
+          ) : lastUpdated ? (
+            <span className="text-text-secondary text-xs font-mono">
+              最終更新: {new Date(lastUpdated).toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {/* 主要指数 8シンボル */}
