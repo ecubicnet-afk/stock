@@ -11,10 +11,10 @@ export function Layout() {
     <div className="min-h-screen bg-bg-primary">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="lg:ml-64 pt-16 md:pt-[88px] pb-8 px-4 md:px-6">
+      <main className="pt-16 md:pt-[124px] pb-8 px-4 md:px-6">
         <Outlet />
       </main>
-      <div className="lg:ml-64">
+      <div>
         <Footer />
       </div>
     </div>
