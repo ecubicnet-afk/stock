@@ -13,6 +13,7 @@ interface MarketData {
   marketSummary: MarketSummary;
   isLoading: boolean;
   lastUpdated: string;
+  fmpStatus: 'not-configured' | 'partial' | 'failed';
 }
 
 export function useMarketData(): MarketData {
@@ -27,6 +28,7 @@ export function useMarketData(): MarketData {
     subIndicators: [],
     fearGreed: { value: 0, label: '', vix: 0 },
     marketSummary: { text: '', timestamp: '' },
+    fmpStatus: 'not-configured',
   });
 
   const fetchData = useCallback(async () => {
@@ -40,6 +42,7 @@ export function useMarketData(): MarketData {
         subIndicators: result.subIndicators,
         fearGreed: result.fearGreed,
         marketSummary: result.marketSummary,
+        fmpStatus: result.fmpStatus,
       });
       setLastUpdated(result.lastUpdated);
     } catch {
