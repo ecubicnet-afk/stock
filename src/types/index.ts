@@ -212,6 +212,49 @@ export interface StrategyData {
   drawing?: StrategyDrawing;
 }
 
+// Vision Map
+export interface VisionDream {
+  id: string;
+  text: string;
+  done: boolean;
+  createdAt: string;
+}
+
+export interface VisionImage {
+  id: string;
+  dataUrl: string;
+  caption: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface VisionMapData {
+  dreams: VisionDream[];
+  images: VisionImage[];
+}
+
+// Assignment Submission
+export interface AssignmentEntry {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Trade Methods
+export interface TradeMethodEntry {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  images?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Watchlist
 export interface WatchlistItem {
   id: string;

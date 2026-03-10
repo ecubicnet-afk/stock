@@ -7,6 +7,9 @@ import { JournalPage } from './pages/JournalPage';
 
 import { PortfolioPage } from './pages/PortfolioPage';
 import { StrategyPage } from './pages/StrategyPage';
+import { VisionMapPage } from './pages/VisionMapPage';
+import { AssignmentPage } from './pages/AssignmentPage';
+import { TradeMethodsPage } from './pages/TradeMethodsPage';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 
 export default function App() {
@@ -25,6 +28,9 @@ export default function App() {
           <Route path="/trade-analysis" element={<Navigate to="/journal" replace />} />
           <Route path="/strategy" element={<StrategyPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
+          <Route path="/vision" element={<VisionMapPage />} />
+          <Route path="/assignment" element={<AssignmentPage />} />
+          <Route path="/trade-methods" element={<TradeMethodsPage />} />
         </Route>
       </Routes>
     </HashRouter>
