@@ -31,7 +31,7 @@ export function useMarketData(): MarketData {
 
   const fetchData = useCallback(async () => {
     try {
-      const result = await fetchAllMarketData(settings.dataSource);
+      const result = await fetchAllMarketData(settings.dataSource, settings.fmpApiKey);
       setData({
         indices: result.indices,
         forex: result.forex,
@@ -47,7 +47,7 @@ export function useMarketData(): MarketData {
     } finally {
       setIsLoading(false);
     }
-  }, [settings.dataSource]);
+  }, [settings.dataSource, settings.fmpApiKey]);
 
   useEffect(() => {
     fetchData();
