@@ -161,7 +161,7 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-card border-b border-primary/10 flex-shrink-0 flex-wrap">
         <button
