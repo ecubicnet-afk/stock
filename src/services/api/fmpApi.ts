@@ -139,10 +139,20 @@ function mapQuotesToMarketItems(
   symbolMap: Record<string, SymbolMeta>,
   sparklineMap?: Record<string, DataPoint[]>
 ): MarketItem[] {
+  const expectedSymbols = Object.keys(symbolMap);
+  const receivedSymbols = quotes.map((q) => q.symbol);
+  console.info(`[FMP] mapQuotes: expected=${expectedSymbols.join(',')} received=${receivedSymbols.join(',')}`);
+
   const items: MarketItem[] = [];
   for (const quote of quotes) {
-    const meta = symbolMap[quote.symbol];
-    if (!meta || !quote.price) continue;
+    // シンボル正規化: FMPが %5E 形式で返す場合に対応
+    const normalizedSymbol = decodeURIComponent(quote.symbol);
+    const meta = symbolMap[quote.symbol] ?? symbolMap[normalizedSymbol];
+    if (!meta) {
+      console.warn(`[FMP] Unknown symbol in response: "${quote.symbol}" (normalized: "${normalizedSymbol}")`);
+      continue;
+    }
+    if (!quote.price) continue;
     const sparkline = sparklineMap?.[meta.id] ?? [];
     items.push({
       id: meta.id,
@@ -165,25 +175,51 @@ function mapQuotesToMarketItems(
 
 // --- Public API ---
 
+// バッチ取得 → 失敗時は個別フォールバック
+async function fetchQuotesWithFallback(symbols: string[], apiKey: string): Promise<FmpQuote[]> {
+  try {
+    const quotes = await fetchFmpQuotes(symbols, apiKey);
+    if (quotes.length > 0) return quotes;
+    console.warn('[FMP] Batch returned 0 quotes, trying individual symbols...');
+  } catch (err) {
+    console.warn('[FMP] Batch fetch failed, trying individual symbols...', err);
+  }
+  // 個別フォールバック
+  const allQuotes: FmpQuote[] = [];
+  for (const symbol of symbols) {
+    try {
+      const quotes = await fetchFmpQuotes([symbol], apiKey);
+      allQuotes.push(...quotes);
+    } catch {
+      console.warn(`[FMP] Individual fetch failed for ${symbol}`);
+    }
+  }
+  return allQuotes;
+}
+
 export async function fetchFmpIndices(apiKey: string, sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
   const symbols = Object.keys(INDEX_SYMBOLS);
-  const quotes = await fetchFmpQuotes(symbols, apiKey);
+  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
+  console.info(`[FMP] fetchFmpIndices: ${quotes.length} quotes for ${symbols.length} symbols`);
   return mapQuotesToMarketItems(quotes, INDEX_SYMBOLS, sparklineMap);
 }
 
 export async function fetchFmpCommodities(apiKey: string, sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
   const symbols = Object.keys(COMMODITY_SYMBOLS);
-  const quotes = await fetchFmpQuotes(symbols, apiKey);
+  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
+  console.info(`[FMP] fetchFmpCommodities: ${quotes.length} quotes for ${symbols.length} symbols`);
   return mapQuotesToMarketItems(quotes, COMMODITY_SYMBOLS, sparklineMap);
 }
 
 // サブ指標(VIX, 米10年国債)を取得
 export async function fetchFmpSubIndicators(apiKey: string): Promise<SubIndicator[]> {
   const symbols = Object.keys(SUB_INDICATOR_SYMBOLS);
-  const quotes = await fetchFmpQuotes(symbols, apiKey);
+  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
+  console.info(`[FMP] fetchFmpSubIndicators: ${quotes.length} quotes for ${symbols.length} symbols`);
   const indicators: SubIndicator[] = [];
   for (const quote of quotes) {
-    const meta = SUB_INDICATOR_SYMBOLS[quote.symbol];
+    const normalizedSymbol = decodeURIComponent(quote.symbol);
+    const meta = SUB_INDICATOR_SYMBOLS[quote.symbol] ?? SUB_INDICATOR_SYMBOLS[normalizedSymbol];
     if (!meta || !quote.price) continue;
     const change = quote.change;
     const changePercent = quote.changesPercentage;
