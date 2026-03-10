@@ -26,6 +26,7 @@ export interface FetchResult {
   fearGreed: typeof mockFearGreed;
   marketSummary: typeof mockMarketSummary;
   lastUpdated: string;
+  fmpStatus: 'not-configured' | 'partial' | 'failed';
 }
 
 // VIXからFear & Greedスコアを算出
@@ -124,6 +125,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
       fearGreed: mockFearGreed,
       marketSummary: mockMarketSummary,
       lastUpdated: new Date().toISOString(),
+      fmpStatus: 'not-configured',
     };
   }
 
@@ -153,6 +155,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
   let commodities: MarketItem[] = mockCommodities.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let subIndicators: SubIndicator[] = mockSubIndicators.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let fearGreed = mockFearGreed;
+  let fmpStatus: FetchResult['fmpStatus'] = 'not-configured';
 
   if (fmpApiKey) {
     // スパークラインデータ（12時間キャッシュ）
@@ -278,6 +281,14 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         fearGreed = { ...fg, vix: vixIndicator.value };
       }
     }
+
+    // FMPステータス算出: ライブデータが1件でもあれば 'partial'
+    const liveCount =
+      (indicesResult.status === 'fulfilled' ? indicesResult.value.length : 0) +
+      (commoditiesResult.status === 'fulfilled' ? commoditiesResult.value.length : 0) +
+      (subResult.status === 'fulfilled' ? subResult.value.length : 0);
+    fmpStatus = liveCount > 0 ? 'partial' : 'failed';
+    console.info(`[FMP] fmpStatus=${fmpStatus} (liveCount=${liveCount})`);
   }
 
   return {
@@ -289,5 +300,6 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
     fearGreed,
     marketSummary: mockMarketSummary,
     lastUpdated: new Date().toISOString(),
+    fmpStatus,
   };
 }
