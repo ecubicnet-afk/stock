@@ -25,7 +25,8 @@ export function DashboardPage() {
   const allItems = [...indices, ...forex, ...commodities];
   const dashboardItems = DASHBOARD_IDS
     .map((id) => allItems.find((item) => item.id === id))
-    .filter((item): item is NonNullable<typeof item> => item != null);
+    .filter((item): item is NonNullable<typeof item> => item != null)
+    .filter((item) => item.dataSource !== 'mock');
 
   return (
     <div className="space-y-6 py-4">

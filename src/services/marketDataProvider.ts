@@ -14,7 +14,7 @@ import {
 const CRYPTO_TTL = 60_000;
 const FOREX_TTL = 300_000;
 const FMP_TTL = 300_000; // 5min — シンボル削減により頻度UP可能
-const SPARKLINE_TTL = 43_200_000; // 12時間 — 日足なので低頻度でOK
+const SPARKLINE_TTL = 3_600_000; // 1時間 — 空結果はキャッシュしないので短めに
 const SUB_TTL = 300_000; // 5min
 
 export interface FetchResult {
@@ -159,7 +159,9 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
     if (!sparklineMap) {
       try {
         sparklineMap = await fetchFmpSparklines(fmpApiKey);
-        setCache('fmp-sparklines', sparklineMap);
+        if (Object.keys(sparklineMap).length > 0) {
+          setCache('fmp-sparklines', sparklineMap);
+        }
       } catch {
         sparklineMap = {};
       }
@@ -225,7 +227,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         }
       }
       const liveIds = new Set(indicesResult.value.map((i) => i.id));
-      indices = [...indicesResult.value, ...mockIndices.filter((m) => !liveIds.has(m.id))];
+      indices = [...indicesResult.value, ...mockIndices.filter((m) => !liveIds.has(m.id)).map((m) => ({ ...m, dataSource: 'mock' as const }))];
     }
 
     if (commoditiesResult.status === 'fulfilled' && commoditiesResult.value.length > 0) {
@@ -245,7 +247,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         }
       }
       const liveIds = new Set(commoditiesResult.value.map((i) => i.id));
-      commodities = [...commoditiesResult.value, ...mockCommodities.filter((m) => !liveIds.has(m.id))];
+      commodities = [...commoditiesResult.value, ...mockCommodities.filter((m) => !liveIds.has(m.id)).map((m) => ({ ...m, dataSource: 'mock' as const }))];
     }
 
     // サブ指標のマージ
