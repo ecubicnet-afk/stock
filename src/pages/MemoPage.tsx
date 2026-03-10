@@ -27,6 +27,7 @@ const IMPORTANCE_DOT: Record<ScheduleEvent['importance'], string> = {
   high: 'bg-down',
   medium: 'bg-accent-gold',
   low: 'bg-accent-cyan',
+  scenario: 'bg-violet-400',
 };
 
 type RegionType = ScheduleEvent['region'];
@@ -256,6 +257,7 @@ export function MemoPage() {
               <option value="high">重要（高）</option>
               <option value="medium">注目（中）</option>
               <option value="low">参考（低）</option>
+              <option value="scenario">シナリオ</option>
             </select>
             <select
               value={newRegion || ''}
@@ -480,6 +482,7 @@ export function MemoPage() {
                               <option value="high">高</option>
                               <option value="medium">中</option>
                               <option value="low">低</option>
+                              <option value="scenario">シナリオ</option>
                             </select>
                             <button onClick={() => handleWlAddEvent(item.id)} className="text-xs text-accent-gold hover:text-accent-gold/80 px-2 shrink-0">追加</button>
                           </div>

@@ -126,11 +126,12 @@ export function StrategyPage() {
       title: '想定シナリオ',
       date: desc.date,
       time: '00:00',
-      importance: 'medium',
+      importance: 'scenario',
       description: plainText,
       region: 'JP',
+      images: desc.imageDataUrl ? [desc.imageDataUrl] : undefined,
     });
-  }, [addEvent, desc.date]);
+  }, [addEvent, desc.date, desc.imageDataUrl, getPlainText]);
 
   if (!activeScenario) return null;
 
