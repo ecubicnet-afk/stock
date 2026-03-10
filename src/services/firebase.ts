@@ -66,11 +66,11 @@ export async function initFirebase(settings: Settings) {
   const { getFirestore } = await import('firebase/firestore');
 
   const config = {
-    apiKey: settings.firebaseApiKey,
-    authDomain: `${settings.firebaseProjectId}.firebaseapp.com`,
-    projectId: settings.firebaseProjectId,
-    storageBucket: `${settings.firebaseProjectId}.appspot.com`,
-    appId: settings.firebaseAppId,
+    apiKey: settings.firebaseApiKey.trim(),
+    authDomain: `${settings.firebaseProjectId.trim()}.firebaseapp.com`,
+    projectId: settings.firebaseProjectId.trim(),
+    storageBucket: `${settings.firebaseProjectId.trim()}.appspot.com`,
+    appId: settings.firebaseAppId.trim(),
   };
 
   firebaseApp = initializeApp(config);
