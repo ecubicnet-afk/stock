@@ -126,13 +126,17 @@ export async function testFirebaseConnection(
       return { success: false, error: '匿名認証に失敗しました。Firebaseコンソールで匿名認証を有効にしてください。' };
     }
 
-    // Also test Firestore access (write + delete)
+    // Also test Firestore access (write + delete) with timeout
     try {
       const { doc, setDoc, deleteDoc } = await import('firebase/firestore');
       const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
       const testRef = doc(db, 'artifacts', appId, 'users', uid, 'sync', '__connection_test__');
-      await setDoc(testRef, { test: true, timestamp: Date.now() });
-      await deleteDoc(testRef);
+      const fsTimeout = <T>(p: Promise<T>) => Promise.race([
+        p,
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Firestoreへの接続がタイムアウトしました（10秒）')), 10000)),
+      ]);
+      await fsTimeout(setDoc(testRef, { test: true, timestamp: Date.now() }));
+      await fsTimeout(deleteDoc(testRef));
     } catch (fsErr: any) {
       const fsCode = (fsErr?.code || '') as string;
       const fsMsg = (fsErr?.message || '') as string;

@@ -8,6 +8,17 @@ import { initFirebase, isFirebaseConfigured } from './firebase';
 
 // Firestore path: artifacts/{appId}/users/{uid}/sync/{key}
 
+const TIMEOUT_MS = 15000; // 15 seconds
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label}: ${ms / 1000}秒でタイムアウトしました。Firestoreデータベースが作成されているか、APIキー制限にCloud Firestore APIが含まれているか確認してください。`)), ms)
+    ),
+  ]);
+}
+
 export async function syncToFirestore(
   settings: Settings,
   key: string,
@@ -25,12 +36,16 @@ export async function syncToFirestore(
   }
 
   const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
-  await setDoc(
-    doc(db, 'artifacts', appId, 'users', uid, 'sync', key),
-    {
-      data: JSON.stringify(data),
-      updatedAt: Date.now(),
-    }
+  await withTimeout(
+    setDoc(
+      doc(db, 'artifacts', appId, 'users', uid, 'sync', key),
+      {
+        data: JSON.stringify(data),
+        updatedAt: Date.now(),
+      }
+    ),
+    TIMEOUT_MS,
+    '保存'
   );
 }
 
@@ -50,8 +65,12 @@ export async function loadFromFirestore<T>(
   }
 
   const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
-  const snap = await getDoc(
-    doc(db, 'artifacts', appId, 'users', uid, 'sync', key)
+  const snap = await withTimeout(
+    getDoc(
+      doc(db, 'artifacts', appId, 'users', uid, 'sync', key)
+    ),
+    TIMEOUT_MS,
+    '読込'
   );
 
   if (!snap.exists()) return null;
