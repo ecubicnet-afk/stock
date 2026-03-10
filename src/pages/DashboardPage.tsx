@@ -5,12 +5,13 @@ import { IndexCardSkeleton } from '../components/dashboard/IndexCardSkeleton';
 import { SubIndicatorTable } from '../components/dashboard/SubIndicatorTable';
 import { FearGreedGauge } from '../components/dashboard/FearGreedGauge';
 
-// ダッシュボードに表示する8シンボル（表示順）
+// ダッシュボードに表示するシンボル（表示順）
 const DASHBOARD_IDS = [
   'nikkei225',     // 日経平均
   'nikkei-futures', // 日経225先物
   'topix',         // TOPIX
   'djia',          // NYダウ
+  'sp500',         // S&P 500
   'nasdaq100',     // NASDAQ 100
   'usdjpy',        // ドル円
   'wti',           // WTI原油
