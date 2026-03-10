@@ -159,10 +159,10 @@ function mapQuotesToMarketItems(
       name: meta.name,
       nameJa: meta.nameJa,
       category: meta.category,
-      currentValue: quote.price,
-      previousClose: quote.previousClose || quote.price - quote.change,
-      change: quote.change,
-      changePercent: quote.changesPercentage,
+      currentValue: quote.price ?? 0,
+      previousClose: quote.previousClose || (quote.price ?? 0) - (quote.change ?? 0),
+      change: quote.change ?? 0,
+      changePercent: quote.changesPercentage ?? 0,
       sparklineData: sparkline,
       currency: meta.currency,
       lastUpdated: new Date().toISOString(),
@@ -221,8 +221,8 @@ export async function fetchFmpSubIndicators(apiKey: string): Promise<SubIndicato
     const normalizedSymbol = decodeURIComponent(quote.symbol);
     const meta = SUB_INDICATOR_SYMBOLS[quote.symbol] ?? SUB_INDICATOR_SYMBOLS[normalizedSymbol];
     if (!meta || !quote.price) continue;
-    const change = quote.change;
-    const changePercent = quote.changesPercentage;
+    const change = quote.change ?? 0;
+    const changePercent = quote.changesPercentage ?? 0;
     let signal: SubIndicator['signal'] = 'neutral';
     if (meta.id === 'vix') {
       signal = quote.price > 25 ? 'bearish' : quote.price < 15 ? 'bullish' : 'neutral';
