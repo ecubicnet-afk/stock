@@ -160,7 +160,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `px-3 py-1.5 text-xs rounded-md transition-all ${
+                `px-4 py-2 text-sm rounded-md transition-all ${
                   isActive
                     ? 'bg-accent-cyan/10 text-accent-cyan font-semibold'
                     : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'

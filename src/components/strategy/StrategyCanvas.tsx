@@ -1,14 +1,21 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import type { StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection } from '../../types';
+import type { StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, StrategyDrawing } from '../../types';
+import { DrawingLayer } from './DrawingLayer';
+import type { DrawingTool } from './DrawingLayer';
 
 interface StrategyCanvasProps {
   notes: StrategyNote[];
   connections: StrategyConnection[];
+  drawing: StrategyDrawing;
+  onUpdateDrawing: (drawing: StrategyDrawing) => void;
   onUpdateNote: (noteId: string, updates: Partial<Omit<StrategyNote, 'id'>>) => void;
   onRemoveNote: (noteId: string) => void;
   onAddConnection: (fromId: string, toId: string, direction: 'bullish' | 'bearish' | 'neutral') => void;
   onRemoveConnection: (connectionId: string) => void;
 }
+
+const DRAWING_COLORS = ['#ffffff', '#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#a855f7'];
+const DRAWING_WIDTHS = [1, 2, 4];
 
 const REGION_STYLES: Record<StrategyNoteRegion, { label: string; emoji: string; bg: string }> = {
   jp: { label: '日本', emoji: '🇯🇵', bg: 'bg-blue-500/15' },
@@ -77,7 +84,7 @@ function getNoteDirection(note: StrategyNote): StrategyNoteDirection {
   return note.direction || 'neutral';
 }
 
-export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote, onAddConnection, onRemoveConnection }: StrategyCanvasProps) {
+export function StrategyCanvas({ notes, connections, drawing, onUpdateDrawing, onUpdateNote, onRemoveNote, onAddConnection, onRemoveConnection }: StrategyCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -87,6 +94,10 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
+  const [drawingTool, setDrawingTool] = useState<DrawingTool | null>(null);
+  const [drawingColor, setDrawingColor] = useState('#ffffff');
+  const [drawingWidth, setDrawingWidth] = useState(2);
+  const [drawingFontSize] = useState(14);
 
   const dateColumns = useMemo(() => {
     const today = new Date();
@@ -154,7 +165,7 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setConnectMode(false); setConnectFrom(null); setEditingNote(null); setSelectedConnection(null); }
+      if (e.key === 'Escape') { setConnectMode(false); setConnectFrom(null); setEditingNote(null); setSelectedConnection(null); setDrawingTool(null); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -165,7 +176,7 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-card border-b border-primary/10 flex-shrink-0 flex-wrap">
         <button
-          onClick={() => { setConnectMode(!connectMode); setConnectFrom(null); }}
+          onClick={() => { setConnectMode(!connectMode); setConnectFrom(null); setDrawingTool(null); }}
           className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${connectMode ? 'bg-accent-cyan text-black' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
         >
           {connectMode ? '🔗 結線モード ON' : '🔗 結線'}
@@ -189,6 +200,58 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
           <button onClick={() => { onRemoveConnection(selectedConnection); setSelectedConnection(null); }}
             className="px-3 py-1.5 rounded text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30">選択した線を削除</button>
         )}
+
+        <div className="w-px h-5 bg-primary/20" />
+
+        {/* Drawing tools */}
+        <button
+          onClick={() => { const next = drawingTool === 'pen' ? null : 'pen' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
+          className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${drawingTool === 'pen' ? 'bg-amber-500/30 text-amber-300' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+        >
+          ✏️ ペン
+        </button>
+        <button
+          onClick={() => { const next = drawingTool === 'eraser' ? null : 'eraser' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
+          className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${drawingTool === 'eraser' ? 'bg-amber-500/30 text-amber-300' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+        >
+          🧹 消しゴム
+        </button>
+        <button
+          onClick={() => { const next = drawingTool === 'text' ? null : 'text' as DrawingTool; setDrawingTool(next); if (next) setConnectMode(false); }}
+          className={`px-2 py-1.5 rounded text-xs font-medium transition-colors ${drawingTool === 'text' ? 'bg-amber-500/30 text-amber-300' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+        >
+          Aa テキスト
+        </button>
+        {drawingTool && (
+          <>
+            <div className="flex items-center gap-1">
+              {DRAWING_COLORS.map((c) => (
+                <button key={c} onClick={() => setDrawingColor(c)}
+                  className={`w-5 h-5 rounded-full border-2 ${drawingColor === c ? 'border-white' : 'border-transparent'}`}
+                  style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            {drawingTool !== 'text' && (
+              <div className="flex items-center gap-1">
+                {DRAWING_WIDTHS.map((w) => (
+                  <button key={w} onClick={() => setDrawingWidth(w)}
+                    className={`px-1.5 py-1 rounded text-[10px] ${drawingWidth === w ? 'bg-white/20 text-white' : 'text-muted hover:text-white'}`}>
+                    {w}px
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        {(drawing.paths.length > 0 || drawing.texts.length > 0) && (
+          <button
+            onClick={() => onUpdateDrawing({ paths: [], texts: [] })}
+            className="px-2 py-1.5 rounded text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20"
+          >
+            全消去
+          </button>
+        )}
+
         <div className="ml-auto flex items-center gap-2 text-[10px] text-muted">
           <span>ドラッグ: 移動</span><span>ダブルクリック: 編集</span><span>ESC: キャンセル</span>
         </div>
@@ -213,14 +276,14 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
             {priceLines.map((pl) => (
               <g key={pl.price}>
                 <line x1={MARGIN_LEFT} y1={pl.y} x2={CANVAS_WIDTH} y2={pl.y} stroke={pl.isMajor ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'} strokeWidth={pl.isMajor ? 1 : 0.5} />
-                <text x={MARGIN_LEFT - 5} y={pl.y + 4} fill={pl.isMajor ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.18)'} fontSize={pl.isMajor ? 11 : 9} textAnchor="end" fontFamily="monospace">{(pl.price / 10000).toFixed(1)}万</text>
+                <text x={MARGIN_LEFT - 5} y={pl.y + 4} fill={pl.isMajor ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)'} fontSize={pl.isMajor ? 13 : 11} textAnchor="end" fontFamily="monospace">{(pl.price / 10000).toFixed(1)}万</text>
               </g>
             ))}
             {dateColumns.map((col, i) => (
               <g key={i}>
                 <line x1={col.x} y1={MARGIN_TOP} x2={col.x} y2={CANVAS_HEIGHT} stroke={col.isMonday ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'} strokeWidth={col.isMonday ? 1 : 0.5} />
-                <text x={col.x + PX_PER_DAY / 2} y={16} fill={col.isWeekend ? 'rgba(255,255,255,0.12)' : col.isMonday ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.22)'} fontSize={10} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday ? 'bold' : 'normal'}>{formatDateLabel(col.date)}</text>
-                <text x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4} fill={i === 0 ? 'rgba(0,210,255,0.5)' : col.isWeekend ? 'rgba(255,255,255,0.12)' : col.isMonday ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.22)'} fontSize={10} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday || i === 0 ? 'bold' : 'normal'}>{i === 0 ? `TODAY ${formatDateLabel(col.date)}` : formatDateLabel(col.date)}</text>
+                <text x={col.x + PX_PER_DAY / 2} y={16} fill={col.isWeekend ? 'rgba(255,255,255,0.25)' : col.isMonday ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.40)'} fontSize={12} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday ? 'bold' : 'normal'}>{formatDateLabel(col.date)}</text>
+                <text x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4} fill={i === 0 ? 'rgba(0,210,255,0.7)' : col.isWeekend ? 'rgba(255,255,255,0.25)' : col.isMonday ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.40)'} fontSize={12} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday || i === 0 ? 'bold' : 'normal'}>{i === 0 ? `TODAY ${formatDateLabel(col.date)}` : formatDateLabel(col.date)}</text>
               </g>
             ))}
           </svg>
@@ -244,6 +307,18 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
             })}
           </svg>
 
+          {/* Drawing layer */}
+          <DrawingLayer
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            drawing={drawing}
+            onUpdateDrawing={onUpdateDrawing}
+            activeTool={drawingTool}
+            toolColor={drawingColor}
+            toolWidth={drawingWidth}
+            toolFontSize={drawingFontSize}
+          />
+
           {/* Notes */}
           {notes.map((note) => {
             const region = getNoteRegion(note);
@@ -255,7 +330,7 @@ export function StrategyCanvas({ notes, connections, onUpdateNote, onRemoveNote,
             return (
               <div key={note.id} data-note-id={note.id}
                 className={`absolute select-none rounded-lg border-2 ${rStyle.bg} ${dStyle.border} ${isConnectSource ? 'ring-2 ring-accent-cyan' : ''} ${draggingId === note.id ? 'opacity-80 z-50' : 'z-10'}`}
-                style={{ transform: `translate(${note.x}px, ${note.y}px)`, width: NOTE_WIDTH, cursor: connectMode ? 'pointer' : 'grab', backdropFilter: 'blur(8px)' }}
+                style={{ transform: `translate(${note.x}px, ${note.y}px)`, width: NOTE_WIDTH, cursor: connectMode ? 'pointer' : 'grab', backdropFilter: 'blur(8px)', pointerEvents: drawingTool ? 'none' : 'auto' }}
                 onPointerDown={(e) => handlePointerDown(e, note.id)} onClick={() => handleNoteClick(note.id)} onDoubleClick={() => startEdit(note)}>
                 {/* Header: region + direction */}
                 <div className="flex items-center justify-between px-2 py-1 border-b border-white/10">

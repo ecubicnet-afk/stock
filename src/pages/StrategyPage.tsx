@@ -45,7 +45,7 @@ function resizeImage(file: File, maxWidth: number): Promise<string> {
 
 
 export function StrategyPage() {
-  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription } = useStrategy();
+  const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription, updateDrawing } = useStrategy();
   const { settings } = useSettings();
   const { memos, addMemo } = useMemos();
   const { events, addEvent } = useSchedule();
@@ -342,6 +342,8 @@ ${notesText}
           <StrategyCanvas
             notes={activeScenario.notes}
             connections={activeScenario.connections}
+            drawing={data.drawing || { paths: [], texts: [] }}
+            onUpdateDrawing={updateDrawing}
             onUpdateNote={(noteId, updates) => updateNote(scenarioId, noteId, updates)}
             onRemoveNote={(noteId) => removeNote(scenarioId, noteId)}
             onAddConnection={(fromId, toId, direction) => addConnection(scenarioId, fromId, toId, direction)}
