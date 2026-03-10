@@ -30,6 +30,7 @@ export function useFirebaseSync() {
 
     (async () => {
       let anyUpdated = false;
+      let hasFatalError = false;
 
       for (const [localKey, syncKey] of Object.entries(SYNC_KEYS)) {
         try {
@@ -62,7 +63,14 @@ export function useFirebaseSync() {
           }
         } catch (err) {
           console.error(`[FirebaseSync] Startup sync error for "${syncKey}":`, err);
+          hasFatalError = true;
+          break; // Auth/config error — no point trying other keys
         }
+      }
+
+      if (hasFatalError) {
+        // Allow retry on next settings change
+        didSync.current = false;
       }
 
       markSyncComplete();

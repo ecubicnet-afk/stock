@@ -29,28 +29,54 @@ export function useSyncActions() {
     if (clearTimer.current) clearTimeout(clearTimer.current);
     clearTimer.current = setTimeout(() => {
       setStatus(s => ({ ...s, result: null, error: null }));
-    }, 3000);
+    }, 5000);
   };
 
   const saveAll = useCallback(async () => {
-    if (!isFirebaseConfigured(settings)) return;
+    if (!isFirebaseConfigured(settings)) {
+      setStatus(s => ({ ...s, result: 'error', error: 'Firebase設定が未入力です。設定画面で入力してください。' }));
+      clearResult();
+      return;
+    }
     setStatus(s => ({ ...s, isSaving: true, result: null, error: null }));
 
     try {
       const entries = Object.entries(SYNC_KEYS);
       const now = Date.now();
+      let successCount = 0;
+      const errors: string[] = [];
 
       await Promise.all(
         entries.map(async ([localKey, syncKey]) => {
           const raw = localStorage.getItem(localKey);
           if (!raw) return;
-          const parsed = JSON.parse(raw);
-          await syncToFirestore(settings, syncKey, parsed);
-          localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(now));
+          try {
+            const parsed = JSON.parse(raw);
+            await syncToFirestore(settings, syncKey, parsed);
+            localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(now));
+            successCount++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : `${syncKey}の保存に失敗`;
+            errors.push(msg);
+          }
         })
       );
 
-      setStatus(s => ({ ...s, isSaving: false, lastSavedAt: now, result: 'success' }));
+      if (errors.length > 0 && successCount === 0) {
+        // All failed
+        setStatus(s => ({ ...s, isSaving: false, result: 'error', error: errors[0] }));
+      } else if (errors.length > 0) {
+        // Partial failure
+        setStatus(s => ({
+          ...s,
+          isSaving: false,
+          lastSavedAt: now,
+          result: 'error',
+          error: `${successCount}件保存、${errors.length}件失敗`,
+        }));
+      } else {
+        setStatus(s => ({ ...s, isSaving: false, lastSavedAt: now, result: 'success' }));
+      }
       clearResult();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '保存に失敗しました';
@@ -60,20 +86,32 @@ export function useSyncActions() {
   }, [settings]);
 
   const loadAll = useCallback(async () => {
-    if (!isFirebaseConfigured(settings)) return;
+    if (!isFirebaseConfigured(settings)) {
+      setStatus(s => ({ ...s, result: 'error', error: 'Firebase設定が未入力です。設定画面で入力してください。' }));
+      clearResult();
+      return;
+    }
     setStatus(s => ({ ...s, isLoading: true, result: null, error: null }));
 
     try {
       const entries = Object.entries(SYNC_KEYS);
       let anyUpdated = false;
+      let successCount = 0;
+      const errors: string[] = [];
 
       await Promise.all(
         entries.map(async ([localKey, syncKey]) => {
-          const remote = await loadFromFirestore<unknown>(settings, syncKey);
-          if (remote) {
-            localStorage.setItem(localKey, JSON.stringify(remote.data));
-            localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(remote.updatedAt));
-            anyUpdated = true;
+          try {
+            const remote = await loadFromFirestore<unknown>(settings, syncKey);
+            if (remote) {
+              localStorage.setItem(localKey, JSON.stringify(remote.data));
+              localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(remote.updatedAt));
+              anyUpdated = true;
+            }
+            successCount++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : `${syncKey}の読込に失敗`;
+            errors.push(msg);
           }
         })
       );
@@ -83,7 +121,19 @@ export function useSyncActions() {
       }
 
       const now = Date.now();
-      setStatus(s => ({ ...s, isLoading: false, lastLoadedAt: now, result: 'success' }));
+      if (errors.length > 0 && successCount === 0) {
+        setStatus(s => ({ ...s, isLoading: false, result: 'error', error: errors[0] }));
+      } else if (errors.length > 0) {
+        setStatus(s => ({
+          ...s,
+          isLoading: false,
+          lastLoadedAt: now,
+          result: 'error',
+          error: `${successCount}件読込、${errors.length}件失敗`,
+        }));
+      } else {
+        setStatus(s => ({ ...s, isLoading: false, lastLoadedAt: now, result: 'success' }));
+      }
       clearResult();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '読込に失敗しました';

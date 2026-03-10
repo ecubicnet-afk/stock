@@ -1,5 +1,5 @@
 /**
- * Firebase service for daily snapshots
+ * Firebase service for daily snapshots and cloud sync
  * Only initializes when Firebase settings are configured
  */
 
@@ -16,6 +16,7 @@ export interface DailySnapshot {
 let firebaseApp: any = null;
 let firestoreDb: any = null;
 let firebaseAuth: any = null;
+let lastConfigKey = '';
 
 const SNAPSHOT_CACHE_KEY = 'stock-app-snapshots';
 
@@ -35,8 +36,30 @@ export function isFirebaseConfigured(settings: Settings): boolean {
   return !!(settings.firebaseProjectId && settings.firebaseApiKey && settings.firebaseAppId);
 }
 
+function getConfigKey(settings: Settings): string {
+  return `${settings.firebaseProjectId}|${settings.firebaseApiKey}|${settings.firebaseAppId}`;
+}
+
 export async function initFirebase(settings: Settings) {
-  if (firebaseApp) return { db: firestoreDb, auth: firebaseAuth };
+  const configKey = getConfigKey(settings);
+
+  // Return cached instance if config hasn't changed
+  if (firebaseApp && configKey === lastConfigKey) {
+    return { db: firestoreDb, auth: firebaseAuth };
+  }
+
+  // Config changed — re-initialize
+  if (firebaseApp) {
+    try {
+      const { deleteApp } = await import('firebase/app');
+      await deleteApp(firebaseApp);
+    } catch {
+      // ignore cleanup errors
+    }
+    firebaseApp = null;
+    firestoreDb = null;
+    firebaseAuth = null;
+  }
 
   const { initializeApp } = await import('firebase/app');
   const { getAuth, signInAnonymously } = await import('firebase/auth');
@@ -53,14 +76,47 @@ export async function initFirebase(settings: Settings) {
   firebaseApp = initializeApp(config);
   firebaseAuth = getAuth(firebaseApp);
   firestoreDb = getFirestore(firebaseApp);
+  lastConfigKey = configKey;
 
-  try {
-    await signInAnonymously(firebaseAuth);
-  } catch (err) {
-    console.error('Firebase auth error:', err);
-  }
+  // Auth failure should propagate — don't swallow
+  await signInAnonymously(firebaseAuth);
 
   return { db: firestoreDb, auth: firebaseAuth };
+}
+
+/** Test Firebase connection and return a clear result */
+export async function testFirebaseConnection(
+  settings: Settings
+): Promise<{ success: boolean; error?: string }> {
+  if (!isFirebaseConfigured(settings)) {
+    return { success: false, error: 'Firebase設定が入力されていません' };
+  }
+
+  try {
+    // Force re-init to test with current settings
+    lastConfigKey = '';
+    const { auth } = await initFirebase(settings);
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      return { success: false, error: '匿名認証に失敗しました。Firebaseコンソールで匿名認証を有効にしてください。' };
+    }
+    return { success: true };
+  } catch (err: any) {
+    const code = err?.code || '';
+    if (code === 'auth/configuration-not-found' || code === 'auth/invalid-api-key') {
+      return { success: false, error: 'APIキーが無効です。Firebase設定を確認してください。' };
+    }
+    if (code === 'auth/operation-not-allowed') {
+      return { success: false, error: '匿名認証が無効です。Firebaseコンソールで有効にしてください。' };
+    }
+    if (code === 'auth/network-request-failed') {
+      return { success: false, error: 'ネットワークエラー。インターネット接続を確認してください。' };
+    }
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : '接続に失敗しました',
+    };
+  }
 }
 
 export async function saveSnapshot(

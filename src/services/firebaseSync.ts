@@ -13,53 +13,52 @@ export async function syncToFirestore(
   key: string,
   data: unknown
 ): Promise<void> {
-  if (!isFirebaseConfigured(settings)) return;
-
-  try {
-    const { db, auth } = await initFirebase(settings);
-    const { doc, setDoc } = await import('firebase/firestore');
-    const uid = auth.currentUser?.uid;
-    if (!uid) return;
-
-    const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
-    await setDoc(
-      doc(db, 'artifacts', appId, 'users', uid, 'sync', key),
-      {
-        data: JSON.stringify(data),
-        updatedAt: Date.now(),
-      }
-    );
-  } catch (err) {
-    console.error(`[FirebaseSync] Failed to sync "${key}" to Firestore:`, err);
+  if (!isFirebaseConfigured(settings)) {
+    throw new Error('Firebase設定が入力されていません');
   }
+
+  const { db, auth } = await initFirebase(settings);
+  const { doc, setDoc } = await import('firebase/firestore');
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error('Firebase認証に失敗しました。匿名認証を有効にしてください。');
+  }
+
+  const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
+  await setDoc(
+    doc(db, 'artifacts', appId, 'users', uid, 'sync', key),
+    {
+      data: JSON.stringify(data),
+      updatedAt: Date.now(),
+    }
+  );
 }
 
 export async function loadFromFirestore<T>(
   settings: Settings,
   key: string
 ): Promise<{ data: T; updatedAt: number } | null> {
-  if (!isFirebaseConfigured(settings)) return null;
-
-  try {
-    const { db, auth } = await initFirebase(settings);
-    const { doc, getDoc } = await import('firebase/firestore');
-    const uid = auth.currentUser?.uid;
-    if (!uid) return null;
-
-    const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
-    const snap = await getDoc(
-      doc(db, 'artifacts', appId, 'users', uid, 'sync', key)
-    );
-
-    if (!snap.exists()) return null;
-
-    const docData = snap.data();
-    return {
-      data: JSON.parse(docData.data) as T,
-      updatedAt: docData.updatedAt ?? 0,
-    };
-  } catch (err) {
-    console.error(`[FirebaseSync] Failed to load "${key}" from Firestore:`, err);
-    return null;
+  if (!isFirebaseConfigured(settings)) {
+    throw new Error('Firebase設定が入力されていません');
   }
+
+  const { db, auth } = await initFirebase(settings);
+  const { doc, getDoc } = await import('firebase/firestore');
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    throw new Error('Firebase認証に失敗しました。匿名認証を有効にしてください。');
+  }
+
+  const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
+  const snap = await getDoc(
+    doc(db, 'artifacts', appId, 'users', uid, 'sync', key)
+  );
+
+  if (!snap.exists()) return null;
+
+  const docData = snap.data();
+  return {
+    data: JSON.parse(docData.data) as T,
+    updatedAt: docData.updatedAt ?? 0,
+  };
 }
