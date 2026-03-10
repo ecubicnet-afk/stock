@@ -17,7 +17,7 @@ export const SYNC_KEYS: Record<string, string> = {
   'stock-app-journal': 'journal',
 };
 
-const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
+export const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
 
 // Debounce timers per key
 const debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};

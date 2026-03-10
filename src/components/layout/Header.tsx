@@ -5,6 +5,7 @@ import { useSettings } from '../../hooks/useSettings';
 import { useTrades } from '../../hooks/useTrades';
 import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { SettingsModal } from '../settings/SettingsModal';
+import { CloudSyncDropdown } from './CloudSyncDropdown';
 import { NAV_ITEMS } from '../../utils/constants';
 
 interface HeaderProps {
@@ -102,6 +103,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 </div>
               ))}
             </div>
+
+            {/* クラウド同期 */}
+            <CloudSyncDropdown />
 
             {/* 設定ボタン */}
             <button
