@@ -24,7 +24,7 @@ export function IndexCard({ item }: IndexCardProps) {
 
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4 hover:border-accent-cyan/30 transition-all group">
-      {/* 銘柄名 + 市場開閉 */}
+      {/* 銘柄名 + 市場開閉 + データソース */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span
@@ -35,7 +35,15 @@ export function IndexCard({ item }: IndexCardProps) {
           />
           <span className="text-xs text-text-secondary truncate">{item.nameJa}</span>
         </div>
-        <span className="text-[10px] text-text-secondary/60 font-mono ml-2 flex-shrink-0">{item.name}</span>
+        <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
+          <span className="text-[10px] text-text-secondary/60 font-mono">{item.name}</span>
+          {item.dataSource === 'live' && (
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-up/15 text-up">LIVE</span>
+          )}
+          {item.dataSource === 'mock' && (
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-text-secondary/15 text-text-secondary/60">MOCK</span>
+          )}
+        </div>
       </div>
 
       {/* 現在値 */}

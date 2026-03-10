@@ -17,8 +17,11 @@ export function SubIndicatorTable({ indicators }: SubIndicatorTableProps) {
 
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-border">
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-primary">重要サブ指標</h3>
+        {indicators.some((i) => i.dataSource === 'mock') && (
+          <span className="text-[10px] text-text-secondary/50">(参考値) = モックデータ (3/9時点)</span>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
