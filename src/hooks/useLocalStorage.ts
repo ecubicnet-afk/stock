@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { syncToFirestore } from '../services/firebaseSync';
 import { isFirebaseConfigured } from '../services/firebase';
+import { initialSyncComplete } from './syncState';
 
 /** Mapping from localStorage key to Firestore sync key */
 export const SYNC_KEYS: Record<string, string> = {
@@ -12,6 +13,8 @@ export const SYNC_KEYS: Record<string, string> = {
   'stock-app-watchlist': 'watchlist',
   'stock-app-trade-analysis': 'trade-analysis',
   'stock-app-trade-files': 'trade-files',
+  'stock-app-memos': 'memos',
+  'stock-app-journal': 'journal',
 };
 
 const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
@@ -22,6 +25,9 @@ const debounceTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 function scheduleSync(localKey: string, data: unknown) {
   const syncKey = SYNC_KEYS[localKey];
   if (!syncKey) return;
+
+  // Don't push to Firestore until initial sync is done (prevents empty-device overwrite)
+  if (!initialSyncComplete) return;
 
   // Read settings from localStorage (avoid circular hook dependency)
   let settings;

@@ -3,6 +3,7 @@ import { useSettings } from './useSettings';
 import { isFirebaseConfigured } from '../services/firebase';
 import { loadFromFirestore, syncToFirestore } from '../services/firebaseSync';
 import { SYNC_KEYS } from './useLocalStorage';
+import { markSyncComplete } from './syncState';
 
 const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
 
@@ -44,13 +45,27 @@ export function useFirebaseSync() {
             // Local is newer — push to Firestore
             const localData = localStorage.getItem(localKey);
             if (localData) {
-              await syncToFirestore(settings, syncKey, JSON.parse(localData));
+              const parsed = JSON.parse(localData);
+              // Don't overwrite remote with empty data
+              const isEmpty = Array.isArray(parsed) ? parsed.length === 0
+                : typeof parsed === 'string' ? parsed.trim() === ''
+                : !parsed;
+              if (isEmpty && remote) {
+                // Local is empty but remote has data — prefer remote
+                localStorage.setItem(localKey, JSON.stringify(remote.data));
+                localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(remote.updatedAt));
+                anyUpdated = true;
+              } else if (!isEmpty) {
+                await syncToFirestore(settings, syncKey, parsed);
+              }
             }
           }
         } catch (err) {
           console.error(`[FirebaseSync] Startup sync error for "${syncKey}":`, err);
         }
       }
+
+      markSyncComplete();
 
       if (anyUpdated) {
         // Notify React hooks that localStorage changed

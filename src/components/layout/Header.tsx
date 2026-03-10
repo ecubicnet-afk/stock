@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
+import { NavLink } from 'react-router-dom';
 import { useClock } from '../../hooks/useClock';
 import { useSettings } from '../../hooks/useSettings';
 import { useTrades } from '../../hooks/useTrades';
 import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { SettingsModal } from '../settings/SettingsModal';
+import { NAV_ITEMS } from '../../utils/constants';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -47,10 +49,21 @@ export function Header({ onMenuToggle }: HeaderProps) {
           {/* ハンバーガーメニュー（モバイル） */}
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
+            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          {/* サイドパネルトグル（デスクトップ） */}
+          <button
+            onClick={onMenuToggle}
+            className="hidden md:block p-2 text-text-secondary hover:text-text-primary transition-colors"
+            title="パネル開閉"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h18v18H3V3zm6 0v18" />
             </svg>
           </button>
 
@@ -146,6 +159,25 @@ export function Header({ onMenuToggle }: HeaderProps) {
             <span className="text-text-secondary/50">今月の決済なし</span>
           )}
         </div>
+
+        {/* ナビゲーションタブ（md以上） */}
+        <nav className="hidden md:flex items-center gap-1 px-4 py-1 border-t border-border/50">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `px-3 py-1.5 text-xs rounded-md transition-all ${
+                  isActive
+                    ? 'bg-accent-cyan/10 text-accent-cyan font-semibold'
+                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
+                }`
+              }
+            >
+              {item.labelJa}
+            </NavLink>
+          ))}
+        </nav>
       </header>
 
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
