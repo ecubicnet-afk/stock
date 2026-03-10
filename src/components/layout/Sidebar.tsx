@@ -1,10 +1,7 @@
-import { type ReactNode, useState, useEffect, useMemo } from 'react';
+import { type ReactNode, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../utils/constants';
 import { useSchedule } from '../../hooks/useSchedule';
-import { useTrades } from '../../hooks/useTrades';
-import { useSettings } from '../../hooks/useSettings';
-import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { useSidebarTodos, useSidebarPrinciples } from '../../hooks/useSidebarNotes';
 
 interface SidebarProps {
@@ -74,17 +71,8 @@ const IMPORTANCE_DOT: Record<string, string> = {
   scenario: 'bg-violet-400',
 };
 
-function formatJPY(value: number): string {
-  if (Math.abs(value) >= 1e8) return `${(value / 1e8).toFixed(2)}億`;
-  if (Math.abs(value) >= 1e4) return `${(value / 1e4).toFixed(1)}万`;
-  return value.toLocaleString();
-}
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { events } = useSchedule();
-  const { trades } = useTrades();
-  const { settings } = useSettings();
-  const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
   const {
     dailyItems, oneshotItems, archive,
     addDailyTodo, toggleDailyTodo, deleteDailyTodo,
@@ -95,24 +83,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [newDailyText, setNewDailyText] = useState('');
   const [newOneshotText, setNewOneshotText] = useState('');
   const [showArchive, setShowArchive] = useState(false);
-
-  useEffect(() => {
-    loadSnapshots(settings).then(setSnapshots).catch(() => {});
-  }, [settings]);
-
-  const latestSnapshot = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
-  const prevSnapshot = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
-  const dailyChange = latestSnapshot && prevSnapshot ? latestSnapshot.totalAsset - prevSnapshot.totalAsset : null;
-
-  const monthlyStats = useMemo(() => {
-    const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const monthTrades = trades.filter((t) => t.date.startsWith(monthPrefix) && t.side === 'sell' && t.pnl !== undefined);
-    const totalPnl = monthTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
-    const wins = monthTrades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = monthTrades.length > 0 ? (wins / monthTrades.length) * 100 : 0;
-    return { totalPnl, winRate, tradeCount: monthTrades.length };
-  }, [trades]);
 
   // Get today's important events (high and medium)
   const todayStr = new Date().toISOString().split('T')[0];
@@ -132,7 +102,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* サイドバー本体 */}
       <aside
-        className={`fixed top-16 left-0 bottom-0 z-40 w-64 bg-bg-secondary/95 backdrop-blur-md border-r border-border transform transition-transform duration-300 overflow-y-auto
+        className={`fixed top-16 md:top-[88px] left-0 bottom-0 z-40 w-64 bg-bg-secondary/95 backdrop-blur-md border-r border-border transform transition-transform duration-300 overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         {/* ナビゲーション */}
@@ -155,64 +125,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </NavLink>
           ))}
         </nav>
-
-        {/* 資産概要 */}
-        <div className="p-4 border-t border-border">
-          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            資産概要
-          </h3>
-          {latestSnapshot ? (
-            <div className="space-y-2">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-text-secondary">総資産</span>
-                <span className="text-sm font-mono font-semibold text-text-primary">¥{formatJPY(latestSnapshot.totalAsset)}</span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-text-secondary">含み損益</span>
-                <span className={`text-xs font-mono ${latestSnapshot.totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {latestSnapshot.totalProfit >= 0 ? '+' : ''}{formatJPY(latestSnapshot.totalProfit)}
-                </span>
-              </div>
-              {dailyChange !== null && (
-                <div className="flex justify-between items-baseline">
-                  <span className="text-[10px] text-text-secondary">前日比</span>
-                  <span className={`text-xs font-mono ${dailyChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {dailyChange >= 0 ? '+' : ''}{formatJPY(dailyChange)}
-                  </span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-text-secondary/50 text-xs">資産管理ページでCSVをアップロードしてください</p>
-          )}
-        </div>
-
-        {/* 今月の損益 */}
-        <div className="p-4 border-t border-border">
-          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            今月の損益
-          </h3>
-          {monthlyStats.tradeCount > 0 ? (
-            <div className="space-y-2">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-text-secondary">確定損益</span>
-                <span className={`text-sm font-mono font-semibold ${monthlyStats.totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {monthlyStats.totalPnl >= 0 ? '+' : ''}¥{formatJPY(monthlyStats.totalPnl)}
-                </span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-text-secondary">勝率</span>
-                <span className="text-xs font-mono text-text-primary">{monthlyStats.winRate.toFixed(1)}%</span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-text-secondary">決済数</span>
-                <span className="text-xs font-mono text-text-primary">{monthlyStats.tradeCount}件</span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-text-secondary/50 text-xs">今月の決済記録はありません</p>
-          )}
-        </div>
 
         {/* 本日の重要イベント */}
         <div className="p-4 border-t border-border">
@@ -368,10 +280,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           )}
         </div>
 
-        {/* 投資で意識すること */}
+        {/* 常に意識すること */}
         <div className="p-4 border-t border-border">
           <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            投資で意識すること
+            常に意識すること
           </h3>
           <textarea
             value={principles}
