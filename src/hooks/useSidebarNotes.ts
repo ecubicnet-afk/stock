@@ -7,21 +7,41 @@ export interface TodoItem {
   done: boolean;
 }
 
+interface TodoState {
+  date: string;
+  items: TodoItem[];
+}
+
+function getToday(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export function useSidebarTodos() {
-  const [todos, setTodos] = useLocalStorage<TodoItem[]>('stock-app-sidebar-todos', []);
+  const [state, setState] = useLocalStorage<TodoState>('stock-app-sidebar-todos', { date: getToday(), items: [] });
+
+  // 日付が変わっていたらリセット
+  const today = getToday();
+  const todos = state.date === today ? state.items : [];
+
+  const setItems = useCallback((updater: (prev: TodoItem[]) => TodoItem[]) => {
+    setState((prev) => {
+      const currentItems = prev.date === getToday() ? prev.items : [];
+      return { date: getToday(), items: updater(currentItems) };
+    });
+  }, [setState]);
 
   const addTodo = useCallback((text: string) => {
     if (!text.trim()) return;
-    setTodos((prev) => [...prev, { id: Date.now().toString(), text: text.trim(), done: false }]);
-  }, [setTodos]);
+    setItems((prev) => [...prev, { id: Date.now().toString(), text: text.trim(), done: false }]);
+  }, [setItems]);
 
   const toggleTodo = useCallback((id: string) => {
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-  }, [setTodos]);
+    setItems((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  }, [setItems]);
 
   const deleteTodo = useCallback((id: string) => {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-  }, [setTodos]);
+    setItems((prev) => prev.filter((t) => t.id !== id));
+  }, [setItems]);
 
   return { todos, addTodo, toggleTodo, deleteTodo };
 }
