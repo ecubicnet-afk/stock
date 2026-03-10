@@ -207,6 +207,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         updateSettings({ firebaseProjectId: e.target.value });
                         setFirebaseTestResult(null);
                       }}
+                      onBlur={(e) => updateSettings({ firebaseProjectId: e.target.value.trim() })}
                       placeholder="クラウド同期に使用"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
@@ -221,6 +222,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         updateSettings({ firebaseApiKey: e.target.value });
                         setFirebaseTestResult(null);
                       }}
+                      onBlur={(e) => updateSettings({ firebaseApiKey: e.target.value.trim() })}
                       placeholder="Firebase Web APIキー"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
@@ -235,6 +237,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         updateSettings({ firebaseAppId: e.target.value });
                         setFirebaseTestResult(null);
                       }}
+                      onBlur={(e) => updateSettings({ firebaseAppId: e.target.value.trim() })}
                       placeholder="Firebase App ID"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
