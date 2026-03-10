@@ -4,20 +4,13 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts';
 import { useSettings } from '../hooks/useSettings';
+import { usePortfolio, type HoldingItem } from '../hooks/usePortfolio';
 import { fetchSectorClassification, fetchIndexData } from '../services/geminiApi';
 import { saveSnapshot, loadSnapshots, deleteSnapshot } from '../services/firebase';
 import { readFileAsText } from '../utils/csvParser';
 
-// --- Types ---
-interface HoldingItem {
-  code: string;
-  name: string;
-  marketValue: number;
-  profit: number;
-  profitRate: number;
-  type: string;
-  sector?: string;
-  portfolioWeight?: number;
+// Extended type for merged view (types is non-serializable Set, used only in-memory)
+interface MergedHoldingItem extends HoldingItem {
   types?: Set<string>;
 }
 
@@ -82,9 +75,8 @@ function CustomPieLabel({ cx, cy, midAngle, outerRadius, percent, name }: any) {
 
 export function PortfolioPage() {
   const { settings } = useSettings();
+  const { holdings: data, summaryTotals, setHoldings, setSummaryTotal } = usePortfolio();
   const [files, setFiles] = useState<Record<string, File | null>>({ spot1: null, spot2: null, margin: null });
-  const [data, setData] = useState<Record<string, HoldingItem[]>>({ spot1: [], spot2: [], margin: [] });
-  const [summaryTotals, setSummaryTotals] = useState({ spot1: 0, spot2: 0, margin: 0 });
   const [history, setHistory] = useState<DailySnapshot[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -111,7 +103,7 @@ export function PortfolioPage() {
       for (const line of lines) {
         const cells = splitCSVLine(line);
         if (cells.includes('資産合計')) {
-          setSummaryTotals((prev) => ({ ...prev, [type]: parseNumber(cells[cells.indexOf('資産合計') + 1]) }));
+          setSummaryTotal(type, parseNumber(cells[cells.indexOf('資産合計') + 1]));
           break;
         }
       }
@@ -131,7 +123,7 @@ export function PortfolioPage() {
             type: '現物',
           };
         }).filter((item) => item.code && item.marketValue > 0);
-        setData((prev) => ({ ...prev, [type]: parsed }));
+        setHoldings(type, parsed);
         addLog(`${type}: ${parsed.length}件の保有資産を抽出。`);
       }
     } else {
@@ -139,7 +131,7 @@ export function PortfolioPage() {
         const cells = splitCSVLine(line);
         if (cells.includes('合計[円]') || cells.includes('合計［円］')) {
           const idx = cells.findIndex((c) => c.includes('合計'));
-          setSummaryTotals((prev) => ({ ...prev, margin: parseNumber(cells[idx + 1]) }));
+          setSummaryTotal('margin', parseNumber(cells[idx + 1]));
           break;
         }
       }
@@ -159,7 +151,7 @@ export function PortfolioPage() {
             type: '信用',
           };
         }).filter((item) => item.code && item.marketValue > 0);
-        setData((prev) => ({ ...prev, margin: parsed }));
+        setHoldings('margin', parsed);
         addLog(`Margin: ${parsed.length}件の信用建玉を抽出。`);
       }
     }
@@ -194,7 +186,7 @@ export function PortfolioPage() {
   // Aggregated data
   const aggregatedData = useMemo(() => {
     const combined = [...data.spot1, ...data.spot2, ...data.margin];
-    const map = new Map<string, HoldingItem & { types: Set<string> }>();
+    const map = new Map<string, MergedHoldingItem & { types: Set<string> }>();
     combined.forEach((item) => {
       const code = String(item.code);
       const attr = enrichedData[code] || { sector: '未分類' };
