@@ -129,6 +129,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
     };
   }
 
+  try {
   const [cryptoResult, forexResult] = await Promise.allSettled([
     (async () => {
       const cached = getCached<MarketItem[]>('crypto', CRYPTO_TTL);
@@ -302,4 +303,19 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
     lastUpdated: new Date().toISOString(),
     fmpStatus,
   };
+
+  } catch (err) {
+    console.error('[MarketData] Critical error in fetchAllMarketData:', err);
+    return {
+      indices: mockIndices,
+      forex: mockForex,
+      commodities: mockCommodities,
+      crypto: mockCrypto,
+      subIndicators: mockSubIndicators,
+      fearGreed: mockFearGreed,
+      marketSummary: mockMarketSummary,
+      lastUpdated: new Date().toISOString(),
+      fmpStatus: 'failed',
+    };
+  }
 }

@@ -45,8 +45,9 @@ export function useMarketData(): MarketData {
         fmpStatus: result.fmpStatus,
       });
       setLastUpdated(result.lastUpdated);
-    } catch {
-      // Keep existing data on error
+    } catch (err) {
+      console.error('[useMarketData] fetch failed:', err);
+      // Keep existing data on error — but ensure isLoading becomes false
     } finally {
       setIsLoading(false);
     }
