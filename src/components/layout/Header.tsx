@@ -8,6 +8,7 @@ import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { SettingsModal } from '../settings/SettingsModal';
 import { CloudSyncDropdown } from './CloudSyncDropdown';
 import { NAV_ITEMS } from '../../utils/constants';
+import { lookupMaxRisk } from '../../utils/riskTable';
 import type { AnalysisTrade } from '../../utils/csvParser';
 
 interface HeaderProps {
@@ -45,18 +46,30 @@ export function Header({ onMenuToggle }: HeaderProps) {
     const monthTrades = trades.filter((t) => t.date.startsWith(monthDash) && t.side === 'sell' && t.pnl !== undefined);
     let totalPnl = monthTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
     let wins = monthTrades.filter((t) => (t.pnl ?? 0) > 0).length;
+    let losses = monthTrades.filter((t) => (t.pnl ?? 0) < 0).length;
+    let winTotal = monthTrades.filter((t) => (t.pnl ?? 0) > 0).reduce((s, t) => s + (t.pnl ?? 0), 0);
+    let lossTotal = monthTrades.filter((t) => (t.pnl ?? 0) < 0).reduce((s, t) => s + Math.abs(t.pnl ?? 0), 0);
     let tradeCount = monthTrades.length;
 
     // CSV取引データ（YYYY/MM形式のmonthフィールド）
     const csvMonthTrades = csvTradeData.filter((t) => t.month === monthSlash);
     if (csvMonthTrades.length > 0) {
       totalPnl += csvMonthTrades.reduce((sum, t) => sum + t.profit, 0);
-      wins += csvMonthTrades.filter((t) => t.profit > 0).length;
+      const csvWins = csvMonthTrades.filter((t) => t.profit > 0);
+      const csvLosses = csvMonthTrades.filter((t) => t.profit < 0);
+      wins += csvWins.length;
+      losses += csvLosses.length;
+      winTotal += csvWins.reduce((s, t) => s + t.profit, 0);
+      lossTotal += csvLosses.reduce((s, t) => s + Math.abs(t.profit), 0);
       tradeCount += csvMonthTrades.length;
     }
 
     const winRate = tradeCount > 0 ? (wins / tradeCount) * 100 : 0;
-    return { totalPnl, winRate, tradeCount };
+    const avgWin = wins > 0 ? winTotal / wins : 0;
+    const avgLoss = losses > 0 ? lossTotal / losses : 0;
+    const rrRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
+    const maxRisk = lookupMaxRisk(winRate, rrRatio);
+    return { totalPnl, winRate, tradeCount, rrRatio, maxRisk };
   }, [trades, csvTradeData]);
 
   return (
@@ -161,6 +174,17 @@ export function Header({ onMenuToggle }: HeaderProps) {
               </span>
               <span className="text-text-secondary">勝率</span>
               <span className="font-mono text-text-primary">{monthlyStats.winRate.toFixed(1)}%</span>
+              <span className="text-text-secondary">RR</span>
+              <span className="font-mono text-text-primary">{monthlyStats.rrRatio.toFixed(2)}</span>
+              {monthlyStats.maxRisk !== null && (
+                <>
+                  <span className="text-text-secondary">限界リスク</span>
+                  <span className="font-mono text-accent-gold">
+                    ¥{formatJPY(latestSnapshot ? latestSnapshot.totalAsset * monthlyStats.maxRisk / 100 : 0)}
+                    <span className="text-text-secondary/70 ml-0.5">({monthlyStats.maxRisk}%)</span>
+                  </span>
+                </>
+              )}
               <span className="text-text-secondary">決済</span>
               <span className="font-mono text-text-primary">{monthlyStats.tradeCount}件</span>
             </div>

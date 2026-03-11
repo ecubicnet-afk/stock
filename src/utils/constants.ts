@@ -1,7 +1,7 @@
 import type { NavItem } from '../types';
 
 export const NAV_ITEMS: NavItem[] = [
-  { path: '/', label: 'Dashboard', labelJa: 'ダッシュボード', icon: 'dashboard' },
+  { path: '/', label: 'Market', labelJa: 'マーケット', icon: 'dashboard' },
   { path: '/chart', label: 'Chart', labelJa: 'チャート', icon: 'chart' },
   { path: '/memo', label: 'Notes & Schedule', labelJa: 'メモ & スケジュール', icon: 'memo' },
   { path: '/journal', label: 'Trade', labelJa: 'トレード', icon: 'tradeAnalysis' },
