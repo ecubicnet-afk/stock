@@ -118,7 +118,9 @@ export function CloudSyncDropdown() {
                     : 'text-down bg-down/10'
                 }`}
               >
-                {syncStatus.result === 'success' ? '完了' : syncStatus.error || 'エラーが発生しました'}
+                {syncStatus.result === 'success'
+                  ? (syncStatus.error || '完了')
+                  : syncStatus.error || 'エラーが発生しました'}
               </div>
             )}
           </div>

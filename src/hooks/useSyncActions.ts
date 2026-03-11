@@ -138,9 +138,16 @@ export function useSyncActions() {
         }));
         clearResult();
       } else {
-        // データ読込成功 — ページをリロードして確実にUIに反映
-        window.location.reload();
-        return;
+        // データ読込成功 — storageイベントでReactコンポーネントを更新
+        window.dispatchEvent(new Event('storage'));
+        setStatus(s => ({
+          ...s,
+          isLoading: false,
+          lastLoadedAt: now,
+          result: 'success',
+          error: `${loadCount}件のデータを読み込みました`,
+        }));
+        clearResult();
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : '読込に失敗しました';
