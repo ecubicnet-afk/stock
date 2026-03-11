@@ -95,7 +95,7 @@ export function useSyncActions() {
 
     try {
       const entries = Object.entries(SYNC_KEYS);
-      let anyUpdated = false;
+      let loadCount = 0;
       let successCount = 0;
       const errors: string[] = [];
 
@@ -106,7 +106,7 @@ export function useSyncActions() {
             if (remote) {
               localStorage.setItem(localKey, JSON.stringify(remote.data));
               localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(remote.updatedAt));
-              anyUpdated = true;
+              loadCount++;
             }
             successCount++;
           } catch (err) {
@@ -116,25 +116,32 @@ export function useSyncActions() {
         })
       );
 
-      if (anyUpdated) {
-        window.dispatchEvent(new Event('storage'));
-      }
-
       const now = Date.now();
       if (errors.length > 0 && successCount === 0) {
         setStatus(s => ({ ...s, isLoading: false, result: 'error', error: errors[0] }));
+        clearResult();
       } else if (errors.length > 0) {
         setStatus(s => ({
           ...s,
           isLoading: false,
           lastLoadedAt: now,
           result: 'error',
-          error: `${successCount}件読込、${errors.length}件失敗`,
+          error: `${loadCount}件読込、${errors.length}件失敗`,
         }));
+        clearResult();
+      } else if (loadCount === 0) {
+        setStatus(s => ({
+          ...s,
+          isLoading: false,
+          result: 'error',
+          error: 'クラウドにデータが見つかりませんでした。先に「クラウドに保存」を実行してください。',
+        }));
+        clearResult();
       } else {
-        setStatus(s => ({ ...s, isLoading: false, lastLoadedAt: now, result: 'success' }));
+        // データ読込成功 — ページをリロードして確実にUIに反映
+        window.location.reload();
+        return;
       }
-      clearResult();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '読込に失敗しました';
       setStatus(s => ({ ...s, isLoading: false, result: 'error', error: msg }));
