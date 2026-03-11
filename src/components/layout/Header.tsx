@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useClock } from '../../hooks/useClock';
 import { useSettings } from '../../hooks/useSettings';
 import { useTrades } from '../../hooks/useTrades';
+import { usePortfolio } from '../../hooks/usePortfolio';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { SettingsModal } from '../settings/SettingsModal';
@@ -25,6 +26,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const { time, date, marketStatuses } = useClock();
   const { settings } = useSettings();
   const { trades } = useTrades();
+  const { holdings, summaryTotals } = usePortfolio();
   const [csvTradeData] = useLocalStorage<AnalysisTrade[]>('stock-app-trade-analysis', []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
@@ -36,6 +38,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const latestSnapshot = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const prevSnapshot = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
   const dailyChange = latestSnapshot && prevSnapshot ? latestSnapshot.totalAsset - prevSnapshot.totalAsset : null;
+
+  const positionStats = useMemo(() => {
+    const allHoldings = [...(holdings.spot1 || []), ...(holdings.spot2 || []), ...(holdings.margin || [])];
+    const totalPosition = allHoldings.reduce((sum, h) => sum + h.marketValue, 0);
+    const realAsset = (summaryTotals.spot1 || 0) + (summaryTotals.spot2 || 0);
+    const leverage = realAsset > 0 ? totalPosition / realAsset : 0;
+    return { totalPosition, leverage };
+  }, [holdings, summaryTotals]);
 
   const monthlyStats = useMemo(() => {
     const now = new Date();
@@ -155,6 +165,16 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <span className="text-text-secondary">前日比</span>
                   <span className={`font-mono ${dailyChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {dailyChange >= 0 ? '+' : ''}{formatJPY(dailyChange)}
+                  </span>
+                </>
+              )}
+              {positionStats.totalPosition > 0 && (
+                <>
+                  <span className="text-text-secondary">ポジション</span>
+                  <span className="font-mono text-text-primary">¥{formatJPY(positionStats.totalPosition)}</span>
+                  <span className="text-text-secondary">レバレッジ</span>
+                  <span className={`font-mono font-semibold ${positionStats.leverage > 2.5 ? 'text-red-400' : 'text-accent-gold'}`}>
+                    {positionStats.leverage.toFixed(2)}倍
                   </span>
                 </>
               )}
