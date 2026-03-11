@@ -292,7 +292,7 @@ function TradeDetailTable({ data, onSelectTrade }: { data: AnalysisTrade[]; onSe
         <div className="flex items-center gap-2">
           {onSelectTrade && <span className="text-[10px] text-accent-gold/60">行をクリックで日誌に記録</span>}
           <span className="text-xs text-text-secondary bg-bg-primary px-2 py-0.5 rounded">
-            {data.length} TRADES
+            {data.length}件
           </span>
         </div>
       </div>

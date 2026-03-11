@@ -5,11 +5,11 @@ interface FearGreedGaugeProps {
 }
 
 const ZONES = [
-  { min: 0, max: 20, label: 'EXTREME\nFEAR', labelJa: '極度の恐怖', color: '#DC2626' },
-  { min: 20, max: 40, label: 'FEAR', labelJa: '恐怖', color: '#F97316' },
-  { min: 40, max: 60, label: 'NEUTRAL', labelJa: '中立', color: '#EAB308' },
-  { min: 60, max: 80, label: 'GREED', labelJa: '強欲', color: '#84CC16' },
-  { min: 80, max: 100, label: 'EXTREME\nGREED', labelJa: '極度の強欲', color: '#22C55E' },
+  { min: 0, max: 20, label: '極度の\n恐怖', labelJa: '極度の恐怖', color: '#DC2626' },
+  { min: 20, max: 40, label: '恐怖', labelJa: '恐怖', color: '#F97316' },
+  { min: 40, max: 60, label: '中立', labelJa: '中立', color: '#EAB308' },
+  { min: 60, max: 80, label: '強欲', labelJa: '強欲', color: '#84CC16' },
+  { min: 80, max: 100, label: '極度の\n強欲', labelJa: '極度の強欲', color: '#22C55E' },
 ];
 
 const TICK_VALUES = [0, 25, 50, 75, 100];
@@ -51,7 +51,7 @@ export function FearGreedGauge({ data }: FearGreedGaugeProps) {
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-text-primary mb-2">恐怖・強欲指数</h3>
-      <p className="text-[11px] text-text-secondary/60 mb-3">Fear & Greed Index</p>
+      <p className="text-[11px] text-text-secondary/60 mb-3">CNN Fear & Greed Index</p>
 
       {/* SVG Gauge */}
       <div className="flex justify-center">
