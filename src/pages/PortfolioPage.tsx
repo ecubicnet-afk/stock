@@ -100,6 +100,8 @@ export function PortfolioPage() {
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== '');
 
     if (type.startsWith('spot')) {
+      // 既存のholdingsをクリア（CSVに保有商品がない場合に古いデータが残るのを防止）
+      setHoldings(type, []);
       for (const line of lines) {
         const cells = splitCSVLine(line);
         if (cells.includes('資産合計')) {
@@ -127,6 +129,8 @@ export function PortfolioPage() {
         addLog(`${type}: ${parsed.length}件の保有資産を抽出。`);
       }
     } else {
+      // 既存のholdingsをクリア
+      setHoldings('margin', []);
       for (const line of lines) {
         const cells = splitCSVLine(line);
         if (cells.includes('合計[円]') || cells.includes('合計［円］')) {
