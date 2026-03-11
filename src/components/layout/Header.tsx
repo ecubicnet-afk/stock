@@ -176,17 +176,15 @@ export function Header({ onMenuToggle }: HeaderProps) {
               <span className="font-mono text-text-primary">{monthlyStats.winRate.toFixed(1)}%</span>
               <span className="text-text-secondary">RR</span>
               <span className="font-mono text-text-primary">{monthlyStats.rrRatio.toFixed(2)}</span>
-              {monthlyStats.maxRisk !== null && (
-                <>
-                  <span className="text-text-secondary">限界リスク</span>
-                  <span className="font-mono text-accent-gold">
-                    ¥{formatJPY(latestSnapshot ? latestSnapshot.totalAsset * monthlyStats.maxRisk / 100 : 0)}
-                    <span className="text-text-secondary/70 ml-0.5">({monthlyStats.maxRisk}%)</span>
-                  </span>
-                </>
+              <span className="text-text-secondary">限界リスク</span>
+              {monthlyStats.maxRisk !== null ? (
+                <span className="font-mono text-accent-gold">
+                  ¥{formatJPY(latestSnapshot ? latestSnapshot.totalAsset * monthlyStats.maxRisk / 100 : 0)}
+                  <span className="text-text-secondary/70 ml-0.5">({monthlyStats.maxRisk}%)</span>
+                </span>
+              ) : (
+                <span className="font-mono text-red-400">破産圏</span>
               )}
-              <span className="text-text-secondary">決済</span>
-              <span className="font-mono text-text-primary">{monthlyStats.tradeCount}件</span>
             </div>
           ) : (
             <span className="text-text-secondary/50">今月の決済なし</span>
