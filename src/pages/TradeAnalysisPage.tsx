@@ -62,6 +62,8 @@ function computeAnalysis(data: AnalysisTrade[]): AnalysisResult | null {
 
   const monthlyMap: Record<string, { profit: number; wins: number; losses: number; winTotal: number; lossTotal: number }> = {};
   data.forEach((t) => {
+    // 月が空または不正（YYYY/MM形式でない）場合はスキップ
+    if (!t.month || !/^\d{4}\/\d{2}$/.test(t.month)) return;
     if (!monthlyMap[t.month]) monthlyMap[t.month] = { profit: 0, wins: 0, losses: 0, winTotal: 0, lossTotal: 0 };
     monthlyMap[t.month].profit += t.profit;
     if (t.profit > 0) { monthlyMap[t.month].wins += 1; monthlyMap[t.month].winTotal += t.profit; }

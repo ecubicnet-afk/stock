@@ -3,10 +3,12 @@ import { NavLink } from 'react-router-dom';
 import { useClock } from '../../hooks/useClock';
 import { useSettings } from '../../hooks/useSettings';
 import { useTrades } from '../../hooks/useTrades';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { loadSnapshots, type DailySnapshot } from '../../services/firebase';
 import { SettingsModal } from '../settings/SettingsModal';
 import { CloudSyncDropdown } from './CloudSyncDropdown';
 import { NAV_ITEMS } from '../../utils/constants';
+import type { AnalysisTrade } from '../../utils/csvParser';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -22,6 +24,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const { time, date, marketStatuses } = useClock();
   const { settings } = useSettings();
   const { trades } = useTrades();
+  const [csvTradeData] = useLocalStorage<AnalysisTrade[]>('stock-app-trade-analysis', []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<DailySnapshot[]>([]);
 
@@ -35,13 +38,26 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   const monthlyStats = useMemo(() => {
     const now = new Date();
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const monthTrades = trades.filter((t) => t.date.startsWith(monthPrefix) && t.side === 'sell' && t.pnl !== undefined);
-    const totalPnl = monthTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
-    const wins = monthTrades.filter((t) => (t.pnl ?? 0) > 0).length;
-    const winRate = monthTrades.length > 0 ? (wins / monthTrades.length) * 100 : 0;
-    return { totalPnl, winRate, tradeCount: monthTrades.length };
-  }, [trades]);
+    const monthDash = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const monthSlash = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // 手動入力トレード（YYYY-MM-DD形式）
+    const monthTrades = trades.filter((t) => t.date.startsWith(monthDash) && t.side === 'sell' && t.pnl !== undefined);
+    let totalPnl = monthTrades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+    let wins = monthTrades.filter((t) => (t.pnl ?? 0) > 0).length;
+    let tradeCount = monthTrades.length;
+
+    // CSV取引データ（YYYY/MM形式のmonthフィールド）
+    const csvMonthTrades = csvTradeData.filter((t) => t.month === monthSlash);
+    if (csvMonthTrades.length > 0) {
+      totalPnl += csvMonthTrades.reduce((sum, t) => sum + t.profit, 0);
+      wins += csvMonthTrades.filter((t) => t.profit > 0).length;
+      tradeCount += csvMonthTrades.length;
+    }
+
+    const winRate = tradeCount > 0 ? (wins / tradeCount) * 100 : 0;
+    return { totalPnl, winRate, tradeCount };
+  }, [trades, csvTradeData]);
 
   return (
     <>
