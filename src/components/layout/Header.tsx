@@ -44,7 +44,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
     const totalPosition = allHoldings.reduce((sum, h) => sum + h.marketValue, 0);
     const realAsset = (summaryTotals.spot1 || 0) + (summaryTotals.spot2 || 0);
     const leverage = realAsset > 0 ? totalPosition / realAsset : 0;
-    return { totalPosition, leverage };
+    const totalProfit = allHoldings.reduce((sum, h) => sum + h.profit, 0);
+    return { totalPosition, leverage, realAsset, totalProfit };
   }, [holdings, summaryTotals]);
 
   const monthlyStats = useMemo(() => {
@@ -152,36 +153,40 @@ export function Header({ onMenuToggle }: HeaderProps) {
         {/* 資産概要 & 今月の損益バー */}
         <div className="hidden md:flex items-center gap-6 px-4 py-1.5 border-t border-border/50 text-xs">
           {/* 資産概要 */}
-          {latestSnapshot ? (
-            <div className="flex items-center gap-4">
-              <span className="text-text-secondary">総資産</span>
-              <span className="font-mono font-semibold text-text-primary">¥{formatJPY(latestSnapshot.totalAsset)}</span>
-              <span className="text-text-secondary">含み損益</span>
-              <span className={`font-mono ${latestSnapshot.totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {latestSnapshot.totalProfit >= 0 ? '+' : ''}{formatJPY(latestSnapshot.totalProfit)}
-              </span>
-              {dailyChange !== null && (
-                <>
-                  <span className="text-text-secondary">前日比</span>
-                  <span className={`font-mono ${dailyChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {dailyChange >= 0 ? '+' : ''}{formatJPY(dailyChange)}
-                  </span>
-                </>
-              )}
-              {positionStats.totalPosition > 0 && (
-                <>
-                  <span className="text-text-secondary">ポジション</span>
-                  <span className="font-mono text-text-primary">¥{formatJPY(positionStats.totalPosition)}</span>
-                  <span className="text-text-secondary">レバレッジ</span>
-                  <span className={`font-mono font-semibold ${positionStats.leverage > 2.5 ? 'text-red-400' : 'text-accent-gold'}`}>
-                    {positionStats.leverage.toFixed(2)}倍
-                  </span>
-                </>
-              )}
-            </div>
-          ) : (
-            <span className="text-text-secondary/50">資産データなし</span>
-          )}
+          {(() => {
+            const totalAsset = latestSnapshot?.totalAsset ?? (positionStats.realAsset || 0);
+            const totalProfit = latestSnapshot?.totalProfit ?? positionStats.totalProfit;
+            const hasData = latestSnapshot || positionStats.realAsset > 0;
+            if (!hasData) return <span className="text-text-secondary/50">資産データなし</span>;
+            return (
+              <div className="flex items-center gap-4">
+                <span className="text-text-secondary">総資産</span>
+                <span className="font-mono font-semibold text-text-primary">¥{formatJPY(totalAsset)}</span>
+                <span className="text-text-secondary">含み損益</span>
+                <span className={`font-mono ${totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {totalProfit >= 0 ? '+' : ''}{formatJPY(totalProfit)}
+                </span>
+                {dailyChange !== null && (
+                  <>
+                    <span className="text-text-secondary">前日比</span>
+                    <span className={`font-mono ${dailyChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {dailyChange >= 0 ? '+' : ''}{formatJPY(dailyChange)}
+                    </span>
+                  </>
+                )}
+                {positionStats.totalPosition > 0 && (
+                  <>
+                    <span className="text-text-secondary">ポジション</span>
+                    <span className="font-mono text-text-primary">¥{formatJPY(positionStats.totalPosition)}</span>
+                    <span className="text-text-secondary">レバレッジ</span>
+                    <span className={`font-mono font-semibold ${positionStats.leverage > 2.5 ? 'text-red-400' : 'text-accent-gold'}`}>
+                      {positionStats.leverage.toFixed(2)}倍
+                    </span>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="w-px h-4 bg-border/50" />
 
@@ -199,7 +204,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               <span className="text-text-secondary">限界リスク</span>
               {monthlyStats.maxRisk !== null ? (
                 <span className="font-mono text-accent-gold">
-                  ¥{formatJPY(latestSnapshot ? latestSnapshot.totalAsset * monthlyStats.maxRisk / 100 : 0)}
+                  ¥{formatJPY((latestSnapshot?.totalAsset ?? positionStats.realAsset) * monthlyStats.maxRisk / 100)}
                   <span className="text-text-secondary/70 ml-0.5">({monthlyStats.maxRisk}%)</span>
                 </span>
               ) : (
