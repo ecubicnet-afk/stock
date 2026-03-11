@@ -141,6 +141,22 @@ function SummaryStats({ analysis }: { analysis: AnalysisResult }) {
 }
 
 function EquityCurve({ chartData }: { chartData: AnalysisResult['chartData'] }) {
+  const extendedData = useMemo(() => {
+    if (chartData.length === 0) return chartData;
+    const last = chartData[chartData.length - 1];
+    const lastDate = new Date(last.date.replace(/\//g, '-') + 'T00:00:00');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    if (lastDate >= tomorrow) return chartData;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const tomorrowStr = `${tomorrow.getFullYear()}/${pad(tomorrow.getMonth() + 1)}/${pad(tomorrow.getDate())}`;
+    return [
+      ...chartData,
+      { ...last, date: tomorrowStr, profit: 0, cumulative: last.cumulative },
+    ];
+  }, [chartData]);
+
   return (
     <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2 mb-3">
@@ -151,7 +167,7 @@ function EquityCurve({ chartData }: { chartData: AnalysisResult['chartData'] }) 
       </h3>
       <div className="h-[300px] w-full">
         <ResponsiveContainer>
-          <LineChart data={chartData}>
+          <LineChart data={extendedData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} minTickGap={40} />
             <YAxis tickFormatter={(v) => `${Math.round(v / 10000).toLocaleString()}万`} tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={60} />
