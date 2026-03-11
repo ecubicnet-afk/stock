@@ -87,8 +87,7 @@ export function useSyncActions() {
 
   const loadAll = useCallback(async () => {
     if (!isFirebaseConfigured(settings)) {
-      setStatus(s => ({ ...s, result: 'error', error: 'Firebase設定が未入力です。設定画面で入力してください。' }));
-      clearResult();
+      alert('Firebase設定が未入力です。設定画面で入力してください。');
       return;
     }
     setStatus(s => ({ ...s, isLoading: true, result: null, error: null }));
@@ -96,7 +95,6 @@ export function useSyncActions() {
     try {
       const entries = Object.entries(SYNC_KEYS);
       let loadCount = 0;
-      let successCount = 0;
       const errors: string[] = [];
 
       await Promise.all(
@@ -108,7 +106,6 @@ export function useSyncActions() {
               localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(remote.updatedAt));
               loadCount++;
             }
-            successCount++;
           } catch (err) {
             const msg = err instanceof Error ? err.message : `${syncKey}の読込に失敗`;
             errors.push(msg);
@@ -116,43 +113,21 @@ export function useSyncActions() {
         })
       );
 
-      const now = Date.now();
-      if (errors.length > 0 && successCount === 0) {
-        setStatus(s => ({ ...s, isLoading: false, result: 'error', error: errors[0] }));
-        clearResult();
-      } else if (errors.length > 0) {
-        setStatus(s => ({
-          ...s,
-          isLoading: false,
-          lastLoadedAt: now,
-          result: 'error',
-          error: `${loadCount}件読込、${errors.length}件失敗`,
-        }));
-        clearResult();
+      setStatus(s => ({ ...s, isLoading: false, lastLoadedAt: Date.now(), result: null }));
+
+      if (errors.length > 0) {
+        alert(`読込エラー: ${errors[0]}`);
       } else if (loadCount === 0) {
-        setStatus(s => ({
-          ...s,
-          isLoading: false,
-          result: 'error',
-          error: 'クラウドにデータが見つかりませんでした。先に「クラウドに保存」を実行してください。',
-        }));
-        clearResult();
+        alert('クラウドにデータが見つかりませんでした。\n先に「クラウドに保存」を実行してください。');
       } else {
         // データ読込成功 — storageイベントでReactコンポーネントを更新
         window.dispatchEvent(new Event('storage'));
-        setStatus(s => ({
-          ...s,
-          isLoading: false,
-          lastLoadedAt: now,
-          result: 'success',
-          error: `${loadCount}件のデータを読み込みました`,
-        }));
-        clearResult();
+        alert(`${loadCount}件のデータをクラウドから読み込みました。`);
       }
     } catch (err) {
+      setStatus(s => ({ ...s, isLoading: false, result: null }));
       const msg = err instanceof Error ? err.message : '読込に失敗しました';
-      setStatus(s => ({ ...s, isLoading: false, result: 'error', error: msg }));
-      clearResult();
+      alert(`読込エラー: ${msg}`);
     }
   }, [settings]);
 
