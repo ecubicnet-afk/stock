@@ -77,6 +77,28 @@ export interface AnalysisTrade {
 /**
  * CSVテキストから取引分析用データをパース（TradeAnalysis用）
  */
+/**
+ * 日付文字列を YYYY/MM/DD 形式に正規化
+ */
+function normalizeDate(raw: string): { date: string; month: string } {
+  if (!raw) return { date: '', month: '' };
+  // YYYY/MM/DD or YYYY-MM-DD
+  const isoMatch = raw.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    const date = `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+    return { date, month: `${y}/${m.padStart(2, '0')}` };
+  }
+  // MM/DD/YYYY or MM-DD-YYYY（米国式）
+  const usMatch = raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (usMatch) {
+    const [, m, d, y] = usMatch;
+    const date = `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+    return { date, month: `${y}/${m.padStart(2, '0')}` };
+  }
+  return { date: raw, month: raw.substring(0, 7) };
+}
+
 export function parseTradeAnalysisCSV(text: string, fileName: string): AnalysisTrade[] {
   const allRows = parseCSVLines(text);
   let headerIdx = -1;
@@ -91,9 +113,13 @@ export function parseTradeAnalysisCSV(text: string, fileName: string): AnalysisT
   if (headerIdx === -1) return [];
 
   const profitIdx = detectedHeaders.findIndex(
-    (h) => h.includes('実現損益［円］') || h.includes('実現損益[円]') || h === '実現損益'
+    (h) => h.includes('実現損益［円］') || h.includes('実現損益[円]')
+      || h.includes('実現損益［円換算］') || h.includes('実現損益[円換算]')
+      || h === '実現損益'
   );
   let dateIdx = detectedHeaders.findIndex((h) => h.includes('約定日'));
+  if (dateIdx === -1) dateIdx = detectedHeaders.findIndex((h) => h.includes('受渡日'));
+  if (dateIdx === -1) dateIdx = detectedHeaders.findIndex((h) => h.includes('日付'));
   if (dateIdx === -1) dateIdx = 0;
   const nameIdx = detectedHeaders.findIndex(
     (h) => h === '銘柄' || h.includes('銘柄名') || h.includes('ファンド')
@@ -117,8 +143,8 @@ export function parseTradeAnalysisCSV(text: string, fileName: string): AnalysisT
       const profitRaw = row[finalProfitIdx]?.replace(/[^-0-9.]/g, '') || '';
       const profit = parseFloat(profitRaw);
       if (isNaN(profit) || profit === 0) return null;
-      const dateStr = row[dateIdx] || '';
-      const month = dateStr.substring(0, 7);
+      const rawDate = row[dateIdx] || '';
+      const { date: dateStr, month } = normalizeDate(rawDate);
       const ticker = finalTickerIdx !== -1 ? row[finalTickerIdx] : '';
       const qtyRaw = quantityIdx !== -1 ? row[quantityIdx]?.replace(/[^-0-9.]/g, '') : '';
       const qty = qtyRaw ? parseFloat(qtyRaw) : 0;
