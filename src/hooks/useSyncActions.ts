@@ -62,22 +62,17 @@ export function useSyncActions() {
         })
       );
 
+      setStatus(s => ({ ...s, isSaving: false, lastSavedAt: now, result: null }));
+
       if (errors.length > 0 && successCount === 0) {
-        // All failed
-        setStatus(s => ({ ...s, isSaving: false, result: 'error', error: errors[0] }));
+        alert(`保存エラー: ${errors[0]}`);
       } else if (errors.length > 0) {
-        // Partial failure
-        setStatus(s => ({
-          ...s,
-          isSaving: false,
-          lastSavedAt: now,
-          result: 'error',
-          error: `${successCount}件保存、${errors.length}件失敗`,
-        }));
+        alert(`${successCount}件保存、${errors.length}件失敗\n${errors[0]}`);
+      } else if (successCount === 0) {
+        alert('保存するデータがありませんでした。');
       } else {
-        setStatus(s => ({ ...s, isSaving: false, lastSavedAt: now, result: 'success' }));
+        alert(`${successCount}件のデータをクラウドに保存しました。`);
       }
-      clearResult();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '保存に失敗しました';
       setStatus(s => ({ ...s, isSaving: false, result: 'error', error: msg }));
@@ -120,9 +115,9 @@ export function useSyncActions() {
       } else if (loadCount === 0) {
         alert('クラウドにデータが見つかりませんでした。\n先に「クラウドに保存」を実行してください。');
       } else {
-        // データ読込成功 — storageイベントでReactコンポーネントを更新
-        window.dispatchEvent(new Event('storage'));
-        alert(`${loadCount}件のデータをクラウドから読み込みました。`);
+        alert(`${loadCount}件のデータをクラウドから読み込みました。\nページをリロードして反映します。`);
+        window.location.reload();
+        return;
       }
     } catch (err) {
       setStatus(s => ({ ...s, isLoading: false, result: null }));
