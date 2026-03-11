@@ -61,10 +61,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <div className="flex items-center gap-2">
             <div className="w-1 h-8 bg-accent-cyan rounded-full" />
             <h1 className="text-lg font-bold text-text-primary hidden sm:block">
-              Investment Dashboard
+              投資ダッシュボード
             </h1>
             <h1 className="text-lg font-bold text-text-primary sm:hidden">
-              InvDash
+              投資DB
             </h1>
           </div>
 

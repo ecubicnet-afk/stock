@@ -70,7 +70,7 @@ function formatNoteDateBadge(dateStr: string): { label: string; className: strin
   const d = noteDate;
   const label = `${d.getMonth() + 1}/${d.getDate()}(${DAY_NAMES[d.getDay()]})`;
 
-  if (diffDays === 0) return { label: `${label} TODAY`, className: 'bg-accent-cyan/30 text-accent-cyan border-accent-cyan/50' };
+  if (diffDays === 0) return { label: `${label} 今日`, className: 'bg-accent-cyan/30 text-accent-cyan border-accent-cyan/50' };
   if (diffDays > 0 && diffDays <= 7) return { label, className: 'bg-accent-gold/25 text-accent-gold border-accent-gold/50' };
   if (diffDays > 7) return { label, className: 'bg-primary/10 text-secondary border-primary/20' };
   return { label, className: 'bg-primary/5 text-muted border-primary/10' };
@@ -292,7 +292,7 @@ export function StrategyCanvas({ notes, connections, drawing, onUpdateDrawing, o
               <g key={i}>
                 <line x1={col.x} y1={MARGIN_TOP} x2={col.x} y2={CANVAS_HEIGHT} stroke={col.isMonday ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'} strokeWidth={col.isMonday ? 1 : 0.5} />
                 <text x={col.x + PX_PER_DAY / 2} y={16} fill={col.isWeekend ? 'rgba(255,255,255,0.25)' : col.isMonday ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.40)'} fontSize={12} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday ? 'bold' : 'normal'}>{formatDateLabel(col.date)}</text>
-                <text x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4} fill={i === 0 ? 'rgba(0,210,255,0.7)' : col.isWeekend ? 'rgba(255,255,255,0.25)' : col.isMonday ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.40)'} fontSize={12} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday || i === 0 ? 'bold' : 'normal'}>{i === 0 ? `TODAY ${formatDateLabel(col.date)}` : formatDateLabel(col.date)}</text>
+                <text x={col.x + PX_PER_DAY / 2} y={CANVAS_HEIGHT - 4} fill={i === 0 ? 'rgba(0,210,255,0.7)' : col.isWeekend ? 'rgba(255,255,255,0.25)' : col.isMonday ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.40)'} fontSize={12} textAnchor="middle" fontFamily="monospace" fontWeight={col.isMonday || i === 0 ? 'bold' : 'normal'}>{i === 0 ? `今日 ${formatDateLabel(col.date)}` : formatDateLabel(col.date)}</text>
               </g>
             ))}
           </svg>
