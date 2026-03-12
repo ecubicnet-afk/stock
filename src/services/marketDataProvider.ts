@@ -13,9 +13,9 @@ import {
 
 const CRYPTO_TTL = 60_000;
 const FOREX_TTL = 300_000;
-const FMP_TTL = 300_000; // 5min — シンボル削減により頻度UP可能
-const SPARKLINE_TTL = 3_600_000; // 1時間 — 空結果はキャッシュしないので短めに
-const SUB_TTL = 300_000; // 5min
+const FMP_TTL = 300_000;
+const SPARKLINE_TTL = 3_600_000;
+const SUB_TTL = 300_000;
 
 export interface FetchResult {
   indices: MarketItem[];
@@ -51,7 +51,6 @@ function computeDerivedIndicators(
   const usdjpy = forex.find((i) => i.id === 'usdjpy');
   const us10y = liveSubIndicators.find((i) => i.id === 'us10y');
 
-  // NT倍率
   if (nikkei && topix && topix.currentValue > 0) {
     const ntRatio = nikkei.currentValue / topix.currentValue;
     const prevNt = nikkei.previousClose / topix.previousClose;
@@ -70,7 +69,6 @@ function computeDerivedIndicators(
     });
   }
 
-  // ドル建て日経平均
   if (nikkei && usdjpy && usdjpy.currentValue > 0) {
     const nikkeiUsd = nikkei.currentValue / usdjpy.currentValue;
     const prevNikkeiUsd = nikkei.previousClose / (usdjpy.previousClose || usdjpy.currentValue);
@@ -89,7 +87,6 @@ function computeDerivedIndicators(
     });
   }
 
-  // 日米金利差（jp10yはモック値を利用）
   if (us10y) {
     const jp10yMock = mockSubIndicators.find((i) => i.id === 'jp10y');
     if (jp10yMock) {
@@ -114,7 +111,7 @@ function computeDerivedIndicators(
   return derived;
 }
 
-export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?: string): Promise<FetchResult> {
+export async function fetchAllMarketData(dataSource: 'auto' | 'mock'): Promise<FetchResult> {
   if (dataSource === 'mock') {
     return {
       indices: mockIndices,
@@ -150,20 +147,19 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
   const crypto = cryptoResult.status === 'fulfilled' ? cryptoResult.value : mockCrypto;
   const forex = forexResult.status === 'fulfilled' ? forexResult.value : mockForex;
 
-  // FMP API: indices, commodities, sparklines, sub-indicators
-  // デフォルトはモック — dataSource: 'mock' を必ず付与してフィルタ対象にする
+  // FMP API via server-side proxy (no apiKey needed)
   let indices: MarketItem[] = mockIndices.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let commodities: MarketItem[] = mockCommodities.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let subIndicators: SubIndicator[] = mockSubIndicators.map((m) => ({ ...m, dataSource: 'mock' as const }));
   let fearGreed = mockFearGreed;
   let fmpStatus: FetchResult['fmpStatus'] = 'not-configured';
 
-  if (fmpApiKey) {
-    // スパークラインデータ（12時間キャッシュ）
+  // Always try FMP via proxy (server knows if key is configured)
+  {
     let sparklineMap = getCached<Record<string, DataPoint[]>>('fmp-sparklines', SPARKLINE_TTL);
     if (!sparklineMap) {
       try {
-        sparklineMap = await fetchFmpSparklines(fmpApiKey);
+        sparklineMap = await fetchFmpSparklines();
         if (Object.keys(sparklineMap).length > 0) {
           setCache('fmp-sparklines', sparklineMap);
         }
@@ -177,12 +173,10 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         const cached = getCached<MarketItem[]>('fmp-indices', FMP_TTL);
         if (cached) return cached;
         try {
-          const data = await fetchFmpIndices(fmpApiKey, sparklineMap ?? undefined);
+          const data = await fetchFmpIndices(sparklineMap ?? undefined);
           if (data.length > 0) setCache('fmp-indices', data);
-          console.info(`[FMP] Indices: ${data.length} items fetched`);
           return data;
-        } catch (err) {
-          console.warn('[FMP] Indices fetch failed:', err);
+        } catch {
           return [];
         }
       })(),
@@ -190,12 +184,10 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         const cached = getCached<MarketItem[]>('fmp-commodities', FMP_TTL);
         if (cached) return cached;
         try {
-          const data = await fetchFmpCommodities(fmpApiKey, sparklineMap ?? undefined);
+          const data = await fetchFmpCommodities(sparklineMap ?? undefined);
           if (data.length > 0) setCache('fmp-commodities', data);
-          console.info(`[FMP] Commodities: ${data.length} items fetched`);
           return data;
-        } catch (err) {
-          console.warn('[FMP] Commodities fetch failed:', err);
+        } catch {
           return [];
         }
       })(),
@@ -203,19 +195,16 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
         const cached = getCached<SubIndicator[]>('fmp-sub', SUB_TTL);
         if (cached) return cached;
         try {
-          const data = await fetchFmpSubIndicators(fmpApiKey);
+          const data = await fetchFmpSubIndicators();
           if (data.length > 0) setCache('fmp-sub', data);
-          console.info(`[FMP] SubIndicators: ${data.length} items fetched`);
           return data;
-        } catch (err) {
-          console.warn('[FMP] SubIndicators fetch failed:', err);
+        } catch {
           return [];
         }
       })(),
     ]);
 
     if (indicesResult.status === 'fulfilled' && indicesResult.value.length > 0) {
-      // sparklineキャッシュに現在値をappend
       if (sparklineMap) {
         for (const item of indicesResult.value) {
           const existing = sparklineMap[item.id];
@@ -255,27 +244,18 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
       commodities = [...commoditiesResult.value, ...mockCommodities.filter((m) => !liveIds.has(m.id)).map((m) => ({ ...m, dataSource: 'mock' as const }))];
     }
 
-    // サブ指標のマージ
     if (subResult.status === 'fulfilled' && subResult.value.length > 0) {
       const liveSubIndicators = subResult.value;
-
-      // 算出指標を生成
       const derivedIndicators = computeDerivedIndicators(indices, forex, liveSubIndicators);
-
-      // ライブ指標のIDセット
       const liveIds = new Set([
         ...liveSubIndicators.map((i) => i.id),
         ...derivedIndicators.map((i) => i.id),
       ]);
-
-      // モック指標にdataSource: 'mock'を付与してマージ
       const mockWithSource = mockSubIndicators
         .filter((m) => !liveIds.has(m.id))
         .map((m) => ({ ...m, dataSource: 'mock' as const }));
-
       subIndicators = [...liveSubIndicators, ...derivedIndicators, ...mockWithSource];
 
-      // Fear & Greed: VIXから算出
       const vixIndicator = liveSubIndicators.find((i) => i.id === 'vix');
       if (vixIndicator) {
         const fg = vixToFearGreed(vixIndicator.value);
@@ -283,13 +263,11 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
       }
     }
 
-    // FMPステータス算出: ライブデータが1件でもあれば 'partial'
     const liveCount =
       (indicesResult.status === 'fulfilled' ? indicesResult.value.length : 0) +
       (commoditiesResult.status === 'fulfilled' ? commoditiesResult.value.length : 0) +
       (subResult.status === 'fulfilled' ? subResult.value.length : 0);
     fmpStatus = liveCount > 0 ? 'partial' : 'failed';
-    console.info(`[FMP] fmpStatus=${fmpStatus} (liveCount=${liveCount})`);
   }
 
   return {
@@ -305,7 +283,7 @@ export async function fetchAllMarketData(dataSource: 'auto' | 'mock', fmpApiKey?
   };
 
   } catch (err) {
-    console.error('[MarketData] Critical error in fetchAllMarketData:', err);
+    console.error('[MarketData] Critical error:', err);
     return {
       indices: mockIndices,
       forex: mockForex,

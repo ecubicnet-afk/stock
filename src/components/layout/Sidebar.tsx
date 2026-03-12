@@ -1,5 +1,7 @@
+'use client';
 import { type ReactNode, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '../../utils/constants';
 import { useSchedule } from '../../hooks/useSchedule';
 import { useSidebarTodos, useSidebarPrinciples } from '../../hooks/useSidebarNotes';
@@ -87,6 +89,7 @@ const IMPORTANCE_DOT: Record<string, string> = {
 };
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const pathname = usePathname();
   const { events } = useSchedule();
   const {
     dailyItems, oneshotItems, archive,
@@ -129,23 +132,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* ナビゲーション（モバイルのみ） */}
         <nav className="p-4 space-y-1 md:hidden">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={onClose}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                   isActive
                     ? 'bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20'
                     : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
-                }`
-              }
-            >
-              {ICONS[item.icon]}
-              <span>{item.labelJa}</span>
-            </NavLink>
-          ))}
+                }`}
+              >
+                {ICONS[item.icon]}
+                <span>{item.labelJa}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* 本日の重要イベント */}

@@ -1,3 +1,4 @@
+'use client';
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, StrategyDrawing } from '../../types';
 import { DrawingLayer } from './DrawingLayer';

@@ -1,3 +1,4 @@
+'use client';
 import { useState, useRef } from 'react';
 
 function LightboxModal({ images, currentIdx, onClose, onNavigate }: {

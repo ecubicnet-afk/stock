@@ -1,14 +1,13 @@
+'use client';
 import type { Settings } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 
 const DEFAULT_SETTINGS: Settings = {
-  fmpApiKey: '',
   autoRefreshInterval: 60,
   dataSource: 'auto',
-  geminiApiKey: '',
-  firebaseProjectId: '',
-  firebaseApiKey: '',
-  firebaseAppId: '',
+  firebaseProjectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  firebaseApiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  firebaseAppId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
 };
 
 export function useSettings() {
@@ -18,5 +17,13 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, ...partial }));
   };
 
-  return { settings, updateSettings };
+  // Merge env vars as defaults (localStorage overrides if set)
+  const mergedSettings: Settings = {
+    ...settings,
+    firebaseProjectId: settings.firebaseProjectId || DEFAULT_SETTINGS.firebaseProjectId,
+    firebaseApiKey: settings.firebaseApiKey || DEFAULT_SETTINGS.firebaseApiKey,
+    firebaseAppId: settings.firebaseAppId || DEFAULT_SETTINGS.firebaseAppId,
+  };
+
+  return { settings: mergedSettings, updateSettings };
 }

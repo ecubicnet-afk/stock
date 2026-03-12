@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 import { useSettings } from '../../hooks/useSettings';
 import { testFmpConnection } from '../../services/api';
@@ -19,7 +20,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   if (!isOpen) return null;
 
-  const hasFmpKey = settings.fmpApiKey.length >= 10;
   const hasFirebaseConfig = isFirebaseConfigured(settings);
 
   const handleFirebaseTest = async () => {
@@ -34,10 +34,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setIsTesting(true);
     setTestResult(null);
     try {
-      const result = await testFmpConnection(settings.fmpApiKey);
+      const result = await testFmpConnection();
       setTestResult(result);
     } catch {
-      setTestResult({ success: false, workingSymbols: [], failedSymbols: [], message: '接続テストに失敗しました' });
+      setTestResult({ success: false, configured: false, workingSymbols: [], failedSymbols: [], message: '接続テストに失敗しました' });
     } finally {
       setIsTesting(false);
     }
@@ -69,9 +69,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <option value="mock">モックデータのみ</option>
               </select>
               <p className="text-xs text-text-secondary/60 mt-1">
-                {hasFmpKey
-                  ? '自動取得: 仮想通貨(CoinGecko)・為替(Frankfurter)・株価指数/コモディティ/VIX(FMP)をリアルタイム取得。'
-                  : '自動取得: 仮想通貨(CoinGecko)・為替(Frankfurter)をリアルタイム取得。株価指数はモックデータ。'}
+                自動取得: 仮想通貨(CoinGecko)・為替(Frankfurter)・株価指数/コモディティ/VIX(FMP)・AI分析(Gemini)をリアルタイム取得。
               </p>
             </div>
 
@@ -92,95 +90,71 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               </select>
             </div>
 
-            {/* FMP API設定 */}
+            {/* API設定（サーバーサイド環境変数で管理） */}
             <div className="p-3 bg-bg-primary/30 border border-border/50 rounded-lg space-y-3">
               <div>
                 <label className="block text-sm text-text-secondary mb-1">
-                  FMP APIキー
-                  {hasFmpKey && (
-                    <span className="ml-2 inline-flex items-center gap-1">
-                      {testResult?.success ? (
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                      ) : testResult && !testResult.success ? (
-                        <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                      )}
-                      <span className="text-xs">
-                        {testResult?.success ? '接続済み' : testResult ? 'エラー' : '未テスト'}
-                      </span>
+                  FMP / Gemini APIキー
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    {testResult?.success ? (
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                    ) : testResult && !testResult.success ? (
+                      <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                    )}
+                    <span className="text-xs">
+                      {testResult?.success ? '接続済み' : testResult ? 'エラー' : '未テスト'}
                     </span>
-                  )}
+                  </span>
                 </label>
-                <input
-                  type="password"
-                  value={settings.fmpApiKey}
-                  onChange={(e) => {
-                    updateSettings({ fmpApiKey: e.target.value });
-                    setTestResult(null);
-                  }}
-                  placeholder="APIキーを入力（株価指数の自動取得に必要）"
-                  className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
-                />
                 <p className="text-xs text-text-secondary/60 mt-1">
-                  Financial Modeling Prepの無料APIキーで株価指数・コモディティ・VIXを自動取得
+                  APIキーはサーバーサイドの環境変数（.env.local）で安全に管理されています。
+                  Vercelの場合はダッシュボードの Environment Variables で設定してください。
                 </p>
               </div>
 
-              {hasFmpKey && (
-                <div>
-                  <button
-                    onClick={handleTestConnection}
-                    disabled={isTesting}
-                    className="w-full py-1.5 bg-accent-cyan/10 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/20 transition-colors disabled:opacity-50"
-                  >
-                    {isTesting ? 'テスト中...' : '接続テスト'}
-                  </button>
+              <div>
+                <button
+                  onClick={handleTestConnection}
+                  disabled={isTesting}
+                  className="w-full py-1.5 bg-accent-cyan/10 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/20 transition-colors disabled:opacity-50"
+                >
+                  {isTesting ? 'テスト中...' : 'FMP接続テスト'}
+                </button>
 
-                  {testResult && (
-                    <div className={`mt-2 p-2 rounded text-xs ${testResult.success ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
-                      <p className="font-semibold mb-1">{testResult.message}</p>
-                      {testResult.workingSymbols.length > 0 && (
-                        <div className="mt-1">
-                          <p className="text-text-secondary/80 mb-0.5">取得可能:</p>
-                          {testResult.workingSymbols.map((s) => (
-                            <span key={s.symbol} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-emerald-500/10 rounded text-[10px]">
-                              {s.symbol} (${s.price.toLocaleString()})
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {testResult.failedSymbols.length > 0 && (
-                        <div className="mt-1">
-                          <p className="text-text-secondary/80 mb-0.5">取得不可 (モック使用):</p>
-                          {testResult.failedSymbols.map((s) => (
-                            <span key={s} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-red-500/10 rounded text-[10px]">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                {testResult && (
+                  <div className={`mt-2 p-2 rounded text-xs ${testResult.success ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
+                    <p className="font-semibold mb-1">{testResult.message}</p>
+                    {testResult.workingSymbols.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-text-secondary/80 mb-0.5">取得可能:</p>
+                        {testResult.workingSymbols.map((s) => (
+                          <span key={s.symbol} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-emerald-500/10 rounded text-[10px]">
+                            {s.symbol} (${s.price.toLocaleString()})
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {testResult.failedSymbols.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-text-secondary/80 mb-0.5">取得不可 (モック使用):</p>
+                        {testResult.failedSymbols.map((s) => (
+                          <span key={s} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-red-500/10 rounded text-[10px]">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="pt-3 border-t border-border">
-              <h3 className="text-sm font-semibold text-text-primary mb-3">資産管理 設定</h3>
+              <h3 className="text-sm font-semibold text-text-primary mb-3">クラウド同期 設定</h3>
 
               <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1">Gemini APIキー（任意）</label>
-                  <input
-                    type="password"
-                    value={settings.geminiApiKey}
-                    onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
-                    placeholder="セクター分析・指数比較に使用"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
-                  />
-                </div>
-
                 <div className="p-3 bg-bg-primary/30 border border-border/50 rounded-lg space-y-3">
                   <div>
                     <label className="block text-sm text-text-secondary mb-1">
@@ -208,7 +182,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         setFirebaseTestResult(null);
                       }}
                       onBlur={(e) => updateSettings({ firebaseProjectId: e.target.value.trim() })}
-                      placeholder="クラウド同期に使用"
+                      placeholder="クラウド同期に使用（環境変数で設定済みの場合は空欄可）"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
                   </div>
@@ -223,7 +197,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         setFirebaseTestResult(null);
                       }}
                       onBlur={(e) => updateSettings({ firebaseApiKey: e.target.value.trim() })}
-                      placeholder="Firebase Web APIキー"
+                      placeholder="Firebase Web APIキー（環境変数で設定済みの場合は空欄可）"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
                   </div>
@@ -238,7 +212,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         setFirebaseTestResult(null);
                       }}
                       onBlur={(e) => updateSettings({ firebaseAppId: e.target.value.trim() })}
-                      placeholder="Firebase App ID"
+                      placeholder="Firebase App ID（環境変数で設定済みの場合は空欄可）"
                       className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
                     />
                   </div>
@@ -264,14 +238,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   )}
 
                   <p className="text-xs text-text-secondary/60">
-                    Firebase設定を入力するとクラウド同期（全デバイス間のデータ共有）が有効になります。
-                    Firebaseコンソールで「匿名認証」を有効にしてください。
+                    Firebase設定は環境変数（NEXT_PUBLIC_FIREBASE_*）で管理できます。
+                    上記に入力すると環境変数より優先されます。
                   </p>
                 </div>
-
-                <p className="text-xs text-text-secondary/60">
-                  Gemini APIキーを入力するとセクター分析・指数比較が利用可能です。
-                </p>
               </div>
             </div>
           </div>

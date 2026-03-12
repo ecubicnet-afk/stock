@@ -1,3 +1,4 @@
+'use client';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { StrategyDrawing, DrawingPath, DrawingText } from '../../types';
 

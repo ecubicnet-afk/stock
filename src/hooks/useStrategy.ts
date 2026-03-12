@@ -1,3 +1,4 @@
+'use client';
 import { useCallback } from 'react';
 import type { StrategyData, StrategyNote, StrategyConnection, StrategyNoteRegion, StrategyNoteDirection, PositionSizing, ScenarioDescription, StrategyDrawing } from '../types';
 import { useLocalStorage } from './useLocalStorage';

@@ -1,3 +1,4 @@
+'use client';
 import type { ScheduleEvent } from '../../types';
 
 interface Props {

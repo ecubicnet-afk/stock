@@ -1,3 +1,4 @@
+'use client';
 export function Footer() {
   return (
     <footer className="py-4 px-6 text-center text-text-secondary text-xs border-t border-border">

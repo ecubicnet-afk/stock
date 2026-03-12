@@ -1,3 +1,4 @@
+'use client';
 import type { JournalEntry, TradeRecord } from '../../types';
 
 interface Props {

@@ -1,10 +1,8 @@
 import type { MarketItem, DataPoint, SubIndicator } from '../../types';
 
-// --- FMP Stable API ---
-// FMPは /api/v3/ を廃止し /stable/ に移行済み。
-// シンボルはパスではなくクエリパラメータ (?symbol=) で渡す。
-
-const FMP_BASE = 'https://financialmodelingprep.com/stable';
+// --- FMP API via Next.js Route Handlers ---
+// All API calls go through /api/fmp/* server-side proxy.
+// API keys are never sent to the browser.
 
 interface FmpQuote {
   symbol: string;
@@ -46,30 +44,21 @@ const COMMODITY_SYMBOLS: Record<string, SymbolMeta> = {
   'GCUSD': { id: 'gold', name: 'Gold', nameJa: '金', category: 'commodity', currency: 'USD' },
 };
 
-// サブ指標用シンボル
 const SUB_INDICATOR_SYMBOLS: Record<string, { id: string; nameJa: string; category: SubIndicator['category']; unit: string }> = {
   '^VIX': { id: 'vix', nameJa: 'VIX (恐怖指数)', category: 'volatility', unit: 'pt' },
   '^TNX': { id: 'us10y', nameJa: '米国10年国債利回り', category: 'bonds', unit: '%' },
 };
 
-// --- Core fetch ---
+// --- Core fetch (via server proxy) ---
 
-async function fetchFmpQuotes(symbols: string[], apiKey: string): Promise<FmpQuote[]> {
-  // /stable/quote?symbol=SYM1,SYM2&apikey=KEY
+async function fetchFmpQuotes(symbols: string[]): Promise<FmpQuote[]> {
   const symbolList = symbols.join(',');
-  const url = `${FMP_BASE}/quote?symbol=${encodeURIComponent(symbolList)}&apikey=${apiKey}`;
+  const url = `/api/fmp/quotes?symbols=${encodeURIComponent(symbolList)}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.warn(`[FMP] Quote API error ${res.status}: ${text.slice(0, 200)}`);
-      throw new Error(`FMP API error: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`FMP API error: ${res.status}`);
     const data = await res.json();
-    if (!Array.isArray(data)) {
-      console.warn('[FMP] Unexpected response format:', JSON.stringify(data).slice(0, 200));
-      return [];
-    }
+    if (!Array.isArray(data)) return [];
     return data;
   } catch (err) {
     console.warn('[FMP] fetchFmpQuotes failed:', err);
@@ -77,49 +66,36 @@ async function fetchFmpQuotes(symbols: string[], apiKey: string): Promise<FmpQuo
   }
 }
 
-async function fetchFmpHistoricalSingle(symbol: string, apiKey: string): Promise<DataPoint[]> {
-  // /stable/historical-price-eod/full?symbol=SYM&from=DATE&to=DATE&apikey=KEY
-  const to = new Date().toISOString().split('T')[0];
-  const from = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-  const url = `${FMP_BASE}/historical-price-eod/full?symbol=${encodeURIComponent(symbol)}&from=${from}&to=${to}&apikey=${apiKey}`;
+async function fetchFmpHistoricalSingle(symbol: string): Promise<DataPoint[]> {
+  const url = `/api/fmp/historical?symbol=${encodeURIComponent(symbol)}`;
   try {
     const res = await fetch(url);
-    if (!res.ok) {
-      console.warn(`[FMP] Historical API error ${res.status} for ${symbol}`);
-      return [];
-    }
+    if (!res.ok) return [];
     const data = await res.json();
 
-    // stable APIのレスポンス形式に対応（配列 or {historical:[...]}）
     let historical: FmpHistoricalDay[];
     if (Array.isArray(data)) {
       historical = data;
     } else if (data && Array.isArray(data.historical)) {
       historical = data.historical;
     } else {
-      console.warn(`[FMP] Unexpected historical response for ${symbol}`);
       return [];
     }
 
     if (historical.length === 0) return [];
-
-    // 日付昇順にソート
     historical.sort((a, b) => a.date.localeCompare(b.date));
-
     return historical.slice(-20).map((d) => ({ time: d.date, value: d.close }));
-  } catch (err) {
-    console.warn(`[FMP] Historical fetch failed for ${symbol}:`, err);
+  } catch {
     return [];
   }
 }
 
-// 全シンボルのスパークラインデータを並列取得
-export async function fetchFmpSparklines(apiKey: string): Promise<Record<string, DataPoint[]>> {
+export async function fetchFmpSparklines(): Promise<Record<string, DataPoint[]>> {
   const allSymbols = { ...INDEX_SYMBOLS, ...COMMODITY_SYMBOLS };
   const entries = Object.entries(allSymbols);
   const results = await Promise.allSettled(
     entries.map(async ([symbol, meta]) => {
-      const data = await fetchFmpHistoricalSingle(symbol, apiKey);
+      const data = await fetchFmpHistoricalSingle(symbol);
       return { id: meta.id, data };
     })
   );
@@ -139,19 +115,11 @@ function mapQuotesToMarketItems(
   symbolMap: Record<string, SymbolMeta>,
   sparklineMap?: Record<string, DataPoint[]>
 ): MarketItem[] {
-  const expectedSymbols = Object.keys(symbolMap);
-  const receivedSymbols = quotes.map((q) => q.symbol);
-  console.info(`[FMP] mapQuotes: expected=${expectedSymbols.join(',')} received=${receivedSymbols.join(',')}`);
-
   const items: MarketItem[] = [];
   for (const quote of quotes) {
-    // シンボル正規化: FMPが %5E 形式で返す場合に対応
     const normalizedSymbol = decodeURIComponent(quote.symbol);
     const meta = symbolMap[quote.symbol] ?? symbolMap[normalizedSymbol];
-    if (!meta) {
-      console.warn(`[FMP] Unknown symbol in response: "${quote.symbol}" (normalized: "${normalizedSymbol}")`);
-      continue;
-    }
+    if (!meta) continue;
     if (!quote.price) continue;
     const sparkline = sparklineMap?.[meta.id] ?? [];
     items.push({
@@ -173,49 +141,42 @@ function mapQuotesToMarketItems(
   return items;
 }
 
-// --- Public API ---
+// --- Public API (no apiKey parameter needed) ---
 
-// バッチ取得 → 失敗時は個別フォールバック
-async function fetchQuotesWithFallback(symbols: string[], apiKey: string): Promise<FmpQuote[]> {
+async function fetchQuotesWithFallback(symbols: string[]): Promise<FmpQuote[]> {
   try {
-    const quotes = await fetchFmpQuotes(symbols, apiKey);
+    const quotes = await fetchFmpQuotes(symbols);
     if (quotes.length > 0) return quotes;
-    console.warn('[FMP] Batch returned 0 quotes, trying individual symbols...');
-  } catch (err) {
-    console.warn('[FMP] Batch fetch failed, trying individual symbols...', err);
+  } catch {
+    // Fall through to individual
   }
-  // 個別フォールバック
   const allQuotes: FmpQuote[] = [];
   for (const symbol of symbols) {
     try {
-      const quotes = await fetchFmpQuotes([symbol], apiKey);
+      const quotes = await fetchFmpQuotes([symbol]);
       allQuotes.push(...quotes);
     } catch {
-      console.warn(`[FMP] Individual fetch failed for ${symbol}`);
+      // skip
     }
   }
   return allQuotes;
 }
 
-export async function fetchFmpIndices(apiKey: string, sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
+export async function fetchFmpIndices(sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
   const symbols = Object.keys(INDEX_SYMBOLS);
-  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
-  console.info(`[FMP] fetchFmpIndices: ${quotes.length} quotes for ${symbols.length} symbols`);
+  const quotes = await fetchQuotesWithFallback(symbols);
   return mapQuotesToMarketItems(quotes, INDEX_SYMBOLS, sparklineMap);
 }
 
-export async function fetchFmpCommodities(apiKey: string, sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
+export async function fetchFmpCommodities(sparklineMap?: Record<string, DataPoint[]>): Promise<MarketItem[]> {
   const symbols = Object.keys(COMMODITY_SYMBOLS);
-  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
-  console.info(`[FMP] fetchFmpCommodities: ${quotes.length} quotes for ${symbols.length} symbols`);
+  const quotes = await fetchQuotesWithFallback(symbols);
   return mapQuotesToMarketItems(quotes, COMMODITY_SYMBOLS, sparklineMap);
 }
 
-// サブ指標(VIX, 米10年国債)を取得
-export async function fetchFmpSubIndicators(apiKey: string): Promise<SubIndicator[]> {
+export async function fetchFmpSubIndicators(): Promise<SubIndicator[]> {
   const symbols = Object.keys(SUB_INDICATOR_SYMBOLS);
-  const quotes = await fetchQuotesWithFallback(symbols, apiKey);
-  console.info(`[FMP] fetchFmpSubIndicators: ${quotes.length} quotes for ${symbols.length} symbols`);
+  const quotes = await fetchQuotesWithFallback(symbols);
   const indicators: SubIndicator[] = [];
   for (const quote of quotes) {
     const normalizedSymbol = decodeURIComponent(quote.symbol);
@@ -249,61 +210,17 @@ export async function fetchFmpSubIndicators(apiKey: string): Promise<SubIndicato
 
 export interface FmpTestResult {
   success: boolean;
-  workingSymbols: { symbol: string; name: string; price: number }[];
+  configured: boolean;
+  workingSymbols: { symbol: string; price: number }[];
   failedSymbols: string[];
   message: string;
 }
 
-export async function testFmpConnection(apiKey: string): Promise<FmpTestResult> {
-  if (!apiKey || apiKey.length < 10) {
-    return { success: false, workingSymbols: [], failedSymbols: [], message: 'APIキーが無効です' };
-  }
-
-  const working: FmpTestResult['workingSymbols'] = [];
-  const failed: string[] = [];
-
-  // 全シンボルリスト
-  const allEntries: { symbol: string; label: string }[] = [
-    ...Object.entries(INDEX_SYMBOLS).map(([s, m]) => ({ symbol: s, label: `${m.nameJa} (${s})` })),
-    ...Object.entries(COMMODITY_SYMBOLS).map(([s, m]) => ({ symbol: s, label: `${m.nameJa} (${s})` })),
-    ...Object.entries(SUB_INDICATOR_SYMBOLS).map(([s, m]) => ({ symbol: s, label: `${m.nameJa} (${s})` })),
-  ];
-
-  const allSymbols = allEntries.map((e) => e.symbol);
-
+export async function testFmpConnection(): Promise<FmpTestResult> {
   try {
-    // バッチ取得
-    const quotes = await fetchFmpQuotes(allSymbols, apiKey);
-    const quoteMap = new Map(quotes.filter((q) => q.price > 0).map((q) => [q.symbol, q]));
-
-    for (const entry of allEntries) {
-      const quote = quoteMap.get(entry.symbol);
-      if (quote) {
-        working.push({ symbol: entry.symbol, name: entry.label, price: quote.price });
-      } else {
-        failed.push(entry.symbol);
-      }
-    }
+    const res = await fetch('/api/fmp/test');
+    return await res.json();
   } catch {
-    // バッチ失敗 → 個別テスト
-    for (const entry of allEntries) {
-      try {
-        const quotes = await fetchFmpQuotes([entry.symbol], apiKey);
-        if (quotes.length > 0 && quotes[0].price > 0) {
-          working.push({ symbol: entry.symbol, name: entry.label, price: quotes[0].price });
-        } else {
-          failed.push(entry.symbol);
-        }
-      } catch {
-        failed.push(entry.symbol);
-      }
-    }
+    return { success: false, configured: false, workingSymbols: [], failedSymbols: [], message: '接続テストに失敗しました' };
   }
-
-  const success = working.length > 0;
-  const message = success
-    ? `接続成功: ${working.length}/${allEntries.length}シンボル取得可能`
-    : 'APIキーが無効、またはすべてのシンボルが取得不可です';
-
-  return { success, workingSymbols: working, failedSymbols: failed, message };
 }

@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
@@ -94,7 +95,7 @@ function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
   );
 }
 
-async function organizeJournalTextWithAI(html: string, geminiApiKey: string): Promise<string> {
+async function organizeJournalTextWithAI(html: string): Promise<string> {
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
   const plainText = tmp.textContent || tmp.innerText || '';
@@ -118,11 +119,11 @@ async function organizeJournalTextWithAI(html: string, geminiApiKey: string): Pr
 ## 入力テキスト
 ${plainText}`;
 
-  return callGemini(geminiApiKey, prompt);
+  return callGemini(prompt);
 }
 
 export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
-  const { settings } = useSettings();
+  // Settings no longer needed - API keys managed server-side
   const [conditionRating, setConditionRating] = useState(5);
   const [disciplineRating, setDisciplineRating] = useState(5);
   const [volatilityRating, setVolatilityRating] = useState(5);
@@ -364,13 +365,9 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
 
             <button
               onClick={async () => {
-                if (!settings.geminiApiKey) {
-                  alert('設定画面でGemini APIキーを入力してください');
-                  return;
-                }
                 setIsOrganizing(true);
                 try {
-                  const organized = await organizeJournalTextWithAI(notes, settings.geminiApiKey);
+                  const organized = await organizeJournalTextWithAI(notes);
                   setNotes(organized);
                 } catch (err) {
                   alert('整理に失敗しました: ' + (err instanceof Error ? err.message : '不明なエラー'));

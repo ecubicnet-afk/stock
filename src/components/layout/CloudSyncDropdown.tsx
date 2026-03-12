@@ -1,3 +1,4 @@
+'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useSyncActions } from '../../hooks/useSyncActions';
 
