@@ -4,6 +4,8 @@ import { useLocalStorage } from './useLocalStorage';
 export interface HoldingItem {
   code: string;
   name: string;
+  price: number;
+  quantity: number;
   marketValue: number;
   profit: number;
   profitRate: number;

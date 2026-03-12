@@ -119,6 +119,8 @@ export function PortfolioPage() {
           return {
             code: obj['銘柄コード・ティッカー'] || obj['銘柄コード'] || cells[1] || '',
             name: obj['銘柄'] || obj['銘柄名'] || cells[2] || '',
+            price: parseNumber(obj['現在値'] || obj['現在値[円]'] || obj['現在値［円］'] || ''),
+            quantity: parseNumber(obj['数量'] || obj['保有数量'] || ''),
             marketValue: parseNumber(obj['時価評価額[円]'] || obj['時価評価額［円］'] || ''),
             profit: parseNumber(obj['評価損益[円]'] || obj['評価損益額［円］'] || ''),
             profitRate: parseNumber(obj['評価損益[％]'] || obj['評価損益率［％］'] || ''),
@@ -149,6 +151,8 @@ export function PortfolioPage() {
           return {
             code: obj['銘柄コード'] || cells[1] || '',
             name: obj['銘柄名'] || obj['銘柄'] || cells[2] || '',
+            price: parseNumber(obj['現在値'] || obj['現在値［円］'] || obj['現在値[円]'] || ''),
+            quantity: parseNumber(obj['数量'] || obj['建株数'] || obj['建数量'] || ''),
             marketValue: parseNumber(obj['時価評価額［円］'] || obj['時価評価額[円]'] || ''),
             profit: parseNumber(obj['評価損益額［円］'] || obj['評価損益額[円]'] || ''),
             profitRate: parseNumber(obj['評価損益率［％］'] || obj['評価損益率[％]'] || ''),
@@ -198,8 +202,10 @@ export function PortfolioPage() {
         map.set(code, { ...item, sector: attr.sector, types: new Set([item.type]) });
       } else {
         const existing = map.get(code)!;
+        existing.quantity += item.quantity;
         existing.marketValue += item.marketValue;
         existing.profit += item.profit;
+        existing.price = item.price || existing.price;
         existing.types.add(item.type);
       }
     });
@@ -374,7 +380,7 @@ export function PortfolioPage() {
             </svg>
             資産管理
           </h1>
-          <p className="text-xs text-text-secondary mt-0.5">楽天証券CSV：ポートフォリオ分析</p>
+          <p className="text-sm text-text-secondary mt-0.5">楽天証券CSV：ポートフォリオ分析</p>
         </div>
         <div className="flex gap-2 items-center">
           <div className="flex items-center bg-bg-card/70 border border-border rounded-lg px-2 py-1.5">
@@ -606,6 +612,8 @@ export function PortfolioPage() {
                 <thead className="text-text-secondary text-xs border-b border-border">
                   <tr>
                     <th className="pb-3 px-3 cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('name')}>銘柄 / コード</th>
+                    <th className="pb-3 px-3 text-right cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('price')}>株価</th>
+                    <th className="pb-3 px-3 text-right cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('quantity')}>株数</th>
                     <th className="pb-3 px-3 text-right cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('portfolioWeight')}>比率</th>
                     <th className="pb-3 px-3 text-right cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('marketValue')}>評価額</th>
                     <th className="pb-3 px-3 text-right cursor-pointer hover:text-accent-cyan" onClick={() => handleSort('profit')}>評価損益 / 率</th>
@@ -628,6 +636,8 @@ export function PortfolioPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="py-3 px-3 text-right font-mono text-text-primary">¥{item.price > 0 ? item.price.toLocaleString() : '-'}</td>
+                      <td className="py-3 px-3 text-right font-mono text-text-primary">{item.quantity > 0 ? item.quantity.toLocaleString() : '-'}</td>
                       <td className="py-3 px-3 text-right font-mono text-text-primary">{(item.portfolioWeight || 0).toFixed(2)}%</td>
                       <td className="py-3 px-3 text-right font-mono font-bold text-text-primary">¥{item.marketValue.toLocaleString()}</td>
                       <td className="py-3 px-3 text-right">
