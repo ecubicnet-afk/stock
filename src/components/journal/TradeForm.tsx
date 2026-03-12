@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import type { TradeRecord } from '../../types';
 import { ImageAttachment } from '../common/ImageAttachment';

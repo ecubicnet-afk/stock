@@ -1,3 +1,4 @@
+'use client';
 import type { MarketSummary as MarketSummaryType } from '../../types';
 
 interface MarketSummaryProps {

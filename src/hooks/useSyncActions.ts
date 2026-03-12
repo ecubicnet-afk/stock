@@ -1,3 +1,4 @@
+'use client';
 import { useState, useCallback, useRef } from 'react';
 import { useSettings } from './useSettings';
 import { isFirebaseConfigured } from '../services/firebase';

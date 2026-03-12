@@ -1,5 +1,7 @@
+'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { NavLink } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useClock } from '../../hooks/useClock';
 import { useSettings } from '../../hooks/useSettings';
 import { useTrades } from '../../hooks/useTrades';
@@ -23,6 +25,7 @@ function formatJPY(value: number): string {
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
+  const pathname = usePathname();
   const { time, date, marketStatuses } = useClock();
   const { settings } = useSettings();
   const { trades } = useTrades();
@@ -218,21 +221,22 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
         {/* ナビゲーションタブ（md以上） */}
         <nav className="hidden md:flex items-center gap-1 px-4 py-1 border-t border-border/50">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `px-4 py-2 text-sm rounded-md transition-all ${
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`px-4 py-2 text-sm rounded-md transition-all ${
                   isActive
                     ? 'bg-accent-cyan/10 text-accent-cyan font-semibold'
                     : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
-                }`
-              }
-            >
-              {item.labelJa}
-            </NavLink>
-          ))}
+                }`}
+              >
+                {item.labelJa}
+              </Link>
+            );
+          })}
         </nav>
       </header>
 

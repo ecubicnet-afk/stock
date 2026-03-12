@@ -1,3 +1,4 @@
+'use client';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import type { DataPoint } from '../../types';
 

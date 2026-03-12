@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import type { MarketItem } from '../../types';
 import { formatNumber, formatChange, formatPercent, getChangeColor } from '../../utils/formatters';

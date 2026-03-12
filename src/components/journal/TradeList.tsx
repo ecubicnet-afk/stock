@@ -1,3 +1,4 @@
+'use client';
 import type { TradeRecord } from '../../types';
 import { ImageThumbnails } from '../common/ImageAttachment';
 

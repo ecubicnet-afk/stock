@@ -1,3 +1,4 @@
+'use client';
 import type { MarketItem } from '../../types';
 import { IndexCard } from './IndexCard';
 import { IndexCardSkeleton } from './IndexCardSkeleton';

@@ -1,3 +1,4 @@
+'use client';
 import type { MemoEntry } from '../types';
 import { useLocalStorage } from './useLocalStorage';
 

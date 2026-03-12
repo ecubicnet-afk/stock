@@ -1,3 +1,4 @@
+'use client';
 export function HeatmapPlaceholder() {
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-8 text-center opacity-60">

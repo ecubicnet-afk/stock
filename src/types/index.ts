@@ -88,10 +88,9 @@ export interface ScheduleEvent {
 
 // Settings
 export interface Settings {
-  fmpApiKey: string;
   autoRefreshInterval: number;
   dataSource: 'auto' | 'mock';
-  geminiApiKey: string;
+  // Firebase config (NEXT_PUBLIC_ env vars, with localStorage override)
   firebaseProjectId: string;
   firebaseApiKey: string;
   firebaseAppId: string;

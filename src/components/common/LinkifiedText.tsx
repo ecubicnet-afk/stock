@@ -1,3 +1,4 @@
+'use client';
 const URL_REGEX = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
 
 interface Props {

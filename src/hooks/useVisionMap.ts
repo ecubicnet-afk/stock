@@ -1,3 +1,4 @@
+'use client';
 import { useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import type { VisionMapData, VisionDream, VisionImage } from '../types';

@@ -1,3 +1,4 @@
+'use client';
 export function IndexCardSkeleton() {
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4 animate-pulse">

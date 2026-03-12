@@ -1,3 +1,4 @@
+'use client';
 import type { FearGreedData } from '../../types';
 
 interface FearGreedGaugeProps {

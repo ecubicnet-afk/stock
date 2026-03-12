@@ -1,3 +1,4 @@
+'use client';
 import type { PositionSizing } from '../../types';
 
 interface PositionCalculatorProps {

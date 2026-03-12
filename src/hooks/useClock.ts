@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import type { MarketStatus } from '../types';
 import { MARKET_HOURS } from '../utils/constants';

@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useCallback } from 'react';
 import type { MarketItem, SubIndicator, FearGreedData, MarketSummary } from '../types';
 import { fetchAllMarketData } from '../services/marketDataProvider';
@@ -33,7 +34,7 @@ export function useMarketData(): MarketData {
 
   const fetchData = useCallback(async () => {
     try {
-      const result = await fetchAllMarketData(settings.dataSource, settings.fmpApiKey);
+      const result = await fetchAllMarketData(settings.dataSource);
       setData({
         indices: result.indices,
         forex: result.forex,
@@ -51,7 +52,7 @@ export function useMarketData(): MarketData {
     } finally {
       setIsLoading(false);
     }
-  }, [settings.dataSource, settings.fmpApiKey]);
+  }, [settings.dataSource]);
 
   useEffect(() => {
     fetchData();

@@ -1,3 +1,4 @@
+'use client';
 import type { SubIndicator } from '../../types';
 import { formatChange, formatPercent, getChangeColor } from '../../utils/formatters';
 import { CATEGORY_LABELS } from '../../utils/constants';
