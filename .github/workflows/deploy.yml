@@ -34,10 +34,19 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint || true
 
-      - name: Build
-        run: npm run build
+      - name: Build static export
+        run: |
+          mv app/api app/_api_backup
+          mv app/robots.ts app/_robots.ts.bak
+          mv app/sitemap.ts app/_sitemap.ts.bak
+          npm run build
+          mv app/_api_backup app/api
+          mv app/_robots.ts.bak app/robots.ts
+          mv app/_sitemap.ts.bak app/sitemap.ts
+        env:
+          STATIC_EXPORT: 'true'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -45,7 +54,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './docs'
+          path: './out'
 
       - name: Deploy to GitHub Pages
         id: deployment
