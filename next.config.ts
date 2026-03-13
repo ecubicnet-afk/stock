@@ -4,7 +4,7 @@ const isStaticExport = process.env.STATIC_EXPORT === 'true';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  ...(isStaticExport ? { output: 'export' } : {}),
+  ...(isStaticExport ? { output: 'export', basePath: '/stock' } : {}),
   ...(!isStaticExport
     ? {
         async headers() {
