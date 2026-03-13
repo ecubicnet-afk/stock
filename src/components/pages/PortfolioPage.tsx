@@ -9,6 +9,7 @@ import { usePortfolio, type HoldingItem } from '@/src/hooks/usePortfolio';
 import { fetchSectorClassification, fetchIndexData } from '@/src/services/geminiApi';
 import { saveSnapshot, loadSnapshots, deleteSnapshot } from '@/src/services/firebase';
 import { readFileAsText } from '@/src/utils/csvParser';
+import { CsvUploader } from '@/src/components/portfolio/CsvUploader';
 
 // Extended type for merged view (types is non-serializable Set, used only in-memory)
 interface MergedHoldingItem extends HoldingItem {
@@ -417,29 +418,8 @@ export function PortfolioPage() {
 
       {/* CSV Upload + AI buttons */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-        <div className="md:col-span-8 relative group">
-          <input type="file" multiple accept=".csv" onChange={handleBulkUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-          <div className="p-6 rounded-xl border-2 border-dashed border-accent-cyan/30 bg-bg-card/70 hover:border-accent-cyan/50 transition-all flex flex-col items-center justify-center text-center">
-            <svg className="w-8 h-8 text-accent-cyan/60 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h4 className="text-sm font-semibold text-text-primary">CSVを一括アップロード</h4>
-            <p className="text-xs text-text-secondary mt-1">現物2つ、信用1つのファイルをまとめて選択</p>
-            <div className="flex gap-3 mt-3">
-              {Object.entries(files).map(([key, val]) => (
-                <div key={key} className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${val ? 'bg-up/10 text-up' : 'bg-bg-primary text-text-secondary/50'}`}>
-                  {val ? (
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <span className="w-3 h-3 rounded-full border border-current opacity-30" />
-                  )}
-                  {key === 'margin' ? '信用' : key === 'spot1' ? '口座1' : '口座2'}
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="md:col-span-8">
+          <CsvUploader onFilesSelected={handleBulkUpload} logs={logs} />
         </div>
         <div className="md:col-span-4 flex flex-col gap-2">
           <button

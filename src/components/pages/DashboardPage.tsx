@@ -1,10 +1,13 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { useMarketData } from '@/src/hooks/useMarketData';
 import { IndexCard } from '@/src/components/dashboard/IndexCard';
 import { IndexCardSkeleton } from '@/src/components/dashboard/IndexCardSkeleton';
 import { SubIndicatorTable } from '@/src/components/dashboard/SubIndicatorTable';
 import { FearGreedGauge } from '@/src/components/dashboard/FearGreedGauge';
+import { Badge } from '@/src/components/ui/Badge';
+
+const MemoizedIndexCard = memo(IndexCard, (prev, next) => prev.item.id === next.item.id && prev.item.currentValue === next.item.currentValue && prev.item.change === next.item.change);
 
 // ダッシュボードに表示するシンボル（表示順）
 const DASHBOARD_IDS = [
@@ -39,17 +42,11 @@ export function DashboardPage() {
   return (
     <div className="space-y-6 py-4">
       {/* FMPステータス + 最終更新日時 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          {fmpStatus === 'partial' && (
-            <span className="text-xs font-mono px-2 py-1 rounded bg-up/10 text-up">FMP API: ライブ取得中</span>
-          )}
-          {fmpStatus === 'failed' && (
-            <span className="text-xs font-mono px-2 py-1 rounded bg-down/10 text-down">FMP API: 接続失敗（モック表示中）</span>
-          )}
-          {fmpStatus === 'not-configured' && (
-            <span className="text-xs font-mono px-2 py-1 rounded bg-text-secondary/10 text-text-secondary">APIキー未設定（モック表示中）</span>
-          )}
+          {fmpStatus === 'partial' && <Badge variant="success">FMP API: ライブ取得中</Badge>}
+          {fmpStatus === 'failed' && <Badge variant="danger">FMP API: 接続失敗（モック表示中）</Badge>}
+          {fmpStatus === 'not-configured' && <Badge variant="neutral">APIキー未設定（モック表示中）</Badge>}
         </div>
         <div>
           {isLoading ? (
@@ -62,6 +59,22 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {/* FMP未設定ガイド */}
+      {fmpStatus === 'not-configured' && (
+        <div className="bg-bg-card/70 backdrop-blur-sm border border-info/20 rounded-xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-info shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="text-sm text-text-primary font-medium">リアルタイムデータを有効にする</p>
+            <p className="text-xs text-text-secondary mt-1">
+              右上の設定アイコンからFMP APIキーを登録すると、リアルタイムの市場データが表示されます。
+              現在はモックデータを表示中です。
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 主要指数 8シンボル */}
       <section>
         <h2 className="text-base font-semibold text-text-primary mb-3 flex items-center gap-2">
@@ -71,7 +84,7 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {isLoading
             ? Array.from({ length: 8 }).map((_, i) => <IndexCardSkeleton key={i} />)
-            : dashboardItems.map((item) => <IndexCard key={item.id} item={item} />)}
+            : dashboardItems.map((item) => <MemoizedIndexCard key={item.id} item={item} />)}
         </div>
       </section>
 
