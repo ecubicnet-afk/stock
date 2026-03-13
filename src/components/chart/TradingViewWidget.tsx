@@ -13,7 +13,10 @@ export function TradingViewWidget({ symbol, height = 500 }: TradingViewWidgetPro
     const container = containerRef.current;
     if (!container) return;
 
-    container.innerHTML = '';
+    // Clear previous widget
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
 
     const widgetDiv = document.createElement('div');
     widgetDiv.className = 'tradingview-widget-container__widget';
@@ -25,7 +28,7 @@ export function TradingViewWidget({ symbol, height = 500 }: TradingViewWidgetPro
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
     script.async = true;
-    script.innerHTML = JSON.stringify({
+    script.textContent = JSON.stringify({
       symbol,
       width: '100%',
       height,
@@ -40,12 +43,20 @@ export function TradingViewWidget({ symbol, height = 500 }: TradingViewWidgetPro
       withdateranges: true,
       support_host: 'https://www.tradingview.com',
     });
+    script.onerror = () => {
+      if (container) {
+        const msg = document.createElement('div');
+        msg.textContent = 'チャートの読み込みに失敗しました';
+        msg.className = 'text-text-secondary text-sm text-center py-8';
+        container.appendChild(msg);
+      }
+    };
 
     container.appendChild(script);
 
     return () => {
-      if (container) {
-        container.innerHTML = '';
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
       }
     };
   }, [symbol, height]);

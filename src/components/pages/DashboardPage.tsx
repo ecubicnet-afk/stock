@@ -1,4 +1,5 @@
 'use client';
+import { useMemo } from 'react';
 import { useMarketData } from '@/src/hooks/useMarketData';
 import { IndexCard } from '@/src/components/dashboard/IndexCard';
 import { IndexCardSkeleton } from '@/src/components/dashboard/IndexCardSkeleton';
@@ -21,17 +22,19 @@ const DASHBOARD_IDS = [
 export function DashboardPage() {
   const { indices, forex, commodities, subIndicators, fearGreed, isLoading, lastUpdated, fmpStatus } = useMarketData();
 
-  // 全データソースから8シンボルを集めて表示順にソート
-  const allItems = [...indices, ...forex, ...commodities];
-  const dashboardItems = DASHBOARD_IDS
-    .map((id) => allItems.find((item) => item.id === id))
-    .filter((item): item is NonNullable<typeof item> => item != null)
-    .filter((item) => {
-      // FMP部分成功時のみモックを非表示（ライブデータがあるのでモックは不要）
-      if (fmpStatus === 'partial' && item.dataSource === 'mock') return false;
-      // 未設定 or 完全失敗時はモック含め全表示（空白ページ回避）
-      return true;
-    });
+  // 全データソースから8シンボルを集めて表示順にソート（memoized）
+  const dashboardItems = useMemo(() => {
+    const allItems = [...indices, ...forex, ...commodities];
+    return DASHBOARD_IDS
+      .map((id) => allItems.find((item) => item.id === id))
+      .filter((item): item is NonNullable<typeof item> => item != null)
+      .filter((item) => {
+        // FMP部分成功時のみモックを非表示（ライブデータがあるのでモックは不要）
+        if (fmpStatus === 'partial' && item.dataSource === 'mock') return false;
+        // 未設定 or 完全失敗時はモック含め全表示（空白ページ回避）
+        return true;
+      });
+  }, [indices, forex, commodities, fmpStatus]);
 
   return (
     <div className="space-y-6 py-4">
