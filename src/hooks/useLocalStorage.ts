@@ -46,9 +46,13 @@ function scheduleSync(localKey: string, data: unknown) {
   // Debounce: only sync after 500ms of inactivity
   clearTimeout(debounceTimers[localKey]);
   debounceTimers[localKey] = setTimeout(() => {
-    const now = Date.now();
-    localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(now));
-    syncToFirestore(settings, syncKey, data).catch(() => {});
+    syncToFirestore(settings, syncKey, data)
+      .then(() => {
+        // Only update timestamp after successful sync
+        const now = Date.now();
+        localStorage.setItem(TIMESTAMP_PREFIX + syncKey, String(now));
+      })
+      .catch(() => {});
   }, 500);
 }
 
@@ -84,8 +88,14 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       try {
         window.localStorage.setItem(key, JSON.stringify(newValue));
         scheduleSync(key, newValue);
-      } catch {
-        // ignore quota errors
+      } catch (err) {
+        console.error(`[localStorage] Save failed for "${key}":`, err);
+        // Show user-visible warning for quota errors
+        if (err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)) {
+          window.dispatchEvent(new CustomEvent('storage-quota-error', {
+            detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
+          }));
+        }
       }
       return newValue;
     });
