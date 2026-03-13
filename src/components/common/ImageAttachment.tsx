@@ -1,6 +1,39 @@
 'use client';
 import { useState, useRef } from 'react';
 
+const MAX_DIMENSION = 1200;
+const JPEG_QUALITY = 0.7;
+
+/** Resize and compress an image file to a JPEG data URL */
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => {
+      // Fallback: read as-is if image fails to load on canvas
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
   images: string[];
   currentIdx: number;
@@ -58,12 +91,9 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
     const toProcess = files.slice(0, remaining);
 
     toProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        onChange([...images, result]);
-      };
-      reader.readAsDataURL(file);
+      compressImage(file).then((dataUrl) => {
+        onChange([...images, dataUrl]);
+      });
     });
 
     e.target.value = '';
