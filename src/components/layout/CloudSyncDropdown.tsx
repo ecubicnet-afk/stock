@@ -53,7 +53,7 @@ export function CloudSyncDropdown() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-56 bg-bg-secondary border border-border rounded-lg shadow-[var(--shadow-dropdown)] z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-border/50">
             <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
               <span
@@ -65,7 +65,7 @@ export function CloudSyncDropdown() {
 
           <div className="p-3 space-y-2">
             {!isConfigured && (
-              <div className="px-1 py-2 text-xs text-amber-400/80 bg-amber-400/5 rounded text-center">
+              <div className="px-1 py-2 text-xs text-amber-700 bg-amber-50 rounded text-center">
                 設定画面でFirebaseの3項目を入力し、接続テストを実行してください
               </div>
             )}

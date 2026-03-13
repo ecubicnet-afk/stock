@@ -4,10 +4,10 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md';
 
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  primary: 'bg-accent-cyan/20 text-accent-cyan hover:bg-accent-cyan/30 border-accent-cyan/30',
-  secondary: 'bg-bg-card text-text-secondary hover:text-text-primary hover:bg-bg-tertiary border-border',
+  primary: 'bg-accent-cyan/10 text-accent-cyan hover:bg-accent-cyan/15 border-accent-cyan/20',
+  secondary: 'bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/80 border-border',
   ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary border-transparent',
-  danger: 'bg-down/20 text-down hover:bg-down/30 border-down/30',
+  danger: 'bg-red-50 text-down hover:bg-red-100 border-red-200',
 };
 
 const SIZE_STYLES: Record<ButtonSize, string> = {

@@ -198,7 +198,7 @@ export function MemoPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Memo Input */}
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <h2 className="text-sm font-semibold text-accent-cyan mb-3 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -223,7 +223,7 @@ export function MemoPage() {
         </div>
 
         {/* Add Event Form */}
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <h2 className="text-sm font-semibold text-accent-gold mb-3 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
@@ -302,7 +302,7 @@ export function MemoPage() {
       />
 
       {/* Event List */}
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +369,7 @@ export function MemoPage() {
         </div>
 
         {wlShowAddForm && (
-          <div className="bg-bg-card/70 border border-border rounded-xl p-4 mb-3">
+          <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4 mb-3">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               <input type="text" value={wlNewTicker} onChange={(e) => setWlNewTicker(e.target.value)} placeholder="銘柄コード (例: 7203)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
               <input type="text" value={wlNewName} onChange={(e) => setWlNewName(e.target.value)} placeholder="銘柄名 (例: トヨタ)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
@@ -394,7 +394,7 @@ export function MemoPage() {
             const isExpanded = wlExpandedId === item.id;
             const tickerTrades = getTradesByTicker(item.ticker);
             return (
-              <div key={item.id} className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl overflow-hidden">
+              <div key={item.id} className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl overflow-hidden">
                 {/* Header row */}
                 <div
                   className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-bg-primary/30"

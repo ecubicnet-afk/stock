@@ -1,7 +1,7 @@
 'use client';
 export function IndexCardSkeleton() {
   return (
-    <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4 animate-pulse">
+    <div className="bg-bg-card border border-border rounded-xl p-4 animate-pulse">
       <div className="flex justify-between mb-2">
         <div className="h-3 w-20 bg-bg-secondary rounded" />
         <div className="h-3 w-12 bg-bg-secondary rounded" />

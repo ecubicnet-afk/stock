@@ -39,7 +39,7 @@ export function SidebarTodos() {
                 </span>
                 <button
                   onClick={() => deleteDailyTodo(todo.id)}
-                  className="text-text-secondary/30 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className="text-text-secondary/30 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 >
                   ×
                 </button>
@@ -65,7 +65,7 @@ export function SidebarTodos() {
 
         {/* 一度きり */}
         <div className="mb-3">
-          <p className="text-[10px] text-amber-400/80 font-semibold mb-1.5 uppercase tracking-wider">一度きり</p>
+          <p className="text-[10px] text-amber-700 font-semibold mb-1.5 uppercase tracking-wider">一度きり</p>
           <div className="space-y-1.5">
             {oneshotItems.map((todo) => (
               <div key={todo.id} className="flex items-center gap-2 group">
@@ -80,7 +80,7 @@ export function SidebarTodos() {
                 </span>
                 <button
                   onClick={() => deleteOneshotTodo(todo.id)}
-                  className="text-text-secondary/30 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className="text-text-secondary/30 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 >
                   ×
                 </button>
@@ -132,7 +132,7 @@ export function SidebarTodos() {
                     </span>
                     <button
                       onClick={() => deleteArchiveItem(item.id)}
-                      className="text-text-secondary/20 hover:text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      className="text-text-secondary/20 hover:text-red-600 text-xs opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                     >
                       ×
                     </button>

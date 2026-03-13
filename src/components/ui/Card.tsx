@@ -9,8 +9,8 @@ interface CardProps {
 export function Card({ children, className = '', hover = false }: CardProps) {
   return (
     <div
-      className={`bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 ${
-        hover ? 'hover:border-accent-cyan/30 transition-colors' : ''
+      className={`bg-bg-card border border-border rounded-xl p-4 shadow-[var(--shadow-card)] ${
+        hover ? 'hover:shadow-[var(--shadow-card-hover)] transition-all' : ''
       } ${className}`}
     >
       {children}
@@ -48,7 +48,7 @@ interface StatCardProps {
 export function StatCard({ label, value, change, changeType = 'neutral', className = '' }: StatCardProps) {
   const changeColor = changeType === 'up' ? 'text-up' : changeType === 'down' ? 'text-down' : 'text-text-secondary';
   return (
-    <div className={`bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 ${className}`}>
+    <div className={`bg-bg-card border border-border rounded-xl p-4 shadow-[var(--shadow-card)] ${className}`}>
       <div className="text-xs text-text-secondary mb-1">{label}</div>
       <div className="font-mono text-lg font-semibold text-text-primary">{value}</div>
       {change && (

@@ -111,28 +111,28 @@ function computeAnalysis(data: AnalysisTrade[]): AnalysisResult | null {
 function SummaryStats({ analysis }: { analysis: AnalysisResult }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 text-center">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4 text-center">
         <div className="text-xs font-semibold text-text-secondary mb-1">全体勝率</div>
         <div className="text-xl font-bold text-text-primary">{analysis.winRate.toFixed(1)}%</div>
         <div className="text-xs text-text-secondary mt-1">{analysis.winCount}勝 / {analysis.lossCount}負</div>
       </div>
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 text-center">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4 text-center">
         <div className="text-xs font-semibold text-text-secondary mb-1">全体RR比</div>
         <div className="text-xl font-bold text-text-primary">{analysis.rrRatio.toFixed(2)}</div>
         <div className="text-xs text-text-secondary mt-1">平均利 / 平均損</div>
       </div>
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 text-center">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4 text-center">
         <div className="text-xs font-semibold text-text-secondary mb-1">プロフィットファクター</div>
         <div className="text-xl font-bold text-text-primary">{analysis.profitFactor.toFixed(2)}</div>
         <div className="text-xs text-text-secondary mt-1">総利益 / 総損失</div>
       </div>
-      <div className={`backdrop-blur-sm border rounded-xl p-4 text-center ${analysis.netProfit >= 0 ? 'bg-up/10 border-up/30' : 'bg-down/10 border-down/30'}`}>
+      <div className={`border rounded-xl p-4 text-center ${analysis.netProfit >= 0 ? 'bg-up/10 border-up/30' : 'bg-down/10 border-down/30'}`}>
         <div className="text-xs font-semibold text-text-secondary mb-1">合計純損益</div>
         <div className={`text-xl font-bold ${analysis.netProfit >= 0 ? 'text-up' : 'text-down'}`}>
           {formatJPY(analysis.netProfit)}
         </div>
       </div>
-      <div className="bg-accent-gold/5 backdrop-blur-sm border border-accent-gold/30 rounded-xl p-4 text-center">
+      <div className="bg-accent-gold/5 border border-accent-gold/30 rounded-xl p-4 text-center">
         <div className="text-xs font-semibold text-accent-gold mb-1">限界リスク</div>
         <div className="text-xl font-bold text-accent-gold">
           {analysis.maxRisk !== null ? `${analysis.maxRisk}%` : '-'}
@@ -161,7 +161,7 @@ function EquityCurve({ chartData }: { chartData: AnalysisResult['chartData'] }) 
   }, [chartData]);
 
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2 mb-3">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -189,7 +189,7 @@ function EquityCurve({ chartData }: { chartData: AnalysisResult['chartData'] }) 
 
 function MonthlyPerformance({ monthlyData }: { monthlyData: AnalysisResult['monthlyData'] }) {
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2 mb-3">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -235,7 +235,7 @@ function MonthlyPerformance({ monthlyData }: { monthlyData: AnalysisResult['mont
 
 function StockBreakdown({ stockData }: { stockData: AnalysisResult['stockData'] }) {
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2 mb-3">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -283,7 +283,7 @@ function StockBreakdown({ stockData }: { stockData: AnalysisResult['stockData'] 
 
 function TradeDetailTable({ data, onSelectTrade }: { data: AnalysisTrade[]; onSelectTrade?: (trade: SelectedCsvTrade) => void }) {
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl overflow-hidden">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl overflow-hidden">
       <div className="p-3 border-b border-border flex items-center justify-between">
         <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -399,7 +399,7 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
           {data.length > 0 && (
             <button
               onClick={clearData}
-              className="px-3 py-1.5 bg-bg-card/70 border border-border text-text-secondary text-sm rounded-lg hover:bg-bg-card"
+              className="px-3 py-1.5 bg-bg-card shadow-[var(--shadow-card)] border border-border text-text-secondary text-sm rounded-lg hover:bg-bg-card"
             >
               リセット
             </button>
@@ -415,7 +415,7 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
       </div>
 
       {loadedFiles.length > 0 && (
-        <div className="bg-bg-card/70 border border-border rounded-xl p-3 flex flex-wrap gap-2 items-center">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-3 flex flex-wrap gap-2 items-center">
           <span className="text-xs font-semibold text-text-secondary mr-2">読み込み済み:</span>
           {loadedFiles.map((file, i) => (
             <div key={i} className="flex items-center gap-1 bg-up/10 text-up px-2 py-0.5 rounded text-xs">
@@ -443,7 +443,7 @@ export function TradeAnalysisContent({ onSelectTrade }: AnalysisProps = {}) {
           <TradeDetailTable data={data} onSelectTrade={onSelectTrade} />
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 bg-bg-card/70 border border-border rounded-xl border-dashed">
+        <div className="flex flex-col items-center justify-center py-24 bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl border-dashed">
           <svg className="w-12 h-12 text-accent-cyan/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>

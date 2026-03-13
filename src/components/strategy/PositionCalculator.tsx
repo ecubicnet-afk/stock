@@ -25,7 +25,7 @@ export function PositionCalculator({ sizing, onChange }: PositionCalculatorProps
   const riskRatio = capital > 0 ? ((riskAmount / capital) * 100) : 0;
 
   // Speedometer color
-  const speedColor = riskRatio <= 1 ? 'text-emerald-400' : riskRatio <= 2 ? 'text-accent-cyan' : riskRatio <= 3 ? 'text-amber-400' : 'text-red-400';
+  const speedColor = riskRatio <= 1 ? 'text-emerald-700' : riskRatio <= 2 ? 'text-accent-cyan' : riskRatio <= 3 ? 'text-amber-700' : 'text-down';
   const speedLabel = riskRatio <= 1 ? '安全' : riskRatio <= 2 ? '適正' : riskRatio <= 3 ? '注意' : '危険！';
 
   return (
@@ -83,7 +83,7 @@ export function PositionCalculator({ sizing, onChange }: PositionCalculatorProps
       <div className="space-y-2 border-t border-primary/10 pt-3">
         <div className="flex justify-between text-xs">
           <span className="text-muted">方向</span>
-          <span className={isLong ? 'text-emerald-400' : 'text-red-400'}>
+          <span className={isLong ? 'text-emerald-700' : 'text-red-700'}>
             {isLong ? '↑ ロング' : '↓ ショート'}
           </span>
         </div>

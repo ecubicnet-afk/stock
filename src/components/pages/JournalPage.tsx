@@ -156,7 +156,7 @@ export function JournalPage() {
             />
 
             {/* Trade record section (above CSV data) */}
-            <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+            <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-accent-gold flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,7 +194,7 @@ export function JournalPage() {
 
             {/* CSV Trades for selected date with daily stats */}
             {selectedDayCsvTrades.length > 0 && (
-              <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+              <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-up flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
