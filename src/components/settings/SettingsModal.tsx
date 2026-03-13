@@ -63,7 +63,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <select
                 value={settings.dataSource}
                 onChange={(e) => updateSettings({ dataSource: e.target.value as Settings['dataSource'] })}
-                className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:dark]"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:light]"
               >
                 <option value="auto">自動取得（API + モックフォールバック）</option>
                 <option value="mock">モックデータのみ</option>
@@ -78,7 +78,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <select
                 value={settings.autoRefreshInterval}
                 onChange={(e) => updateSettings({ autoRefreshInterval: Number(e.target.value) })}
-                className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:dark]"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:light]"
               >
                 <option value={30}>30秒</option>
                 <option value={60}>60秒</option>
@@ -97,11 +97,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   FMP / Gemini APIキー
                   <span className="ml-2 inline-flex items-center gap-1">
                     {testResult?.success ? (
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                     ) : testResult && !testResult.success ? (
-                      <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
                     )}
                     <span className="text-xs">
                       {testResult?.success ? '接続済み' : testResult ? 'エラー' : '未テスト'}
@@ -124,13 +124,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 </button>
 
                 {testResult && (
-                  <div className={`mt-2 p-2 rounded text-xs ${testResult.success ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
+                  <div className={`mt-2 p-2 rounded text-xs ${testResult.success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                     <p className="font-semibold mb-1">{testResult.message}</p>
                     {testResult.workingSymbols.length > 0 && (
                       <div className="mt-1">
                         <p className="text-text-secondary/80 mb-0.5">取得可能:</p>
                         {testResult.workingSymbols.map((s) => (
-                          <span key={s.symbol} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-emerald-500/10 rounded text-[10px]">
+                          <span key={s.symbol} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-emerald-50 rounded text-[10px]">
                             {s.symbol} (${s.price.toLocaleString()})
                           </span>
                         ))}
@@ -140,7 +140,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <div className="mt-1">
                         <p className="text-text-secondary/80 mb-0.5">取得不可 (モック使用):</p>
                         {testResult.failedSymbols.map((s) => (
-                          <span key={s} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-red-500/10 rounded text-[10px]">
+                          <span key={s} className="inline-block mr-2 mb-0.5 px-1.5 py-0.5 bg-red-50 rounded text-[10px]">
                             {s}
                           </span>
                         ))}
@@ -162,11 +162,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       {hasFirebaseConfig && (
                         <span className="ml-2 inline-flex items-center gap-1">
                           {firebaseTestResult?.success ? (
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                           ) : firebaseTestResult && !firebaseTestResult.success ? (
-                            <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
                           ) : (
-                            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
                           )}
                           <span className="text-xs">
                             {firebaseTestResult?.success ? '接続済み' : firebaseTestResult ? 'エラー' : '未テスト'}
@@ -228,7 +228,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </button>
 
                       {firebaseTestResult && (
-                        <div className={`mt-2 p-2 rounded text-xs ${firebaseTestResult.success ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}`}>
+                        <div className={`mt-2 p-2 rounded text-xs ${firebaseTestResult.success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                           {firebaseTestResult.success
                             ? '接続成功 - クラウド同期が利用可能です'
                             : firebaseTestResult.error || '接続に失敗しました'}

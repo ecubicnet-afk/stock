@@ -50,7 +50,7 @@ export function FearGreedGauge({ data }: FearGreedGaugeProps) {
   const base2 = polarToCartesian(CX, CY, baseOffset, perpAngle2);
 
   return (
-    <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card border border-border rounded-xl p-4">
       <h3 className="text-sm font-semibold text-text-primary mb-2">恐怖・強欲指数</h3>
       <p className="text-[11px] text-text-secondary/60 mb-3">CNN Fear & Greed Index</p>
 

@@ -88,7 +88,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-bg-secondary/80 backdrop-blur-md border-b border-border">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-bg-secondary border-b border-border shadow-[var(--shadow-header)]">
         <div className="h-16 flex items-center px-4 gap-4">
           {/* ハンバーガーメニュー（lg未満） */}
           <button
@@ -166,13 +166,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 <span className="text-text-secondary">総資産</span>
                 <span className="font-mono font-semibold text-text-primary">¥{formatJPY(totalAsset)}</span>
                 <span className="text-text-secondary">含み損益</span>
-                <span className={`font-mono ${totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`font-mono ${totalProfit >= 0 ? 'text-up' : 'text-down'}`}>
                   {totalProfit >= 0 ? '+' : ''}{formatJPY(totalProfit)}
                 </span>
                 {dailyChange !== null && (
                   <>
                     <span className="text-text-secondary">前日比</span>
-                    <span className={`font-mono ${dailyChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <span className={`font-mono ${dailyChange >= 0 ? 'text-up' : 'text-down'}`}>
                       {dailyChange >= 0 ? '+' : ''}{formatJPY(dailyChange)}
                     </span>
                   </>
@@ -182,7 +182,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                     <span className="text-text-secondary">ポジション</span>
                     <span className="font-mono text-text-primary">¥{formatJPY(positionStats.totalPosition)}</span>
                     <span className="text-text-secondary">レバレッジ</span>
-                    <span className={`font-mono font-semibold ${positionStats.leverage > 2.5 ? 'text-red-400' : 'text-accent-gold'}`}>
+                    <span className={`font-mono font-semibold ${positionStats.leverage > 2.5 ? 'text-down' : 'text-accent-gold'}`}>
                       {positionStats.leverage.toFixed(2)}倍
                     </span>
                   </>
@@ -197,7 +197,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           {monthlyStats.tradeCount > 0 ? (
             <div className="flex items-center gap-4">
               <span className="text-text-secondary">今月確定</span>
-              <span className={`font-mono font-semibold ${monthlyStats.totalPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className={`font-mono font-semibold ${monthlyStats.totalPnl >= 0 ? 'text-up' : 'text-down'}`}>
                 {monthlyStats.totalPnl >= 0 ? '+' : ''}¥{formatJPY(monthlyStats.totalPnl)}
               </span>
               <span className="text-text-secondary">勝率</span>
@@ -211,7 +211,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <span className="text-text-secondary/70 ml-0.5">({monthlyStats.maxRisk}%)</span>
                 </span>
               ) : (
-                <span className="font-mono text-red-400">破産圏</span>
+                <span className="font-mono text-down">破産圏</span>
               )}
             </div>
           ) : (

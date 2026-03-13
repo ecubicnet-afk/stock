@@ -186,13 +186,13 @@ ${notesText}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowScenario(!showScenario)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showScenario ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showScenario ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
           >
             📋 想定シナリオ
           </button>
           <button
             onClick={() => setShowImport(!showImport)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showImport ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showImport ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-primary/10 text-secondary hover:bg-primary/20'}`}
           >
             📎 インポート
           </button>
@@ -210,7 +210,7 @@ ${notesText}
         <div className="flex-shrink-0 border-b border-primary/10 px-4 py-3 bg-amber-500/5">
           {/* Header bar with date + save buttons */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h3 className="text-xs font-semibold text-amber-300">想定シナリオ</h3>
+            <h3 className="text-xs font-semibold text-amber-700">想定シナリオ</h3>
             <div className="h-4 w-px bg-primary/20" />
             <div className="flex items-center gap-1">
               <span className="text-[10px] text-muted">📅</span>
@@ -228,17 +228,17 @@ ${notesText}
             <button
               onClick={handleAIAnalysis}
               disabled={isAnalyzing}
-              className={`px-2 py-0.5 rounded text-[10px] ${isAnalyzing ? 'bg-purple-500/10 text-purple-300/50 cursor-wait' : 'bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'}`}
+              className={`px-2 py-0.5 rounded text-[10px] ${isAnalyzing ? 'bg-purple-500/10 text-purple-700/50 cursor-wait' : 'bg-purple-500/10 text-purple-700 hover:bg-purple-500/20'}`}
             >
               {isAnalyzing ? 'AI分析中...' : 'AI分析'}
             </button>
-            <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] hover:bg-amber-500/20">
+            <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] hover:bg-amber-100">
               メモに保存
             </button>
             <button
               onClick={handleSaveToSchedule}
               disabled={!desc.date}
-              className={`px-2 py-0.5 rounded text-[10px] ${desc.date ? 'bg-blue-500/10 text-blue-300 hover:bg-blue-500/20' : 'bg-primary/5 text-muted cursor-not-allowed'}`}
+              className={`px-2 py-0.5 rounded text-[10px] ${desc.date ? 'bg-blue-50 text-blue-700 hover:bg-blue-500/20' : 'bg-primary/5 text-muted cursor-not-allowed'}`}
             >
               📅 スケジュールに追加
             </button>
@@ -259,7 +259,7 @@ ${notesText}
                   <div key={i} className="flex items-center gap-1 text-xs">
                     <span className="text-muted">🔗</span>
                     <a href={url} target="_blank" rel="noopener noreferrer" className="text-accent-cyan hover:underline truncate flex-1">{url}</a>
-                    <button onClick={() => handleRemoveUrl(i)} className="text-muted hover:text-red-400 text-xs px-1">×</button>
+                    <button onClick={() => handleRemoveUrl(i)} className="text-muted hover:text-red-600 text-xs px-1">×</button>
                   </div>
                 ))}
                 <div className="flex gap-1">
@@ -305,12 +305,12 @@ ${notesText}
                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/90"
+                        className="w-6 h-6 bg-black/50 text-white rounded-full text-xs flex items-center justify-center hover:bg-black/90"
                         title="画像を変更"
                       >📷</button>
                       <button
                         onClick={() => updateScenarioDescription({ imageDataUrl: undefined, imageZoom: 100 })}
-                        className="w-6 h-6 bg-black/70 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600/80"
+                        className="w-6 h-6 bg-black/50 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600/80"
                       >×</button>
                     </div>
                   </div>
@@ -318,7 +318,7 @@ ${notesText}
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-full min-h-[120px] border-2 border-dashed border-primary/20 rounded-lg flex flex-col items-center justify-center text-muted hover:border-amber-400/30 hover:text-amber-300 transition-colors"
+                  className="w-full h-full min-h-[120px] border-2 border-dashed border-primary/20 rounded-lg flex flex-col items-center justify-center text-muted hover:border-amber-300 hover:text-amber-700 transition-colors"
                 >
                   <span className="text-2xl">📷</span>
                   <span className="text-xs mt-1">画像を添付</span>
@@ -359,7 +359,7 @@ ${notesText}
 
         {/* Side panel - absolute overlay */}
         {(showAddNote || showImport) && (
-          <div className="absolute top-0 right-0 bottom-0 w-80 bg-bg-secondary/95 backdrop-blur-md border-l border-primary/10 overflow-y-auto z-10 shadow-2xl">
+          <div className="absolute top-0 right-0 bottom-0 w-80 bg-bg-secondary/95 border-l border-primary/10 overflow-y-auto z-10 shadow-2xl">
             <div className="p-3 space-y-4">
               {/* Close button */}
               <div className="flex justify-end">
@@ -397,7 +397,7 @@ ${notesText}
                           <button
                             key={d.value}
                             onClick={() => setNewNote((n) => ({ ...n, direction: d.value }))}
-                            className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.direction === d.value ? (d.value === 'bullish' ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30' : d.value === 'bearish' ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30' : 'bg-slate-500/20 text-slate-300 ring-1 ring-slate-400/30') : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
+                            className={`flex-1 px-2 py-1.5 rounded text-xs ${newNote.direction === d.value ? (d.value === 'bullish' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-300' : d.value === 'bearish' ? 'bg-red-50 text-red-700 ring-1 ring-red-300' : 'bg-slate-500/20 text-slate-600 ring-1 ring-slate-300') : 'bg-primary/5 text-muted hover:bg-primary/10'}`}
                           >
                             {d.emoji} {d.label}
                           </button>
@@ -492,7 +492,7 @@ ${notesText}
                             key={event.id}
                             onClick={() => !alreadyImported && handleImportEvent(event.id, event.title, event.description || '', event.date)}
                             disabled={alreadyImported}
-                            className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-blue-500/10 text-secondary hover:bg-blue-500/20 border border-blue-500/10'}`}
+                            className={`w-full text-left px-2 py-1.5 rounded text-xs ${alreadyImported ? 'bg-primary/5 text-muted opacity-50' : 'bg-blue-50 text-secondary hover:bg-blue-500/20 border border-blue-500/10'}`}
                           >
                             <div className="flex items-center gap-1">
                               <span>{alreadyImported ? '✓' : ''}</span>

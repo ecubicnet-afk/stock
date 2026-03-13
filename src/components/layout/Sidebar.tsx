@@ -96,10 +96,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const todayStr = new Date().toISOString().split('T')[0];
   const IMPORTANCE_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2, scenario: 3 };
   const IMPORTANCE_LABEL: Record<string, { text: string; className: string }> = {
-    high: { text: '重要', className: 'bg-red-500/20 text-red-400' },
-    medium: { text: '中', className: 'bg-amber-400/20 text-amber-400' },
-    low: { text: '低', className: 'bg-cyan-400/20 text-cyan-400' },
-    scenario: { text: 'シナリオ', className: 'bg-violet-400/20 text-violet-400' },
+    high: { text: '重要', className: 'bg-red-50 text-red-700' },
+    medium: { text: '中', className: 'bg-amber-50 text-amber-700' },
+    low: { text: '低', className: 'bg-cyan-50 text-cyan-700' },
+    scenario: { text: 'シナリオ', className: 'bg-violet-50 text-violet-700' },
   };
   const todayEvents = events
     .filter((e) => e.date === todayStr)
@@ -117,7 +117,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* サイドバー本体 */}
       <aside
-        className={`fixed top-16 md:top-[124px] left-0 bottom-0 z-40 w-64 bg-bg-secondary/95 backdrop-blur-md border-r border-border transform transition-transform duration-300 overflow-y-auto
+        className={`fixed top-16 md:top-[124px] left-0 bottom-0 z-40 w-64 bg-bg-secondary border-r border-border transform transition-transform duration-300 overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
         role="navigation"
         aria-label="メインナビゲーション"

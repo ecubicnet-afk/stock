@@ -383,7 +383,7 @@ export function PortfolioPage() {
           <p className="text-sm text-text-secondary mt-0.5">楽天証券CSV：ポートフォリオ分析</p>
         </div>
         <div className="flex gap-2 items-center">
-          <div className="flex items-center bg-bg-card/70 border border-border rounded-lg px-2 py-1.5">
+          <div className="flex items-center bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-lg px-2 py-1.5">
             <svg className="w-4 h-4 text-accent-gold mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -425,7 +425,7 @@ export function PortfolioPage() {
           <button
             onClick={handleFetchSectors}
             disabled={aggregatedData.length === 0 || isAnalyzing}
-            className="flex-1 flex flex-col items-center justify-center p-4 bg-bg-card/70 border border-border text-text-primary rounded-xl hover:bg-bg-card disabled:opacity-30"
+            className="flex-1 flex flex-col items-center justify-center p-4 bg-bg-card shadow-[var(--shadow-card)] border border-border text-text-primary rounded-xl hover:bg-bg-card disabled:opacity-30"
           >
             {isAnalyzing ? (
               <svg className="w-6 h-6 animate-spin text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,7 +442,7 @@ export function PortfolioPage() {
           <button
             onClick={handleFetchIndices}
             disabled={history.length === 0 || isAnalyzing}
-            className="flex-1 flex flex-col items-center justify-center p-4 bg-bg-card/70 border border-border text-text-primary rounded-xl hover:bg-bg-card disabled:opacity-30"
+            className="flex-1 flex flex-col items-center justify-center p-4 bg-bg-card shadow-[var(--shadow-card)] border border-border text-text-primary rounded-xl hover:bg-bg-card disabled:opacity-30"
           >
             <svg className="w-5 h-5 text-up" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
@@ -454,11 +454,11 @@ export function PortfolioPage() {
 
       {/* Global Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <p className="text-xs font-semibold text-text-secondary mb-1">総資産 (Equity)</p>
           <h3 className="text-xl font-bold text-text-primary font-mono">¥{totals.realAsset.toLocaleString()}</h3>
         </div>
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <p className="text-xs font-semibold text-text-secondary mb-1">評価損益合計</p>
           <h3 className={`text-xl font-bold font-mono ${totals.profitAmount >= 0 ? 'text-up' : 'text-down'}`}>
             ¥{totals.profitAmount.toLocaleString()}
@@ -467,7 +467,7 @@ export function PortfolioPage() {
             {((totals.profitAmount / (totals.realAsset || 1)) * 100).toFixed(2)}%
           </span>
         </div>
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <p className="text-xs font-semibold text-text-secondary mb-1">対市場インデックス</p>
           {performanceStats ? (
             <h3 className={`text-xl font-bold font-mono ${performanceStats.vsNikkei >= 0 ? 'text-up' : 'text-down'}`}>
@@ -477,7 +477,7 @@ export function PortfolioPage() {
             <p className="text-text-secondary/50 text-sm italic">同期で表示</p>
           )}
         </div>
-        <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <p className="text-xs font-semibold text-text-secondary mb-1">実質レバレッジ</p>
           <h3 className="text-xl font-bold text-accent-gold font-mono">{totals.leverage.toFixed(2)}<span className="text-sm ml-0.5">倍</span></h3>
           <div className="w-full bg-bg-primary h-1.5 rounded-full mt-2 overflow-hidden">
@@ -487,7 +487,7 @@ export function PortfolioPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl overflow-hidden">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl overflow-hidden">
         <div className="flex border-b border-border overflow-x-auto">
           {tabs.map((t) => (
             <button
@@ -741,7 +741,7 @@ export function PortfolioPage() {
 
       {/* Logs */}
       {logs.length > 0 && (
-        <div className="bg-bg-card/70 border border-border rounded-xl p-3">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-3">
           <h4 className="text-xs font-semibold text-text-secondary mb-2">ログ</h4>
           <div className="max-h-32 overflow-y-auto text-xs font-mono text-text-secondary/70 space-y-0.5">
             {logs.map((l, i) => (

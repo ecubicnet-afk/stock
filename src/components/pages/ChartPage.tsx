@@ -34,7 +34,7 @@ export function ChartPage() {
       </div>
 
       {/* TradingView Chart */}
-      <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+      <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
         {selected && (
           <TradingViewWidget key={selected.id} symbol={selected.tvSymbol} height={500} />
         )}

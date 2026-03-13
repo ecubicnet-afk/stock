@@ -33,7 +33,7 @@ export function JournalCalendar({ year, month, entries, trades, csvTradeDates, s
   const monthLabel = `${year}年${month + 1}月`;
 
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-3 py-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>

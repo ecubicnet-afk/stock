@@ -55,7 +55,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
   const todayStr = new Date().toISOString().split('T')[0];
 
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
       {/* Header: Month nav + Legend */}
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => onChangeMonth(-1)} className="text-text-secondary hover:text-text-primary px-2 py-1">
@@ -84,7 +84,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
           <div
             key={d}
             className={`text-sm text-center py-1 font-medium ${
-              i === 5 ? 'text-blue-400/80' : i === 6 ? 'text-red-400/80' : 'text-text-secondary/70'
+              i === 5 ? 'text-blue-600' : i === 6 ? 'text-red-600' : 'text-text-secondary/70'
             }`}
           >
             {d}
@@ -120,9 +120,9 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
                   : isToday
                     ? 'text-accent-cyan font-bold'
                     : dow === 5
-                      ? 'text-blue-400/80'
+                      ? 'text-blue-600'
                       : dow === 6
-                        ? 'text-red-400/80'
+                        ? 'text-red-600'
                         : 'text-text-secondary'
               }`}>
                 {cell.day}
@@ -134,7 +134,7 @@ export function ScheduleCalendar({ year, month, events, selectedDate, onSelectDa
                   <div
                     key={evt.id}
                     className={`text-[11px] leading-tight truncate rounded-sm pl-1 border-l-2 ${IMPORTANCE_BORDER[evt.importance]} ${
-                      evt.importance === 'high' ? 'bg-red-500/10' : evt.importance === 'medium' ? 'bg-amber-400/10' : evt.importance === 'scenario' ? 'bg-violet-400/10' : 'bg-cyan-400/10'
+                      evt.importance === 'high' ? 'bg-red-50' : evt.importance === 'medium' ? 'bg-amber-50' : evt.importance === 'scenario' ? 'bg-violet-50' : 'bg-cyan-50'
                     }`}
                     title={`${evt.time} ${evt.title}${evt.region ? ` (${evt.region})` : ''}`}
                   >

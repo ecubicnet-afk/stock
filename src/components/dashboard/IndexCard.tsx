@@ -14,7 +14,7 @@ export function IndexCard({ item }: IndexCardProps) {
   const marketOpen = useMarketOpenStatus(item.id);
 
   return (
-    <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4 hover:border-accent-cyan/30 transition-all group">
+    <div className="bg-bg-card border border-border rounded-xl p-4 hover:border-accent-cyan/30 transition-all group">
       {/* 銘柄名 + 市場開閉 + データソース */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 min-w-0">

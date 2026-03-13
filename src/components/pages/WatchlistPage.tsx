@@ -60,7 +60,7 @@ export function WatchlistPage() {
       </div>
 
       {showAddForm && (
-        <div className="bg-bg-card/70 border border-border rounded-xl p-4">
+        <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             <input type="text" value={newTicker} onChange={(e) => setNewTicker(e.target.value)} placeholder="銘柄コード (例: 7203)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
             <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="銘柄名 (例: トヨタ)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
@@ -85,7 +85,7 @@ export function WatchlistPage() {
           const isExpanded = expandedId === item.id;
           const tickerTrades = getTradesByTicker(item.ticker);
           return (
-            <div key={item.id} className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl overflow-hidden">
+            <div key={item.id} className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl overflow-hidden">
               {/* Header row */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-bg-primary/30"

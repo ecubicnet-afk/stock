@@ -204,7 +204,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const hasImages = images.length > 0;
 
   return (
-    <div className="bg-bg-card/70 backdrop-blur-sm border border-border rounded-xl p-4 space-y-3">
+    <div className="bg-bg-card shadow-[var(--shadow-card)] border border-border rounded-xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-accent-cyan flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,13 +245,13 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx - 1 + images.length) % images.length); }}
-                    className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
+                    className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/50 text-sm"
                   >
                     ‹
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx + 1) % images.length); }}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/50 text-sm"
                   >
                     ›
                   </button>
@@ -277,7 +277,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
                     />
                     <button
                       onClick={() => handleRemoveImage(i)}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-black/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
                     >
                       ×
                     </button>
@@ -377,7 +377,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
               disabled={!notes.trim() || isOrganizing}
               className={`px-4 py-1.5 text-sm rounded-lg transition-colors ${
                 notes.trim() && !isOrganizing
-                  ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                  ? 'bg-amber-50 text-amber-700 hover:bg-amber-100'
                   : 'bg-bg-primary/30 text-text-secondary/30 cursor-not-allowed'
               }`}
             >
