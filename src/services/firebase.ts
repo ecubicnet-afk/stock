@@ -16,8 +16,9 @@ export interface DailySnapshot {
 let firebaseApp: any = null;
 let firestoreDb: any = null;
 let firebaseAuth: any = null;
+let firebaseStorage: any = null;
 let lastConfigKey = '';
-let initPromise: Promise<{ db: any; auth: any }> | null = null;
+let initPromise: Promise<{ db: any; auth: any; storage: any }> | null = null;
 
 const SNAPSHOT_CACHE_KEY = 'stock-app-snapshots';
 
@@ -46,7 +47,7 @@ export async function initFirebase(settings: Settings) {
 
   // Return cached instance if config hasn't changed AND user is still authenticated
   if (firebaseApp && configKey === lastConfigKey && firebaseAuth?.currentUser) {
-    return { db: firestoreDb, auth: firebaseAuth };
+    return { db: firestoreDb, auth: firebaseAuth, storage: firebaseStorage };
   }
 
   // If already initializing, wait for that promise (prevents race condition)
@@ -74,6 +75,7 @@ async function doInitFirebase(settings: Settings, configKey: string) {
     firebaseApp = null;
     firestoreDb = null;
     firebaseAuth = null;
+    firebaseStorage = null;
     lastConfigKey = '';
   }
 
@@ -94,6 +96,9 @@ async function doInitFirebase(settings: Settings, configKey: string) {
     firebaseApp = initializeApp(config);
     firebaseAuth = getAuth(firebaseApp);
     firestoreDb = getFirestore(firebaseApp);
+
+    const { getStorage } = await import('firebase/storage');
+    firebaseStorage = getStorage(firebaseApp);
   }
 
   // Always ensure user is authenticated before returning
@@ -105,7 +110,7 @@ async function doInitFirebase(settings: Settings, configKey: string) {
   // Set config key AFTER successful auth (prevents race condition)
   lastConfigKey = configKey;
 
-  return { db: firestoreDb, auth: firebaseAuth };
+  return { db: firestoreDb, auth: firebaseAuth, storage: firebaseStorage };
 }
 
 /** Test Firebase connection and return a clear result */

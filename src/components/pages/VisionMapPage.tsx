@@ -35,17 +35,26 @@ export function VisionMapPage() {
     return () => clearTimeout(tempId);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target?.result as string;
-        addImage({ dataUrl, caption: '', x: 0, y: 0, width: 200, height: 150 });
-      };
-      reader.readAsDataURL(file);
-    });
+    const { compressImage } = await import('@/src/components/common/ImageAttachment');
+    const { uploadImage } = await import('@/src/services/firebaseStorage');
+    const { isFirebaseConfigured } = await import('@/src/services/firebase');
+    let settings: import('@/src/types').Settings | null = null;
+    try {
+      const raw = localStorage.getItem('stock-app-settings');
+      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
+    } catch { /* ignore */ }
+
+    for (const file of Array.from(files)) {
+      const { dataUrl, blob } = await compressImage(file);
+      let finalUrl = dataUrl;
+      if (settings) {
+        try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+      }
+      addImage({ dataUrl: finalUrl, caption: '', x: 0, y: 0, width: 200, height: 150 });
+    }
     e.target.value = '';
   };
 
