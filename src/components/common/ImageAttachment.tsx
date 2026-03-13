@@ -4,17 +4,56 @@ import { uploadImage } from '../../services/firebaseStorage';
 import { isFirebaseConfigured } from '../../services/firebase';
 import type { Settings } from '../../types';
 
-const MAX_DIMENSION = 1200;
-const JPEG_QUALITY = 0.7;
+// Compression settings for base64 fallback (when Firebase Storage is not available)
+const FALLBACK_MAX_DIMENSION = 1200;
+const FALLBACK_JPEG_QUALITY = 0.7;
+// Thumbnail for preview when uploading to Storage
+const PREVIEW_MAX_DIMENSION = 400;
 
-/** Resize and compress an image file, returning both a preview dataUrl and a Blob for upload */
-export function compressImage(file: File): Promise<{ dataUrl: string; blob: Blob }> {
+/**
+ * Process an image file for upload.
+ * - forStorage=true: original file as blob (no quality loss), small preview dataUrl
+ * - forStorage=false: resized + JPEG compressed for localStorage
+ */
+export function compressImage(file: File, forStorage = false): Promise<{ dataUrl: string; blob: Blob }> {
+  if (forStorage) {
+    // Storage mode: keep original quality, generate small preview only
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        // Generate a small preview for immediate display
+        let { width, height } = img;
+        if (width > PREVIEW_MAX_DIMENSION || height > PREVIEW_MAX_DIMENSION) {
+          const ratio = Math.min(PREVIEW_MAX_DIMENSION / width, PREVIEW_MAX_DIMENSION / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        URL.revokeObjectURL(img.src);
+        resolve({ dataUrl, blob: file });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        const reader = new FileReader();
+        reader.onload = () => resolve({ dataUrl: reader.result as string, blob: file });
+        reader.readAsDataURL(file);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  // Fallback mode: compress for localStorage
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       let { width, height } = img;
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+      if (width > FALLBACK_MAX_DIMENSION || height > FALLBACK_MAX_DIMENSION) {
+        const ratio = Math.min(FALLBACK_MAX_DIMENSION / width, FALLBACK_MAX_DIMENSION / height);
         width = Math.round(width * ratio);
         height = Math.round(height * ratio);
       }
@@ -23,18 +62,17 @@ export function compressImage(file: File): Promise<{ dataUrl: string; blob: Blob
       canvas.height = height;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+      const dataUrl = canvas.toDataURL('image/jpeg', FALLBACK_JPEG_QUALITY);
       canvas.toBlob(
         (blob) => {
           resolve({ dataUrl, blob: blob || new Blob([dataUrl], { type: 'image/jpeg' }) });
         },
         'image/jpeg',
-        JPEG_QUALITY,
+        FALLBACK_JPEG_QUALITY,
       );
       URL.revokeObjectURL(img.src);
     };
     img.onerror = () => {
-      // Fallback: read as-is if image fails to load on canvas
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
@@ -117,17 +155,20 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
     const toProcess = files.slice(0, remaining);
     const settings = getSettings();
 
+    const useStorage = !!settings;
     setUploading(true);
     try {
       for (const file of toProcess) {
-        const { dataUrl, blob } = await compressImage(file);
+        const { dataUrl, blob } = await compressImage(file, useStorage);
         if (settings) {
           try {
             const url = await uploadImage(settings, blob);
             onChange([...images, url]);
           } catch (err) {
             console.error('[ImageAttachment] Storage upload failed, using base64:', err);
-            onChange([...images, dataUrl]);
+            // Re-compress for localStorage since original blob is too large
+            const fallback = await compressImage(file, false);
+            onChange([...images, fallback.dataUrl]);
           }
         } else {
           onChange([...images, dataUrl]);

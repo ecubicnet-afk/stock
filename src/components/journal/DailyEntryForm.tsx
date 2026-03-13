@@ -167,23 +167,34 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     const remaining = 5 - images.length;
     const toProcess = files.slice(0, remaining);
-    toProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setImages((prev) => {
-          const next = [...prev, result];
-          setCurrentImageIdx(next.length - 1);
-          return next;
-        });
-      };
-      reader.readAsDataURL(file);
-    });
+
+    const { compressImage } = await import('@/src/components/common/ImageAttachment');
+    const { uploadImage } = await import('@/src/services/firebaseStorage');
+    const { isFirebaseConfigured } = await import('@/src/services/firebase');
+    let settings: import('@/src/types').Settings | null = null;
+    try {
+      const raw = localStorage.getItem('stock-app-settings');
+      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
+    } catch { /* ignore */ }
+
+    const useStorage = !!settings;
+    for (const file of toProcess) {
+      const { dataUrl, blob } = await compressImage(file, useStorage);
+      let finalUrl = dataUrl;
+      if (settings) {
+        try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+      }
+      setImages((prev) => {
+        const next = [...prev, finalUrl];
+        setCurrentImageIdx(next.length - 1);
+        return next;
+      });
+    }
     e.target.value = '';
   };
 

@@ -47,8 +47,9 @@ export function VisionMapPage() {
       if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
     } catch { /* ignore */ }
 
+    const useStorage = !!settings;
     for (const file of Array.from(files)) {
-      const { dataUrl, blob } = await compressImage(file);
+      const { dataUrl, blob } = await compressImage(file, useStorage);
       let finalUrl = dataUrl;
       if (settings) {
         try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
