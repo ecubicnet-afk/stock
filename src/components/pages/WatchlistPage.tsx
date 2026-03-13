@@ -64,7 +64,7 @@ export function WatchlistPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             <input type="text" value={newTicker} onChange={(e) => setNewTicker(e.target.value)} placeholder="銘柄コード (例: 7203)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
             <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="銘柄名 (例: トヨタ)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
-            <select value={newMarket} onChange={(e) => setNewMarket(e.target.value as WatchlistItem['market'])} className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:dark]">
+            <select value={newMarket} onChange={(e) => setNewMarket(e.target.value as WatchlistItem['market'])} className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:light]">
               <option value="JP">日本株</option>
               <option value="US">米国株</option>
               <option value="other">その他</option>
@@ -161,8 +161,8 @@ export function WatchlistPage() {
                       </div>
                       <div className="flex gap-1">
                         <input type="text" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="予定名" className="flex-1 bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none" />
-                        <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:dark]" />
-                        <select value={eventImportance} onChange={(e) => setEventImportance(e.target.value as ScheduleEvent['importance'])} className="bg-bg-primary/50 border border-border rounded px-1 py-1 text-xs text-text-primary [color-scheme:dark]">
+                        <input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:light]" />
+                        <select value={eventImportance} onChange={(e) => setEventImportance(e.target.value as ScheduleEvent['importance'])} className="bg-bg-primary/50 border border-border rounded px-1 py-1 text-xs text-text-primary [color-scheme:light]">
                           <option value="high">高</option>
                           <option value="medium">中</option>
                           <option value="low">低</option>

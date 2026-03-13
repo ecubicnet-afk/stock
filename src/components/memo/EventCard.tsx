@@ -93,18 +93,18 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
             type="date"
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
-            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
           />
           <input
             type="time"
             value={editTime}
             onChange={(e) => setEditTime(e.target.value)}
-            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
           />
           <select
             value={editImportance}
             onChange={(e) => setEditImportance(e.target.value as ScheduleEvent['importance'])}
-            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
           >
             <option value="high">重要</option>
             <option value="medium">注目</option>
@@ -114,7 +114,7 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
           <select
             value={editRegion || ''}
             onChange={(e) => setEditRegion((e.target.value || undefined) as RegionType)}
-            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+            className="bg-bg-primary/50 border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
           >
             <option value="JP">🇯🇵</option>
             <option value="US">🇺🇸</option>

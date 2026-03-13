@@ -391,7 +391,7 @@ export function PortfolioPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent border-none text-sm text-text-primary focus:outline-none [color-scheme:dark]"
+              className="bg-transparent border-none text-sm text-text-primary focus:outline-none [color-scheme:light]"
             />
           </div>
           <button
