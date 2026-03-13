@@ -83,7 +83,10 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
                 <img
                   src={img}
                   alt={`添付${i + 1}`}
-                  style={{ width: 48, height: 48 }}
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  decoding="async"
                   className="rounded object-cover cursor-pointer border border-border"
                   onClick={() => setLightboxIdx(i)}
                 />
@@ -147,6 +150,10 @@ export function ImageThumbnails({ images }: { images?: string[] }) {
             key={i}
             src={img}
             alt={`添付${i + 1}`}
+            width={48}
+            height={48}
+            loading="lazy"
+            decoding="async"
             className="w-12 h-12 rounded object-cover cursor-pointer border border-border hover:border-accent-cyan/50 transition-colors"
             onClick={() => setLightboxIdx(i)}
           />

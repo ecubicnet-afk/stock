@@ -32,7 +32,9 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json(sparklines);
+    return NextResponse.json(sparklines, {
+      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch sparkline data' }, { status: 500 });
   }

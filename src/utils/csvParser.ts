@@ -83,14 +83,14 @@ export interface AnalysisTrade {
 function normalizeDate(raw: string): { date: string; month: string } {
   if (!raw) return { date: '', month: '' };
   // YYYY/MM/DD or YYYY-MM-DD
-  const isoMatch = raw.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  const isoMatch = raw.match(/(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})/);
   if (isoMatch) {
     const [, y, m, d] = isoMatch;
     const date = `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
     return { date, month: `${y}/${m.padStart(2, '0')}` };
   }
   // MM/DD/YYYY or MM-DD-YYYY（米国式）
-  const usMatch = raw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  const usMatch = raw.match(/(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})/);
   if (usMatch) {
     const [, m, d, y] = usMatch;
     const date = `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;

@@ -1,6 +1,19 @@
 'use client';
 const URL_REGEX = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/g;
 
+/** Strip dangerous HTML tags and event handlers to prevent XSS */
+function sanitizeHtml(html: string): string {
+  return html
+    // Remove script/iframe/object/embed/form tags and their content
+    .replace(/<(script|iframe|object|embed|form|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // Remove self-closing dangerous tags
+    .replace(/<(script|iframe|object|embed|form|style)\b[^>]*\/?>/gi, '')
+    // Remove event handler attributes (on*)
+    .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+    // Remove javascript: protocol in href/src
+    .replace(/(href|src)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '$1=""');
+}
+
 function linkifyHtml(html: string): string {
   // Don't linkify URLs already inside <a> tags
   // Split by existing <a...>...</a> tags, only linkify outside them
@@ -17,7 +30,7 @@ interface RichTextDisplayProps {
 }
 
 export function RichTextDisplay({ html, className = '' }: RichTextDisplayProps) {
-  const processedHtml = linkifyHtml(html);
+  const processedHtml = linkifyHtml(sanitizeHtml(html));
 
   return (
     <div
