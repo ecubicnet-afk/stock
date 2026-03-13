@@ -21,29 +21,6 @@ const DIRECTION_OPTIONS: { value: StrategyNoteDirection; label: string; emoji: s
 ];
 
 
-function resizeImage(file: File, maxWidth: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      img.onerror = reject;
-      img.src = reader.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-
 export function StrategyPage() {
   const { data, addNote, updateNote, removeNote, addConnection, removeConnection, updateSummary, updateScenarioDescription, updateDrawing } = useStrategy();
   const { memos, addMemo } = useMemos();
@@ -94,8 +71,16 @@ export function StrategyPage() {
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await resizeImage(file, 1200);
-    updateScenarioDescription({ imageDataUrl: dataUrl, imageZoom: 100 });
+    const { compressImage } = await import('@/src/components/common/ImageAttachment');
+    const { uploadImage } = await import('@/src/services/firebaseStorage');
+    const { isFirebaseConfigured } = await import('@/src/services/firebase');
+    const { dataUrl, blob } = await compressImage(file);
+    let finalUrl = dataUrl;
+    try {
+      const raw = localStorage.getItem('stock-app-settings');
+      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) finalUrl = await uploadImage(s, blob); }
+    } catch { /* fallback to base64 */ }
+    updateScenarioDescription({ imageDataUrl: finalUrl, imageZoom: 100 });
     e.target.value = '';
   }, [updateScenarioDescription]);
 
