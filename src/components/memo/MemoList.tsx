@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ImageAttachment } from '../common/ImageAttachment';
+import { ImageAttachment, ImageThumbnails } from '../common/ImageAttachment';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { MemoEntry } from '../../types';
@@ -17,7 +17,6 @@ const STICKY_COLORS = [
 
 const ROTATIONS = ['-rotate-1', 'rotate-1', '-rotate-[1.5deg]', 'rotate-[0.5deg]', 'rotate-[1.5deg]', '-rotate-[0.5deg]'];
 
-const ITEMS_PER_PAGE = 20;
 
 function hashId(id: string): number {
   let hash = 0;
@@ -151,23 +150,10 @@ function StickyNote({
         </button>
       )}
 
-      {/* 画像サムネイル */}
+      {/* 画像サムネイル（クリックでライトボックス拡大表示） */}
       {memo.images && memo.images.length > 0 && (
-        <div className="mt-2 flex gap-1.5 flex-wrap">
-          {memo.images.slice(0, 2).map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              alt=""
-              className="w-12 h-12 object-cover rounded border border-white/60"
-              loading="lazy"
-            />
-          ))}
-          {memo.images.length > 2 && (
-            <div className="w-12 h-12 rounded border border-white/60 bg-white/50 flex items-center justify-center text-xs text-gray-500 font-medium">
-              +{memo.images.length - 2}
-            </div>
-          )}
+        <div className="mt-2">
+          <ImageThumbnails images={memo.images} />
         </div>
       )}
 
@@ -188,7 +174,6 @@ interface Props {
 
 export function MemoList({ memos, onUpdate, onDelete }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const startEdit = useCallback((id: string, _text: string, _images?: string[]) => {
     setEditingId(id);
@@ -207,9 +192,6 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
 
   if (memos.length === 0) return null;
 
-  const visibleMemos = memos.slice(0, visibleCount);
-  const hasMore = visibleCount < memos.length;
-
   return (
     <div>
       {/* セクションヘッダー */}
@@ -225,7 +207,7 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
 
       {/* 付箋グリッド */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {visibleMemos.map((memo) => {
+        {memos.map((memo) => {
           const idx = hashId(memo.id);
           const color = STICKY_COLORS[idx % STICKY_COLORS.length];
           const rotation = ROTATIONS[idx % ROTATIONS.length];
@@ -245,17 +227,6 @@ export function MemoList({ memos, onUpdate, onDelete }: Props) {
         })}
       </div>
 
-      {/* さらに表示 */}
-      {hasMore && (
-        <div className="mt-4 text-center">
-          <button
-            onClick={() => setVisibleCount((c) => c + ITEMS_PER_PAGE)}
-            className="px-4 py-2 text-sm text-text-secondary hover:text-accent-cyan bg-bg-tertiary rounded-lg hover:bg-bg-secondary transition-colors"
-          >
-            さらに表示（残り {memos.length - visibleCount} 件）
-          </button>
-        </div>
-      )}
     </div>
   );
 }
