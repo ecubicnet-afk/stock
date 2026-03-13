@@ -16,13 +16,17 @@ const FONT_COLORS = [
 ];
 
 const ACCENT_STYLES = {
-  amber: { active: 'bg-amber-500/20 text-amber-300', border: 'focus-within:border-amber-400/50' },
-  cyan: { active: 'bg-accent-cyan/20 text-accent-cyan', border: 'focus-within:border-accent-cyan/50' },
-  gold: { active: 'bg-accent-gold/20 text-accent-gold', border: 'focus-within:border-accent-gold/50' },
+  amber: { border: 'focus-within:border-amber-400/50' },
+  cyan: { border: 'focus-within:border-accent-cyan/50' },
+  gold: { border: 'focus-within:border-accent-gold/50' },
 };
 
+function execCmd(cmd: string, value?: string) {
+  document.execCommand(cmd, false, value);
+}
+
 function applyFontSize(cmdSize: string, pxSize: string) {
-  document.execCommand('fontSize', false, cmdSize);
+  execCmd('fontSize', cmdSize);
   const fonts = document.querySelectorAll(`font[size="${cmdSize}"]`);
   fonts.forEach((font) => {
     const span = document.createElement('span');
@@ -32,8 +36,23 @@ function applyFontSize(cmdSize: string, pxSize: string) {
   });
 }
 
-function applyFontColor(hex: string) {
-  document.execCommand('foreColor', false, hex);
+interface ToolbarButtonProps {
+  onAction: () => void;
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+function ToolbarButton({ onAction, title, children, className = '' }: ToolbarButtonProps) {
+  return (
+    <button
+      onMouseDown={(e) => { e.preventDefault(); onAction(); }}
+      className={`p-1 rounded text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors ${className}`}
+      title={title}
+    >
+      {children}
+    </button>
+  );
 }
 
 interface RichTextEditorProps {
@@ -58,7 +77,6 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, minHeight
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync external value changes (e.g. when switching entries)
   useEffect(() => {
     if (editorRef.current && initializedRef.current) {
       const currentHtml = editorRef.current.innerHTML;
@@ -74,24 +92,56 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, minHeight
     }
   }, [onChange]);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Ctrl/Cmd+B for bold
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      execCmd('bold');
+      handleInput();
+    }
+    // Ctrl/Cmd+I for italic
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      execCmd('italic');
+      handleInput();
+    }
+  }, [handleInput]);
+
   return (
     <div className={className}>
       {/* Toolbar */}
-      <div className="flex items-center gap-1.5 mb-1">
+      <div className="flex items-center gap-1 mb-1 flex-wrap">
+        {/* Format buttons */}
+        <ToolbarButton onAction={() => { execCmd('bold'); handleInput(); }} title="太字 (Ctrl+B)">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z"/></svg>
+        </ToolbarButton>
+        <ToolbarButton onAction={() => { execCmd('italic'); handleInput(); }} title="斜体 (Ctrl+I)">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z"/></svg>
+        </ToolbarButton>
+        <ToolbarButton onAction={() => { execCmd('insertUnorderedList'); handleInput(); }} title="箇条書き">
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+        </ToolbarButton>
+
+        <div className="h-3 w-px bg-border mx-0.5" />
+
+        {/* Font sizes */}
         <div className="flex gap-0.5">
           {FONT_SIZES.map((s) => (
             <button key={s.label}
               onMouseDown={(e) => { e.preventDefault(); applyFontSize(s.cmd, s.px); handleInput(); }}
-              className={`px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-primary hover:bg-primary/10`}
+              className="px-1.5 py-0.5 rounded text-[10px] text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
               title={`フォントサイズ: ${s.label}`}
             >{s.label}</button>
           ))}
         </div>
-        <div className="h-3 w-px bg-primary/20" />
+
+        <div className="h-3 w-px bg-border mx-0.5" />
+
+        {/* Font colors */}
         <div className="flex gap-1">
           {FONT_COLORS.map((c) => (
             <button key={c.hex}
-              onMouseDown={(e) => { e.preventDefault(); applyFontColor(c.hex); handleInput(); }}
+              onMouseDown={(e) => { e.preventDefault(); execCmd('foreColor', c.hex); handleInput(); }}
               className={`w-3.5 h-3.5 rounded-full ${c.cls} opacity-50 hover:opacity-100 transition-opacity`}
               title={c.label}
             />
@@ -103,8 +153,9 @@ export function RichTextEditor({ value, onChange, onBlur, placeholder, minHeight
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         onBlur={onBlur}
-        className={`w-full px-3 py-2 bg-primary/5 border border-primary/10 rounded-lg text-sm text-primary focus:outline-none ${accent.border}`}
+        className={`w-full px-3 py-2 bg-bg-primary/50 border border-border rounded-lg text-sm text-text-primary focus:outline-none ${accent.border}`}
         style={{ minHeight, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
         data-placeholder={placeholder}
       />

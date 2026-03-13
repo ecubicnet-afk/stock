@@ -220,21 +220,24 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </div>
 
         {/* ナビゲーションタブ（md以上） */}
-        <nav className="hidden md:flex items-center gap-1 px-4 py-1 border-t border-border/50">
-          {NAV_ITEMS.map((item) => {
+        <nav className="hidden md:flex items-center gap-0.5 px-4 py-1 border-t border-border/50">
+          {NAV_ITEMS.map((item, idx) => {
             const isActive = pathname === item.path;
+            const showSep = idx > 0 && item.category !== NAV_ITEMS[idx - 1].category;
             return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`px-4 py-2 text-sm rounded-md transition-all ${
-                  isActive
-                    ? 'bg-accent-cyan/10 text-accent-cyan font-semibold'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
-                }`}
-              >
-                {item.labelJa}
-              </Link>
+              <div key={item.path} className="flex items-center">
+                {showSep && <div className="w-px h-4 bg-border/50 mx-1" />}
+                <Link
+                  href={item.path}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                    isActive
+                      ? 'bg-accent-cyan/10 text-accent-cyan font-semibold'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-card'
+                  }`}
+                >
+                  {item.labelJa}
+                </Link>
+              </div>
             );
           })}
         </nav>

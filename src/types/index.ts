@@ -54,6 +54,7 @@ export interface NavItem {
   label: string;
   labelJa: string;
   icon: string;
+  category?: string;
 }
 
 // OHLC data for candlestick charts
@@ -217,6 +218,7 @@ export interface VisionDream {
   text: string;
   done: boolean;
   createdAt: string;
+  category?: string;
 }
 
 export interface VisionImage {
