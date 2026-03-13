@@ -74,12 +74,16 @@ export function StrategyPage() {
     const { compressImage } = await import('@/src/components/common/ImageAttachment');
     const { uploadImage } = await import('@/src/services/firebaseStorage');
     const { isFirebaseConfigured } = await import('@/src/services/firebase');
-    const { dataUrl, blob } = await compressImage(file);
-    let finalUrl = dataUrl;
+    let settings: import('@/src/types').Settings | null = null;
     try {
       const raw = localStorage.getItem('stock-app-settings');
-      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) finalUrl = await uploadImage(s, blob); }
-    } catch { /* fallback to base64 */ }
+      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
+    } catch { /* ignore */ }
+    const { dataUrl, blob } = await compressImage(file, !!settings);
+    let finalUrl = dataUrl;
+    if (settings) {
+      try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+    }
     updateScenarioDescription({ imageDataUrl: finalUrl, imageZoom: 100 });
     e.target.value = '';
   }, [updateScenarioDescription]);
