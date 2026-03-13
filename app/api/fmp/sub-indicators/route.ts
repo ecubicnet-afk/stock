@@ -18,7 +18,9 @@ export async function GET() {
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch sub-indicators' }, { status: 500 });
   }

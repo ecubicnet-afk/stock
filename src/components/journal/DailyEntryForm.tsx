@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { JournalEntry } from '../../types';
-import { useSettings } from '../../hooks/useSettings';
 import { callGemini } from '../../services/geminiApi';
 
 interface SaveData {

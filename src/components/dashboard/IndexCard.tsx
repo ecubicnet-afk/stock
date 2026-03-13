@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
 import type { MarketItem } from '../../types';
 import { formatNumber, formatChange, formatPercent, getChangeColor } from '../../utils/formatters';
 import { SparklineChart } from './SparklineChart';
-import { isMarketOpen } from '../../utils/marketHours';
+import { useMarketOpenStatus } from '../../hooks/useMarketOpenStatus';
 
 interface IndexCardProps {
   item: MarketItem;
@@ -12,16 +11,7 @@ interface IndexCardProps {
 export function IndexCard({ item }: IndexCardProps) {
   const changeColor = getChangeColor(item.change);
   const sparkColor = item.change >= 0 ? 'var(--color-up)' : 'var(--color-down)';
-
-  const [marketOpen, setMarketOpen] = useState(() => isMarketOpen(item.id));
-
-  useEffect(() => {
-    // 1分ごとに市場開閉を再チェック
-    const interval = setInterval(() => {
-      setMarketOpen(isMarketOpen(item.id));
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, [item.id]);
+  const marketOpen = useMarketOpenStatus(item.id);
 
   return (
     <div className="bg-bg-card backdrop-blur-sm border border-border rounded-xl p-4 hover:border-accent-cyan/30 transition-all group">

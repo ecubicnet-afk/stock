@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200' },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch historical data' }, { status: 500 });
   }

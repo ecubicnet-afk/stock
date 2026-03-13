@@ -1,73 +1,91 @@
-# React + TypeScript + Vite
+# 投資ダッシュボード
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+株式投資ダッシュボード - リアルタイム市場データ、トレード日誌、ポートフォリオ管理
 
-Currently, two official plugins are available:
+## 技術スタック
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **フレームワーク:** Next.js 16 (App Router) + React 19
+- **言語:** TypeScript 5.9 (strict mode)
+- **スタイリング:** Tailwind CSS v4
+- **チャート:** Recharts + TradingView Widget
+- **データベース:** Firebase Firestore (リアルタイム同期)
+- **API:** Financial Modeling Prep (市場データ), Google Gemini (AI分析)
+- **フォント:** next/font (JetBrains Mono, Noto Sans JP)
 
-## React Compiler
+## プロジェクト構成
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+├── app/                    # Next.js App Router
+│   ├── api/               # サーバーサイド API プロキシ
+│   │   ├── fmp/           # Financial Modeling Prep API
+│   │   └── gemini/        # Google Gemini API
+│   ├── layout.tsx         # ルートレイアウト (フォント・メタデータ)
+│   ├── page.tsx           # ダッシュボード (トップ)
+│   ├── chart/             # チャート分析
+│   ├── journal/           # トレード日誌
+│   ├── portfolio/         # ポートフォリオ管理
+│   ├── strategy/          # 戦略キャンバス
+│   ├── memo/              # 市場メモ
+│   ├── assignment/        # 課題管理
+│   ├── trade-methods/     # トレード手法
+│   ├── vision/            # ビジョンマップ
+│   ├── robots.ts          # robots.txt 生成
+│   └── sitemap.ts         # サイトマップ生成
+│
+├── src/
+│   ├── components/        # React コンポーネント
+│   │   ├── chart/         # チャート関連
+│   │   ├── common/        # 共通コンポーネント
+│   │   ├── dashboard/     # ダッシュボード
+│   │   ├── journal/       # トレード日誌
+│   │   ├── layout/        # レイアウト (Header, Sidebar, Footer)
+│   │   ├── memo/          # メモ
+│   │   ├── pages/         # ページコンポーネント
+│   │   ├── schedule/      # スケジュール
+│   │   ├── settings/      # 設定
+│   │   └── strategy/      # 戦略キャンバス
+│   │
+│   ├── hooks/             # カスタムフック
+│   ├── services/          # API・Firebase サービス
+│   ├── types/             # TypeScript 型定義
+│   ├── utils/             # ユーティリティ関数
+│   └── index.css          # Tailwind CSS エントリー
+│
+└── .github/workflows/     # CI/CD
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## パフォーマンス最適化
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **next/font:** フォントの自動最適化・プリロード (CLS 改善)
+- **dynamic import:** 重いページコンポーネントの遅延読み込み (初期バンドル削減)
+- **軽量 SVG スパークライン:** Recharts 依存を除去した SVG 直接描画
+- **共有タイマー:** IndexCard の市場開閉チェックを単一の共有タイマーに統合
+- **API キャッシュ:** サーバーサイド API ルートに Cache-Control ヘッダー設定
+- **セキュリティヘッダー:** X-Content-Type-Options, X-Frame-Options, Referrer-Policy
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 開発
+
+```bash
+# 依存パッケージのインストール
+npm install
+
+# 開発サーバー起動
+npm run dev
+
+# ビルド
+npm run build
+
+# Lint
+npm run lint
 ```
+
+## 環境変数
+
+`.env.example` を `.env.local` にコピーして設定:
+
+```
+FMP_API_KEY=        # Financial Modeling Prep API キー
+GEMINI_API_KEY=     # Google Gemini API キー
+```
+
+Firebase 設定はアプリ内の設定画面から行います。
