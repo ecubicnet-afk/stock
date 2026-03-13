@@ -84,7 +84,7 @@ export function TradeForm({ date, prefill, onAdd, onCancel }: Props) {
       <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="理由（エントリー/イグジット理由）" className="w-full h-12 bg-bg-card/50 border border-border rounded-lg p-2 text-sm text-text-primary resize-none placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-gold/50" />
       <ImageAttachment images={images} onChange={setImages} maxImages={3} />
       <div className="grid grid-cols-2 gap-2">
-        <select value={emotion} onChange={(e) => setEmotion(e.target.value)} className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary [color-scheme:dark]">
+        <select value={emotion} onChange={(e) => setEmotion(e.target.value)} className="bg-bg-card/50 border border-border rounded-lg px-2 py-1.5 text-sm text-text-primary [color-scheme:light]">
           <option value="">感情状態</option>
           <option value="冷静">冷静</option>
           <option value="自信あり">自信あり</option>

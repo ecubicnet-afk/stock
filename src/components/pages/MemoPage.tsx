@@ -242,18 +242,18 @@ export function MemoPage() {
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
             />
             <input
               type="time"
               value={newTime}
               onChange={(e) => setNewTime(e.target.value)}
-              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
             />
             <select
               value={newImportance}
               onChange={(e) => setNewImportance(e.target.value as ScheduleEvent['importance'])}
-              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
             >
               <option value="high">重要（高）</option>
               <option value="medium">注目（中）</option>
@@ -263,7 +263,7 @@ export function MemoPage() {
             <select
               value={newRegion || ''}
               onChange={(e) => setNewRegion((e.target.value || undefined) as RegionType)}
-              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:dark]"
+              className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50 [color-scheme:light]"
             >
               <option value="JP">🇯🇵 日本</option>
               <option value="US">🇺🇸 米国</option>
@@ -373,7 +373,7 @@ export function MemoPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
               <input type="text" value={wlNewTicker} onChange={(e) => setWlNewTicker(e.target.value)} placeholder="銘柄コード (例: 7203)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
               <input type="text" value={wlNewName} onChange={(e) => setWlNewName(e.target.value)} placeholder="銘柄名 (例: トヨタ)" className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:border-accent-cyan/50" />
-              <select value={wlNewMarket} onChange={(e) => setWlNewMarket(e.target.value as WatchlistItem['market'])} className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:dark]">
+              <select value={wlNewMarket} onChange={(e) => setWlNewMarket(e.target.value as WatchlistItem['market'])} className="bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary [color-scheme:light]">
                 <option value="JP">日本株</option>
                 <option value="US">米国株</option>
                 <option value="other">その他</option>
@@ -475,11 +475,11 @@ export function MemoPage() {
                         <div className="space-y-1">
                           <div className="flex gap-1">
                             <input type="text" value={wlEventTitle} onChange={(e) => setWlEventTitle(e.target.value)} placeholder="予定名" className="flex-1 bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary placeholder:text-text-secondary/50 focus:outline-none" />
-                            <input type="date" value={wlEventDate} onChange={(e) => setWlEventDate(e.target.value)} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:dark]" />
+                            <input type="date" value={wlEventDate} onChange={(e) => setWlEventDate(e.target.value)} className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:light]" />
                           </div>
                           <div className="flex gap-1">
-                            <input type="time" value={wlEventTime} onChange={(e) => setWlEventTime(e.target.value)} placeholder="時刻" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:dark]" />
-                            <select value={wlEventImportance} onChange={(e) => setWlEventImportance(e.target.value as ScheduleEvent['importance'])} className="bg-bg-primary/50 border border-border rounded px-1 py-1 text-xs text-text-primary [color-scheme:dark]">
+                            <input type="time" value={wlEventTime} onChange={(e) => setWlEventTime(e.target.value)} placeholder="時刻" className="bg-bg-primary/50 border border-border rounded px-2 py-1 text-xs text-text-primary [color-scheme:light]" />
+                            <select value={wlEventImportance} onChange={(e) => setWlEventImportance(e.target.value as ScheduleEvent['importance'])} className="bg-bg-primary/50 border border-border rounded px-1 py-1 text-xs text-text-primary [color-scheme:light]">
                               <option value="high">高</option>
                               <option value="medium">中</option>
                               <option value="low">低</option>

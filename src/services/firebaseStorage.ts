@@ -26,10 +26,21 @@ export async function uploadImage(
   }
 
   const id = imageId || crypto.randomUUID();
+  const ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const contentType = blob.type || 'image/jpeg';
   const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-  const storageRef = ref(storage, `users/${uid}/images/${id}.jpg`);
-  await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-  return getDownloadURL(storageRef);
+  const storageRef = ref(storage, `users/${uid}/images/${id}.${ext}`);
+
+  // 30-second timeout to prevent hanging forever
+  const withTimeout = <T>(p: Promise<T>) => Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('アップロードがタイムアウトしました（30秒）')), 30000)
+    ),
+  ]);
+
+  await withTimeout(uploadBytes(storageRef, blob, { contentType }));
+  return withTimeout(getDownloadURL(storageRef));
 }
 
 /**
