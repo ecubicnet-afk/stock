@@ -35,6 +35,9 @@ export function StrategyPage() {
   const [newNote, setNewNote] = useState({ title: '', description: '', region: 'jp' as StrategyNoteRegion, direction: 'neutral' as StrategyNoteDirection, url: '', date: '' });
   const [newUrl, setNewUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [memoStatus, setMemoStatus] = useState<'idle' | 'success'>('idle');
+  const [scheduleStatus, setScheduleStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const desc = data.scenarioDescription;
@@ -71,20 +74,31 @@ export function StrategyPage() {
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const { compressImage } = await import('@/src/components/common/ImageAttachment');
-    const { uploadImage } = await import('@/src/services/firebaseStorage');
-    const { isFirebaseConfigured } = await import('@/src/services/firebase');
-    let settings: import('@/src/types').Settings | null = null;
+    setImageUploading(true);
     try {
-      const raw = localStorage.getItem('stock-app-settings');
-      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
-    } catch { /* ignore */ }
-    const { dataUrl, blob } = await compressImage(file, !!settings);
-    let finalUrl = dataUrl;
-    if (settings) {
-      try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+      const { compressImage } = await import('@/src/components/common/ImageAttachment');
+      const { uploadImage } = await import('@/src/services/firebaseStorage');
+      const { isFirebaseConfigured } = await import('@/src/services/firebase');
+      let settings: import('@/src/types').Settings | null = null;
+      try {
+        const raw = localStorage.getItem('stock-app-settings');
+        if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
+      } catch { /* ignore */ }
+      const { dataUrl, blob } = await compressImage(file, !!settings);
+      let finalUrl = dataUrl;
+      if (settings) {
+        try {
+          finalUrl = await uploadImage(settings, blob);
+        } catch {
+          // Storage失敗時はlocalStorage用に圧縮（400pxプレビューではなく1200px）
+          const fallback = await compressImage(file, false);
+          finalUrl = fallback.dataUrl;
+        }
+      }
+      updateScenarioDescription({ imageDataUrl: finalUrl, imageZoom: 100 });
+    } finally {
+      setImageUploading(false);
     }
-    updateScenarioDescription({ imageDataUrl: finalUrl, imageZoom: 100 });
     e.target.value = '';
   }, [updateScenarioDescription]);
 
@@ -108,21 +122,34 @@ export function StrategyPage() {
   const handleSaveToMemo = useCallback(() => {
     const plainText = getPlainText();
     if (!plainText.trim()) return;
-    addMemo(plainText);
+    try {
+      addMemo(plainText);
+      setMemoStatus('success');
+      setTimeout(() => setMemoStatus('idle'), 2000);
+    } catch {
+      /* ignore */
+    }
   }, [addMemo, getPlainText]);
 
   const handleSaveToSchedule = useCallback(() => {
     const plainText = getPlainText();
     if (!plainText.trim() || !desc.date) return;
-    addEvent({
-      title: '想定シナリオ',
-      date: desc.date,
-      time: '00:00',
-      importance: 'scenario',
-      description: plainText,
-      region: 'JP',
-      images: desc.imageDataUrl ? [desc.imageDataUrl] : undefined,
-    });
+    try {
+      addEvent({
+        title: '想定シナリオ',
+        date: desc.date,
+        time: '00:00',
+        importance: 'scenario',
+        description: plainText,
+        region: 'JP',
+        images: desc.imageDataUrl ? [desc.imageDataUrl] : undefined,
+      });
+      setScheduleStatus('success');
+      setTimeout(() => setScheduleStatus('idle'), 2000);
+    } catch {
+      setScheduleStatus('error');
+      setTimeout(() => setScheduleStatus('idle'), 2000);
+    }
   }, [addEvent, desc.date, desc.imageDataUrl, getPlainText]);
 
   const handleAIAnalysis = useCallback(async () => {
@@ -221,15 +248,19 @@ ${notesText}
             >
               {isAnalyzing ? 'AI分析中...' : 'AI分析'}
             </button>
-            <button onClick={handleSaveToMemo} className="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-[10px] hover:bg-amber-100">
-              メモに保存
+            <button
+              onClick={handleSaveToMemo}
+              disabled={memoStatus === 'success'}
+              className={`px-2 py-0.5 rounded text-[10px] transition-colors ${memoStatus === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+            >
+              {memoStatus === 'success' ? '保存しました' : 'メモに保存'}
             </button>
             <button
               onClick={handleSaveToSchedule}
-              disabled={!desc.date}
-              className={`px-2 py-0.5 rounded text-[10px] ${desc.date ? 'bg-blue-50 text-blue-700 hover:bg-blue-500/20' : 'bg-primary/5 text-muted cursor-not-allowed'}`}
+              disabled={!desc.date || scheduleStatus !== 'idle'}
+              className={`px-2 py-0.5 rounded text-[10px] transition-colors ${scheduleStatus === 'success' ? 'bg-emerald-50 text-emerald-700' : scheduleStatus === 'error' ? 'bg-red-50 text-red-700' : desc.date ? 'bg-blue-50 text-blue-700 hover:bg-blue-500/20' : 'bg-primary/5 text-muted cursor-not-allowed'}`}
             >
-              📅 スケジュールに追加
+              {scheduleStatus === 'success' ? '追加しました' : scheduleStatus === 'error' ? '失敗しました' : '📅 スケジュールに追加'}
             </button>
           </div>
 
@@ -266,7 +297,15 @@ ${notesText}
             </div>
             {/* Image area with zoom */}
             <div className="flex-1 min-w-0 flex flex-col">
-              {desc.imageDataUrl ? (
+              {imageUploading ? (
+                <div className="w-full h-full min-h-[120px] border-2 border-dashed border-amber-300 rounded-lg flex flex-col items-center justify-center text-amber-700 bg-amber-50/30">
+                  <svg className="w-6 h-6 animate-spin mb-1" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span className="text-xs">アップロード中...</span>
+                </div>
+              ) : desc.imageDataUrl ? (
                 <>
                   {/* Zoom controls */}
                   <div className="flex items-center justify-center gap-2 mb-1">
