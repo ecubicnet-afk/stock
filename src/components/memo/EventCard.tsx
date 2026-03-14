@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ImageThumbnails } from '../common/ImageAttachment';
+import { ImageAttachment, ImageThumbnails } from '../common/ImageAttachment';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { ScheduleEvent } from '../../types';
@@ -33,9 +33,7 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
   const [editImportance, setEditImportance] = useState<ScheduleEvent['importance']>('medium');
   const [editDescription, setEditDescription] = useState('');
   const [editRegion, setEditRegion] = useState<RegionType>('JP');
-
-  const [memoEditing, setMemoEditing] = useState(false);
-  const [memoText, setMemoText] = useState('');
+  const [editImages, setEditImages] = useState<string[]>([]);
 
   const startEdit = () => {
     setEditing(true);
@@ -45,6 +43,7 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
     setEditImportance(event.importance);
     setEditDescription(event.description || '');
     setEditRegion(event.region || 'JP');
+    setEditImages(event.images || []);
   };
 
   const saveEdit = () => {
@@ -56,19 +55,10 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
         importance: editImportance,
         description: editDescription.trim() || undefined,
         region: editRegion || undefined,
+        images: editImages.length > 0 ? editImages : undefined,
       });
     }
     setEditing(false);
-  };
-
-  const startMemoEdit = () => {
-    setMemoEditing(true);
-    setMemoText(event.description || '');
-  };
-
-  const saveMemo = () => {
-    onUpdate(event.id, { description: memoText.trim() || undefined });
-    setMemoEditing(false);
   };
 
   if (editing) {
@@ -80,13 +70,6 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
           onChange={(e) => setEditTitle(e.target.value)}
           className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent-gold/50"
           autoFocus
-        />
-        <RichTextEditor
-          value={editDescription}
-          onChange={setEditDescription}
-          placeholder="詳細メモ（任意）"
-          minHeight="64px"
-          accentColor="gold"
         />
         <div className="grid grid-cols-4 gap-2">
           <input
@@ -121,6 +104,14 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
             <option value="other">他</option>
           </select>
         </div>
+        <RichTextEditor
+          value={editDescription}
+          onChange={setEditDescription}
+          placeholder="詳細メモ（任意）"
+          minHeight="64px"
+          accentColor="gold"
+        />
+        <ImageAttachment images={editImages} onChange={setEditImages} maxImages={3} />
         <div className="flex gap-2">
           <button onClick={saveEdit} className="px-3 py-1 bg-accent-gold/20 text-accent-gold text-xs rounded-lg hover:bg-accent-gold/30">保存</button>
           <button onClick={() => setEditing(false)} className="px-3 py-1 bg-bg-primary text-text-secondary text-xs rounded-lg hover:text-text-primary">キャンセル</button>
@@ -154,41 +145,15 @@ export function EventCard({ event, onUpdate, onDelete }: Props) {
         </div>
       </div>
 
-      {event.description && !memoEditing && (
+      {event.description && (
         <div className="mt-1.5 ml-[3.75rem] text-xs text-text-secondary/80 border-l-2 border-accent-gold/30 pl-2">
           <RichTextDisplay html={event.description} />
         </div>
       )}
-      {event.images && event.images.length > 0 && !memoEditing && (
+      {event.images && event.images.length > 0 && (
         <div className="ml-[3.75rem]">
           <ImageThumbnails images={event.images} />
         </div>
-      )}
-
-      {memoEditing ? (
-        <div className="mt-2 ml-[3.75rem]">
-          <RichTextEditor
-            value={memoText}
-            onChange={setMemoText}
-            placeholder="このイベントについてメモを入力..."
-            minHeight="80px"
-            accentColor="gold"
-          />
-          <div className="flex gap-2 mt-1.5">
-            <button onClick={saveMemo} className="px-3 py-1 bg-accent-gold/20 text-accent-gold text-xs rounded-lg hover:bg-accent-gold/30">保存</button>
-            <button onClick={() => setMemoEditing(false)} className="px-3 py-1 bg-bg-primary text-text-secondary text-xs rounded-lg hover:text-text-primary">キャンセル</button>
-          </div>
-        </div>
-      ) : (
-        <button
-          onClick={startMemoEdit}
-          className="mt-1.5 ml-[3.75rem] text-[11px] text-text-secondary/40 hover:text-accent-gold/70 transition-colors flex items-center gap-1"
-        >
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          {event.description ? 'メモを編集' : 'メモを追加'}
-        </button>
       )}
     </div>
   );
