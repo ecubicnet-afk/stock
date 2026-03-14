@@ -1,4 +1,21 @@
 import { SYNC_KEYS } from '../hooks/useLocalStorage';
+import { syncToFirestore } from './firebaseSync';
+import { isFirebaseConfigured } from './firebase';
+
+/** 設定を取得してFirestoreに同期 */
+async function syncKeyToFirestore(localKey: string): Promise<void> {
+  const syncKey = SYNC_KEYS[localKey];
+  if (!syncKey) return;
+  let settings;
+  try { settings = JSON.parse(localStorage.getItem('stock-app-settings') || '{}'); }
+  catch { return; }
+  if (!isFirebaseConfigured(settings)) return;
+  const raw = localStorage.getItem(localKey);
+  if (!raw) return;
+  try {
+    await syncToFirestore(settings, syncKey, JSON.parse(raw));
+  } catch { /* ignore */ }
+}
 
 /** プレースホルダー文字列の判定 */
 export function isUploadingPlaceholder(src: string): boolean {
@@ -174,6 +191,7 @@ export async function processUploadQueue(manifest: StrippedImage[]): Promise<voi
 }
 
 function replacePlaceholders(replacements: Map<string, string>): void {
+  const changedKeys: string[] = [];
   for (const localKey of Object.keys(SYNC_KEYS)) {
     const raw = localStorage.getItem(localKey);
     if (!raw) continue;
@@ -181,17 +199,24 @@ function replacePlaceholders(replacements: Map<string, string>): void {
     for (const [placeholder, url] of replacements) {
       updated = updated.replaceAll(placeholder, url);
     }
-    if (updated !== raw) localStorage.setItem(localKey, updated);
+    if (updated !== raw) {
+      localStorage.setItem(localKey, updated);
+      changedKeys.push(localKey);
+    }
   }
   window.dispatchEvent(new Event('storage'));
+  // Firestoreにも同期
+  for (const key of changedKeys) {
+    syncKeyToFirestore(key).catch(() => {});
+  }
 }
 
 /**
  * 中断されたセッションで残った __uploading__ プレースホルダーを除去。
  * 該当画像エントリを配列から削除する。
  */
-export function cleanupOrphanedPlaceholders(): boolean {
-  let cleaned = false;
+export function cleanupOrphanedPlaceholders(): string[] {
+  const changedKeys: string[] = [];
 
   for (const localKey of Object.keys(SYNC_KEYS)) {
     try {
@@ -240,10 +265,10 @@ export function cleanupOrphanedPlaceholders(): boolean {
 
       if (changed) {
         localStorage.setItem(localKey, JSON.stringify(data));
-        cleaned = true;
+        changedKeys.push(localKey);
       }
     } catch { /* skip */ }
   }
 
-  return cleaned;
+  return changedKeys;
 }

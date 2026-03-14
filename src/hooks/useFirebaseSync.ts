@@ -229,9 +229,22 @@ export function useFirebaseSync() {
       // Clean up orphaned __uploading__ placeholders from interrupted sessions
       {
         const { cleanupOrphanedPlaceholders } = await import('../services/storageMigration');
-        if (cleanupOrphanedPlaceholders()) {
+        const changedKeys = cleanupOrphanedPlaceholders();
+        if (changedKeys.length > 0) {
           anyUpdated = true;
           window.dispatchEvent(new Event('storage'));
+          // Firestoreにも同期して、次回リロード時にプレースホルダーが復活しないようにする
+          for (const localKey of changedKeys) {
+            const syncKey = SYNC_KEYS[localKey];
+            if (syncKey) {
+              try {
+                const raw = localStorage.getItem(localKey);
+                if (raw) {
+                  await syncToFirestore(settings, syncKey, JSON.parse(raw));
+                }
+              } catch { /* ignore */ }
+            }
+          }
         }
       }
 
