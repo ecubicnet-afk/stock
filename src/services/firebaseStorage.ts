@@ -73,3 +73,21 @@ export function isStorageUrl(value: string): boolean {
   return value.startsWith('https://firebasestorage.googleapis.com/')
     || value.startsWith('https://storage.googleapis.com/');
 }
+
+/** Check if a string is a base64 data URL */
+export function isBase64DataUrl(value: string): boolean {
+  return value.startsWith('data:image/');
+}
+
+/**
+ * Convert a base64 data URL to a Blob and upload to Firebase Storage.
+ * Used to migrate old base64 images stored in localStorage/Firestore.
+ */
+export async function migrateBase64ToStorage(
+  settings: Settings,
+  dataUrl: string,
+): Promise<string> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return uploadImage(settings, blob);
+}

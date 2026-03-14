@@ -96,6 +96,8 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
             detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
           }));
         }
+        // Revert React state to match localStorage (save failed)
+        return prev;
       }
       return newValue;
     });
