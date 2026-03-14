@@ -5,6 +5,7 @@ import { isFirebaseConfigured } from '../services/firebase';
 import { loadFromFirestore, syncToFirestore } from '../services/firebaseSync';
 import { SYNC_KEYS } from './useLocalStorage';
 import { markSyncComplete } from './syncState';
+import type { Settings } from '../types';
 
 const TIMESTAMP_PREFIX = 'stock-app-sync-ts-';
 
@@ -55,6 +56,81 @@ function mergeArraysById(local: unknown[], remote: unknown[]): unknown[] {
   addItems(local);
   addItems(remote);
   return Array.from(map.values());
+}
+
+/**
+ * Migrate base64 data URLs in localStorage to Firebase Storage URLs.
+ * Runs once after sync to free up localStorage/Firestore space.
+ */
+async function migrateBase64Images(settings: Settings): Promise<boolean> {
+  const { migrateBase64ToStorage, isBase64DataUrl } = await import('../services/firebaseStorage');
+  let anyMigrated = false;
+
+  async function migrateImageArray(images: string[]): Promise<boolean> {
+    let changed = false;
+    for (let i = 0; i < images.length; i++) {
+      if (isBase64DataUrl(images[i])) {
+        try {
+          images[i] = await migrateBase64ToStorage(settings, images[i]);
+          changed = true;
+        } catch { /* retry next time */ }
+      }
+    }
+    return changed;
+  }
+
+  // Process all sync keys that may contain base64 images
+  for (const [localKey, syncKey] of Object.entries(SYNC_KEYS)) {
+    try {
+      const raw = localStorage.getItem(localKey);
+      if (!raw) continue;
+      const data = JSON.parse(raw);
+      let migrated = false;
+
+      if (Array.isArray(data)) {
+        // Array data: memos, trades, journal, schedule, trade-methods, watchlist
+        for (const item of data) {
+          if (!item || typeof item !== 'object') continue;
+          if (Array.isArray(item.images) && await migrateImageArray(item.images)) migrated = true;
+          // WatchlistItem: nested events[].images
+          if (Array.isArray(item.events)) {
+            for (const evt of item.events) {
+              if (evt?.images && await migrateImageArray(evt.images)) migrated = true;
+            }
+          }
+        }
+      } else if (typeof data === 'object' && data !== null) {
+        // Strategy: scenarioDescription.imageDataUrl
+        if (data.scenarioDescription?.imageDataUrl && isBase64DataUrl(data.scenarioDescription.imageDataUrl)) {
+          try {
+            data.scenarioDescription.imageDataUrl = await migrateBase64ToStorage(settings, data.scenarioDescription.imageDataUrl);
+            migrated = true;
+          } catch { /* retry next time */ }
+        }
+        // VisionMap: images[].dataUrl
+        if (Array.isArray(data.images)) {
+          for (const img of data.images) {
+            if (img?.dataUrl && isBase64DataUrl(img.dataUrl)) {
+              try {
+                img.dataUrl = await migrateBase64ToStorage(settings, img.dataUrl);
+                migrated = true;
+              } catch { /* retry next time */ }
+            }
+          }
+        }
+      }
+
+      if (migrated) {
+        localStorage.setItem(localKey, JSON.stringify(data));
+        await syncToFirestore(settings, syncKey, data).catch(() => {});
+        anyMigrated = true;
+      }
+    } catch {
+      // Parse error or other issue — skip this key
+    }
+  }
+
+  return anyMigrated;
 }
 
 /**
@@ -148,6 +224,13 @@ export function useFirebaseSync() {
       if (anyUpdated) {
         // Notify React hooks that localStorage changed
         window.dispatchEvent(new Event('storage'));
+      }
+
+      // Migrate any remaining base64 images to Firebase Storage (non-blocking)
+      if (!hasFatalError) {
+        migrateBase64Images(settings).then((migrated) => {
+          if (migrated) window.dispatchEvent(new Event('storage'));
+        }).catch(() => {});
       }
     })();
   }, [settings]);
