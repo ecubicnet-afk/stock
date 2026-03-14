@@ -158,22 +158,23 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
     const useStorage = !!settings;
     setUploading(true);
     try {
-      for (const file of toProcess) {
+      // Upload all images in parallel for speed
+      const uploadPromises = toProcess.map(async (file) => {
         const { dataUrl, blob } = await compressImage(file, useStorage);
         if (settings) {
           try {
-            const url = await uploadImage(settings, blob);
-            onChange([...images, url]);
+            return await uploadImage(settings, blob);
           } catch (err) {
             console.error('[ImageAttachment] Storage upload failed, using base64:', err);
-            // Re-compress for localStorage since original blob is too large
             const fallback = await compressImage(file, false);
-            onChange([...images, fallback.dataUrl]);
+            return fallback.dataUrl;
           }
-        } else {
-          onChange([...images, dataUrl]);
         }
-      }
+        return dataUrl;
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      onChange([...images, ...newUrls]);
     } finally {
       setUploading(false);
     }

@@ -6,8 +6,30 @@
 import type { Settings } from '../types';
 import { initFirebase, isFirebaseConfigured } from './firebase';
 
+// Cache dynamic imports for parallel upload performance
+let storageModuleCache: {
+  ref: typeof import('firebase/storage').ref;
+  uploadBytes: typeof import('firebase/storage').uploadBytes;
+  getDownloadURL: typeof import('firebase/storage').getDownloadURL;
+} | null = null;
+
+async function getStorageModule() {
+  if (!storageModuleCache) {
+    const mod = await import('firebase/storage');
+    storageModuleCache = { ref: mod.ref, uploadBytes: mod.uploadBytes, getDownloadURL: mod.getDownloadURL };
+  }
+  return storageModuleCache;
+}
+
+const withTimeout = <T>(p: Promise<T>, ms = 30000) => Promise.race([
+  p,
+  new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('アップロードがタイムアウトしました（30秒）')), ms)
+  ),
+]);
+
 /**
- * Upload a compressed image blob to Firebase Storage.
+ * Upload an image blob to Firebase Storage.
  * Returns the public download URL.
  */
 export async function uploadImage(
@@ -28,16 +50,8 @@ export async function uploadImage(
   const id = imageId || crypto.randomUUID();
   const ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
   const contentType = blob.type || 'image/jpeg';
-  const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+  const { ref, uploadBytes, getDownloadURL } = await getStorageModule();
   const storageRef = ref(storage, `users/${uid}/images/${id}.${ext}`);
-
-  // 30-second timeout to prevent hanging forever
-  const withTimeout = <T>(p: Promise<T>) => Promise.race([
-    p,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('アップロードがタイムアウトしました（30秒）')), 30000)
-    ),
-  ]);
 
   await withTimeout(uploadBytes(storageRef, blob, { contentType }));
   return withTimeout(getDownloadURL(storageRef));
@@ -55,7 +69,8 @@ export async function deleteImage(
 
   try {
     const { storage } = await initFirebase(settings);
-    const { ref, deleteObject } = await import('firebase/storage');
+    const { ref } = await getStorageModule();
+    const { deleteObject } = await import('firebase/storage');
     // Extract the storage path from the download URL
     const url = new URL(downloadUrl);
     const pathMatch = url.pathname.match(/\/o\/(.+?)(\?|$)/);
