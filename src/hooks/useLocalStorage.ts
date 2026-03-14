@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { syncToFirestore } from '../services/firebaseSync';
 import { isFirebaseConfigured } from '../services/firebase';
 import { initialSyncComplete } from './syncState';
@@ -56,6 +56,84 @@ function scheduleSync(localKey: string, data: unknown) {
   }, 500);
 }
 
+/**
+ * Migrate base64 images in data to Firebase Storage URLs, then retry localStorage save.
+ * Returns the cleaned data if successful, null if migration failed or not applicable.
+ */
+async function migrateAndRetry(key: string, data: unknown): Promise<unknown | null> {
+  const { migrateBase64ToStorage, isBase64DataUrl } = await import('../services/firebaseStorage');
+
+  let settings;
+  try {
+    settings = JSON.parse(localStorage.getItem('stock-app-settings') || '{}');
+  } catch { return null; }
+  if (!isFirebaseConfigured(settings)) return null;
+
+  let migrated = false;
+  const cloned = JSON.parse(JSON.stringify(data));
+
+  if (Array.isArray(cloned)) {
+    for (const item of cloned) {
+      if (!item || typeof item !== 'object') continue;
+      // images: string[] field (memos, trades, journal, schedule, trade-methods)
+      if (Array.isArray(item.images)) {
+        for (let i = 0; i < item.images.length; i++) {
+          if (isBase64DataUrl(item.images[i])) {
+            try {
+              item.images[i] = await migrateBase64ToStorage(settings, item.images[i]);
+              migrated = true;
+            } catch { /* skip this image */ }
+          }
+        }
+      }
+      // WatchlistItem: events[].images
+      if (Array.isArray(item.events)) {
+        for (const evt of item.events) {
+          if (evt?.images && Array.isArray(evt.images)) {
+            for (let i = 0; i < evt.images.length; i++) {
+              if (isBase64DataUrl(evt.images[i])) {
+                try {
+                  evt.images[i] = await migrateBase64ToStorage(settings, evt.images[i]);
+                  migrated = true;
+                } catch { /* skip */ }
+              }
+            }
+          }
+        }
+      }
+    }
+  } else if (typeof cloned === 'object' && cloned !== null) {
+    // Strategy: scenarioDescription.imageDataUrl
+    if (cloned.scenarioDescription?.imageDataUrl && isBase64DataUrl(cloned.scenarioDescription.imageDataUrl)) {
+      try {
+        cloned.scenarioDescription.imageDataUrl = await migrateBase64ToStorage(settings, cloned.scenarioDescription.imageDataUrl);
+        migrated = true;
+      } catch { /* skip */ }
+    }
+    // VisionMap: images[].dataUrl
+    if (Array.isArray(cloned.images)) {
+      for (const img of cloned.images) {
+        if (img?.dataUrl && isBase64DataUrl(img.dataUrl)) {
+          try {
+            img.dataUrl = await migrateBase64ToStorage(settings, img.dataUrl);
+            migrated = true;
+          } catch { /* skip */ }
+        }
+      }
+    }
+  }
+
+  if (!migrated) return null;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(cloned));
+    scheduleSync(key, cloned);
+    return cloned;
+  } catch {
+    return null;
+  }
+}
+
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -65,6 +143,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       return initialValue;
     }
   });
+
+  // Track whether a migration retry is in progress
+  const migrating = useRef(false);
 
   // Listen for storage events (from useFirebaseSync or other tabs)
   useEffect(() => {
@@ -89,14 +170,31 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         window.localStorage.setItem(key, JSON.stringify(newValue));
         scheduleSync(key, newValue);
       } catch (err) {
-        console.error(`[localStorage] Save failed for "${key}":`, err);
-        // Show user-visible warning for quota errors
         if (err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)) {
-          window.dispatchEvent(new CustomEvent('storage-quota-error', {
-            detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
-          }));
+          // Background: migrate base64 images to Firebase Storage and retry
+          if (!migrating.current) {
+            migrating.current = true;
+            migrateAndRetry(key, newValue).then((cleaned) => {
+              if (cleaned) {
+                setStoredValue(cleaned as T);
+                window.dispatchEvent(new Event('storage'));
+              } else {
+                window.dispatchEvent(new CustomEvent('storage-quota-error', {
+                  detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
+                }));
+              }
+            }).catch(() => {
+              window.dispatchEvent(new CustomEvent('storage-quota-error', {
+                detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
+              }));
+            }).finally(() => {
+              migrating.current = false;
+            });
+          }
+        } else {
+          console.error(`[localStorage] Save failed for "${key}":`, err);
         }
-        // Revert React state to match localStorage (save failed)
+        // Revert React state to match localStorage (save failed, retry in background)
         return prev;
       }
       return newValue;
