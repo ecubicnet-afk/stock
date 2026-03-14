@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { syncToFirestore } from '../services/firebaseSync';
 import { isFirebaseConfigured } from '../services/firebase';
 import { initialSyncComplete } from './syncState';
+import { emergencyFreeSpace, stripBase64FromValue, processUploadQueue } from '../services/storageMigration';
 
 /** Mapping from localStorage key to Firestore sync key */
 export const SYNC_KEYS: Record<string, string> = {
@@ -89,14 +90,29 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         window.localStorage.setItem(key, JSON.stringify(newValue));
         scheduleSync(key, newValue);
       } catch (err) {
-        console.error(`[localStorage] Save failed for "${key}":`, err);
-        // Show user-visible warning for quota errors
         if (err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22)) {
-          window.dispatchEvent(new CustomEvent('storage-quota-error', {
-            detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
-          }));
+          // 即座にbase64を除去してリトライ
+          const manifest = emergencyFreeSpace();
+          const { stripped, images: newValueImages } = stripBase64FromValue(newValue);
+          const allImages = [...manifest, ...newValueImages];
+
+          try {
+            window.localStorage.setItem(key, JSON.stringify(stripped));
+            scheduleSync(key, stripped);
+            // バックグラウンドでbase64をFirebase Storageにアップロード
+            if (allImages.length > 0) {
+              processUploadQueue(allImages).catch(() => {});
+            }
+            return stripped as T;
+          } catch {
+            window.dispatchEvent(new CustomEvent('storage-quota-error', {
+              detail: { key, message: 'ストレージ容量が不足しています。古いメモや画像を削除してください。' },
+            }));
+            return prev;
+          }
+        } else {
+          console.error(`[localStorage] Save failed for "${key}":`, err);
         }
-        // Revert React state to match localStorage (save failed)
         return prev;
       }
       return newValue;

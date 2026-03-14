@@ -226,6 +226,15 @@ export function useFirebaseSync() {
         window.dispatchEvent(new Event('storage'));
       }
 
+      // Clean up orphaned __uploading__ placeholders from interrupted sessions
+      {
+        const { cleanupOrphanedPlaceholders } = await import('../services/storageMigration');
+        if (cleanupOrphanedPlaceholders()) {
+          anyUpdated = true;
+          window.dispatchEvent(new Event('storage'));
+        }
+      }
+
       // Migrate any remaining base64 images to Firebase Storage (non-blocking)
       if (!hasFatalError) {
         migrateBase64Images(settings).then((migrated) => {
