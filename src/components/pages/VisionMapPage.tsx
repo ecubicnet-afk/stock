@@ -48,14 +48,16 @@ export function VisionMapPage() {
     } catch { /* ignore */ }
 
     const useStorage = !!settings;
-    for (const file of Array.from(files)) {
+    const uploadPromises = Array.from(files).map(async (file) => {
       const { dataUrl, blob } = await compressImage(file, useStorage);
       let finalUrl = dataUrl;
       if (settings) {
         try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
       }
-      addImage({ dataUrl: finalUrl, caption: '', x: 0, y: 0, width: 200, height: 150 });
-    }
+      return finalUrl;
+    });
+    const urls = await Promise.all(uploadPromises);
+    urls.forEach(url => addImage({ dataUrl: url, caption: '', x: 0, y: 0, width: 200, height: 150 }));
     e.target.value = '';
   };
 

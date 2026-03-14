@@ -183,18 +183,20 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     } catch { /* ignore */ }
 
     const useStorage = !!settings;
-    for (const file of toProcess) {
+    const uploadPromises = toProcess.map(async (file) => {
       const { dataUrl, blob } = await compressImage(file, useStorage);
       let finalUrl = dataUrl;
       if (settings) {
         try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
       }
-      setImages((prev) => {
-        const next = [...prev, finalUrl];
-        setCurrentImageIdx(next.length - 1);
-        return next;
-      });
-    }
+      return finalUrl;
+    });
+    const newUrls = await Promise.all(uploadPromises);
+    setImages((prev) => {
+      const next = [...prev, ...newUrls];
+      setCurrentImageIdx(next.length - 1);
+      return next;
+    });
     e.target.value = '';
   };
 
