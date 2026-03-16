@@ -101,7 +101,7 @@ export async function fetchSectorClassification(
  */
 export async function fetchIndexData(
   dates: string[]
-): Promise<Record<string, { n225: number; topix: number }>> {
+): Promise<Record<string, { n225: number; topix: number; sp500: number }>> {
   const res = await fetch('/api/gemini/index-data', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -114,9 +114,9 @@ export async function fetchIndexData(
   }
 
   const parsed = await res.json();
-  const result: Record<string, { n225: number; topix: number }> = {};
+  const result: Record<string, { n225: number; topix: number; sp500: number }> = {};
   for (const d of parsed.data) {
-    result[d.date] = { n225: d.n225, topix: d.topix };
+    result[d.date] = { n225: d.n225, topix: d.topix, sp500: d.sp500 || 0 };
   }
   return result;
 }

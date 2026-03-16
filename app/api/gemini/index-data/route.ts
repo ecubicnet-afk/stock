@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Too many dates (max 365)' }, { status: 400 });
   }
 
-  const prompt = `以下の日付リストの日経平均株価(N225)とTOPIX終値をJSON形式で教えて。土日祝の場合は直前の営業日を採用して。{ "data": [ { "date": "2026-02-26", "n225": 39500.25, "topix": 2700.50 }, ... ] } リスト: ${body.dates.join(', ')}`;
+  const prompt = `以下の日付リストの日経平均株価(N225)、TOPIX、S&P500の終値をJSON形式で教えて。土日祝の場合は直前の営業日を採用して。{ "data": [ { "date": "2026-02-26", "n225": 39500.25, "topix": 2700.50, "sp500": 5800.00 }, ... ] } リスト: ${body.dates.join(', ')}`;
 
   try {
     const res = await fetch(
