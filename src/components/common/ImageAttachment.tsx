@@ -5,50 +5,26 @@ import { isFirebaseConfigured } from '../../services/firebase';
 import { isUploadingPlaceholder } from '../../services/storageMigration';
 import type { Settings } from '../../types';
 
-// Compression settings for base64 fallback (when Firebase Storage is not available)
-const FALLBACK_MAX_DIMENSION = 1200;
-const FALLBACK_JPEG_QUALITY = 0.7;
-// Thumbnail for preview when uploading to Storage
-const PREVIEW_MAX_DIMENSION = 400;
+// High-quality settings for base64 fallback (when Firebase Storage is not available)
+const FALLBACK_MAX_DIMENSION = 2400;
+const FALLBACK_JPEG_QUALITY = 0.92;
 
 /**
  * Process an image file for upload.
- * - forStorage=true: original file as blob (no quality loss), small preview dataUrl
- * - forStorage=false: resized + JPEG compressed for localStorage
+ * - forStorage=true: original file as blob (no quality loss), high-quality preview dataUrl
+ * - forStorage=false: resized with high JPEG quality for localStorage
  */
 export function compressImage(file: File, forStorage = false): Promise<{ dataUrl: string; blob: Blob }> {
   if (forStorage) {
-    // Storage mode: keep original quality, generate small preview only
+    // Storage mode: keep original quality, generate high-quality preview
     return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        // Generate a small preview for immediate display
-        let { width, height } = img;
-        if (width > PREVIEW_MAX_DIMENSION || height > PREVIEW_MAX_DIMENSION) {
-          const ratio = Math.min(PREVIEW_MAX_DIMENSION / width, PREVIEW_MAX_DIMENSION / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-        URL.revokeObjectURL(img.src);
-        resolve({ dataUrl, blob: file });
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(img.src);
-        const reader = new FileReader();
-        reader.onload = () => resolve({ dataUrl: reader.result as string, blob: file });
-        reader.readAsDataURL(file);
-      };
-      img.src = URL.createObjectURL(file);
+      const reader = new FileReader();
+      reader.onload = () => resolve({ dataUrl: reader.result as string, blob: file });
+      reader.readAsDataURL(file);
     });
   }
 
-  // Fallback mode: compress for localStorage
+  // Fallback mode: high-quality compress for localStorage
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -63,12 +39,15 @@ export function compressImage(file: File, forStorage = false): Promise<{ dataUrl
       canvas.height = height;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', FALLBACK_JPEG_QUALITY);
+      // Use PNG for images with text/charts (better quality), fallback to high-quality JPEG
+      const isPng = file.type === 'image/png';
+      const format = isPng ? 'image/png' : 'image/jpeg';
+      const dataUrl = canvas.toDataURL(format, FALLBACK_JPEG_QUALITY);
       canvas.toBlob(
         (blob) => {
-          resolve({ dataUrl, blob: blob || new Blob([dataUrl], { type: 'image/jpeg' }) });
+          resolve({ dataUrl, blob: blob || new Blob([dataUrl], { type: format }) });
         },
-        'image/jpeg',
+        format,
         FALLBACK_JPEG_QUALITY,
       );
       URL.revokeObjectURL(img.src);
