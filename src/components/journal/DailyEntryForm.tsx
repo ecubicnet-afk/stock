@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { JournalEntry } from '../../types';
@@ -134,7 +134,10 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isOrganizing, setIsOrganizing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setConditionRating(entry?.conditionRating ?? 5);
@@ -167,38 +170,70 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const processFiles = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
     const remaining = 5 - images.length;
     const toProcess = files.slice(0, remaining);
+    if (toProcess.length === 0) return;
 
-    const { compressImage } = await import('@/src/components/common/ImageAttachment');
-    const { uploadImage } = await import('@/src/services/firebaseStorage');
-    const { isFirebaseConfigured } = await import('@/src/services/firebase');
-    let settings: import('@/src/types').Settings | null = null;
+    setIsUploading(true);
     try {
-      const raw = localStorage.getItem('stock-app-settings');
-      if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
-    } catch { /* ignore */ }
+      const { compressImage } = await import('@/src/components/common/ImageAttachment');
+      const { uploadImage } = await import('@/src/services/firebaseStorage');
+      const { isFirebaseConfigured } = await import('@/src/services/firebase');
+      let settings: import('@/src/types').Settings | null = null;
+      try {
+        const raw = localStorage.getItem('stock-app-settings');
+        if (raw) { const s = JSON.parse(raw); if (isFirebaseConfigured(s)) settings = s; }
+      } catch { /* ignore */ }
 
-    const useStorage = !!settings;
-    const uploadPromises = toProcess.map(async (file) => {
-      const { dataUrl, blob } = await compressImage(file, useStorage);
-      let finalUrl = dataUrl;
-      if (settings) {
-        try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
-      }
-      return finalUrl;
-    });
-    const newUrls = await Promise.all(uploadPromises);
-    setImages((prev) => {
-      const next = [...prev, ...newUrls];
-      setCurrentImageIdx(next.length - 1);
-      return next;
-    });
+      const useStorage = !!settings;
+      const uploadPromises = toProcess.map(async (file) => {
+        const { dataUrl, blob } = await compressImage(file, useStorage);
+        let finalUrl = dataUrl;
+        if (settings) {
+          try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+        }
+        return finalUrl;
+      });
+      const newUrls = await Promise.all(uploadPromises);
+      setImages((prev) => {
+        const next = [...prev, ...newUrls];
+        setCurrentImageIdx(next.length - 1);
+        return next;
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  }, [images.length]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
     e.target.value = '';
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    await processFiles(files);
+  }, [processFiles]);
 
   const handleRemoveImage = (idx: number) => {
     const next = images.filter((_, i) => i !== idx);
@@ -238,11 +273,53 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
         )}
       </div>
 
+      {/* Image upload drop zone (when no images) */}
+      {!hasImages && (
+        <div
+          ref={dropZoneRef}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => !isUploading && fileInputRef.current?.click()}
+          className={`relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
+            isDragging
+              ? 'border-accent-cyan bg-accent-cyan/5'
+              : 'border-border/60 hover:border-accent-cyan/50 hover:bg-bg-primary/30'
+          }`}
+        >
+          {isUploading ? (
+            <div className="flex flex-col items-center gap-1.5 py-2">
+              <svg className="w-5 h-5 animate-spin text-accent-cyan" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span className="text-xs text-text-secondary">アップロード中...</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5 py-2">
+              <svg className="w-6 h-6 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div className="text-xs text-text-secondary/60">
+                クリックまたはドラッグ&ドロップで画像を追加
+              </div>
+              <div className="text-[10px] text-text-secondary/40">最大5枚</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Split view: large image left, journal right */}
       <div className={hasImages ? 'grid grid-cols-1 lg:grid-cols-2 gap-4' : ''}>
         {/* Left: Large image viewer */}
         {hasImages && (
-          <div className="space-y-2">
+          <div
+            ref={dropZoneRef}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`space-y-2 ${isDragging ? 'ring-2 ring-accent-cyan ring-offset-2 rounded-lg' : ''}`}
+          >
             {/* Main large image */}
             <div
               className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer border border-border"
@@ -251,20 +328,20 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
               <img
                 src={images[currentImageIdx]}
                 alt={`チャート${currentImageIdx + 1}`}
-                className="w-full aspect-[16/10] object-contain"
+                className="w-full max-h-[50vh] object-contain"
               />
               {/* Navigation arrows for multiple images */}
               {images.length > 1 && (
                 <>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx - 1 + images.length) % images.length); }}
-                    className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/50 text-sm"
+                    className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
                   >
                     ‹
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIdx((currentImageIdx + 1) % images.length); }}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/50 text-sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 text-sm"
                   >
                     ›
                   </button>
@@ -275,55 +352,48 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
               </div>
             </div>
 
-            {/* Thumbnail strip for multiple images */}
-            {images.length > 1 && (
-              <div className="flex gap-1 overflow-x-auto">
-                {images.map((img, i) => (
-                  <div key={i} className="relative group shrink-0">
-                    <img
-                      src={img}
-                      alt={`サムネイル${i + 1}`}
-                      className={`w-12 h-12 rounded object-cover cursor-pointer border-2 transition-colors ${
-                        i === currentImageIdx ? 'border-accent-cyan' : 'border-border hover:border-accent-cyan/50'
-                      }`}
-                      onClick={() => setCurrentImageIdx(i)}
-                    />
-                    <button
-                      onClick={() => handleRemoveImage(i)}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Thumbnail strip + controls */}
+            <div className="flex items-center gap-1.5">
+              {images.map((img, i) => (
+                <div key={i} className="relative group shrink-0">
+                  <img
+                    src={img}
+                    alt={`サムネイル${i + 1}`}
+                    className={`w-12 h-12 rounded object-cover cursor-pointer border-2 transition-colors ${
+                      i === currentImageIdx ? 'border-accent-cyan' : 'border-border hover:border-accent-cyan/50'
+                    }`}
+                    onClick={() => setCurrentImageIdx(i)}
+                  />
+                  <button
+                    onClick={() => handleRemoveImage(i)}
+                    className="absolute -top-1 -right-1 w-4 h-4 bg-black/50 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
 
-            {/* Single image: show remove button */}
-            {images.length === 1 && (
-              <div className="flex items-center gap-2">
+              {/* Add more images button */}
+              {images.length < 5 && (
                 <button
-                  onClick={() => handleRemoveImage(0)}
-                  className="text-[11px] text-text-secondary/50 hover:text-down transition-colors"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-12 h-12 rounded border-2 border-dashed border-border hover:border-accent-cyan/50 flex items-center justify-center transition-colors shrink-0 disabled:opacity-50"
                 >
-                  画像を削除
+                  {isUploading ? (
+                    <svg className="w-4 h-4 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4 text-text-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
                 </button>
-              </div>
-            )}
-
-            {/* Add more images button */}
-            {images.length < 5 && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1 text-xs text-text-secondary/60 hover:text-accent-cyan transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-                </svg>
-                画像を追加
-              </button>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -361,20 +431,6 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Upload button (when no images yet) */}
-            {!hasImages && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1 text-xs text-text-secondary/60 hover:text-accent-cyan transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                画像を添付
-              </button>
-            )}
-
             <button
               onClick={async () => {
                 setIsOrganizing(true);
