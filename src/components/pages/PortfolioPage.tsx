@@ -2,25 +2,18 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts';
 import { useSettings } from '@/src/hooks/useSettings';
 import { usePortfolio, type HoldingItem } from '@/src/hooks/usePortfolio';
 import { fetchSectorClassification, fetchIndexData } from '@/src/services/geminiApi';
-import { saveSnapshot, loadSnapshots, deleteSnapshot } from '@/src/services/firebase';
+import { saveSnapshot, loadSnapshots, deleteSnapshot, type DailySnapshot } from '@/src/services/firebase';
 import { readFileAsText } from '@/src/utils/csvParser';
 import { CsvUploader } from '@/src/components/portfolio/CsvUploader';
+import { ComparisonTab } from '@/src/components/portfolio/ComparisonTab';
 
 // Extended type for merged view (types is non-serializable Set, used only in-memory)
 interface MergedHoldingItem extends HoldingItem {
   types?: Set<string>;
-}
-
-interface DailySnapshot {
-  date: string;
-  totalAsset: number;
-  totalProfit: number;
-  timestamp: number;
 }
 
 // --- Utils ---
@@ -86,7 +79,7 @@ export function PortfolioPage() {
   const [sortConfig, setSortConfig] = useState({ key: 'marketValue', direction: 'desc' as 'asc' | 'desc' });
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [indexData, setIndexData] = useState<Record<string, { n225: number; topix: number }>>({});
+  const [indexData, setIndexData] = useState<Record<string, { n225: number; topix: number; sp500: number }>>({});
   const [enrichedData, setEnrichedData] = useState<Record<string, { sector: string }>>({});
   const [logs, setLogs] = useState<string[]>([]);
 
@@ -258,32 +251,17 @@ export function PortfolioPage() {
       .sort((a, b) => b.value - a.value);
   }, [aggregatedData]);
 
-  const comparisonHistory = useMemo(() => {
-    if (history.length === 0) return [];
-    const base = history[0];
-    const baseIndex = indexData[base.date] || { n225: 1, topix: 1 };
-    return history.map((curr, histIdx) => {
-      const idx = indexData[curr.date] || { n225: 0, topix: 0 };
-      const dailyChange = histIdx > 0 ? curr.totalAsset - history[histIdx - 1].totalAsset : 0;
-      return {
-        ...curr,
-        dailyChange,
-        dailyChangePercent: histIdx > 0 ? (dailyChange / history[histIdx - 1].totalAsset) * 100 : 0,
-        portfolioNorm: (curr.totalAsset / base.totalAsset) * 100,
-        n225Norm: idx.n225 ? (idx.n225 / baseIndex.n225) * 100 : null,
-        topixNorm: idx.topix ? (idx.topix / baseIndex.topix) * 100 : null,
-      };
-    });
-  }, [history, indexData]);
-
+  // Simple stats for header (detailed metrics are in ComparisonTab)
   const performanceStats = useMemo(() => {
-    if (comparisonHistory.length === 0) return null;
-    const last = comparisonHistory[comparisonHistory.length - 1];
-    return {
-      portfolioTotal: last.portfolioNorm - 100,
-      vsNikkei: last.n225Norm ? last.portfolioNorm - last.n225Norm : 0,
-    };
-  }, [comparisonHistory]);
+    if (history.length < 2) return null;
+    const base = history[0];
+    const last = history[history.length - 1];
+    const baseIndex = indexData[base.date] || { n225: 1, topix: 1, sp500: 1 };
+    const lastIndex = indexData[last.date] || { n225: 0, topix: 0, sp500: 0 };
+    const portfolioNorm = (last.totalAsset / base.totalAsset) * 100;
+    const n225Norm = lastIndex.n225 && baseIndex.n225 ? (lastIndex.n225 / baseIndex.n225) * 100 : 100;
+    return { vsNikkei: portfolioNorm - n225Norm };
+  }, [history, indexData]);
 
   // Actions
   const handleFetchSectors = async () => {
@@ -329,11 +307,16 @@ export function PortfolioPage() {
     setIsSaving(true);
     setSaveStatus(null);
     try {
+      const spotValue = [...(data.spot1 || []), ...(data.spot2 || [])].reduce((s, h) => s + h.marketValue, 0);
+      const marginValue = (data.margin || []).reduce((s, h) => s + h.marketValue, 0);
       const snapshot: DailySnapshot = {
         date: selectedDate,
         totalAsset: totals.realAsset,
         totalProfit: totals.profitAmount,
         timestamp: Date.now(),
+        cashAmount: Math.max(0, totals.realAsset - spotValue - marginValue),
+        spotAmount: spotValue,
+        marginAmount: marginValue,
       };
       await saveSnapshot(settings, snapshot);
       // Update local history
@@ -636,93 +619,11 @@ export function PortfolioPage() {
 
           {/* History tab */}
           {activeTab === 'history' && (
-            <div className="space-y-4">
-              {performanceStats && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="bg-up/10 border border-up/20 rounded-lg p-3">
-                    <p className="text-xs text-text-secondary mb-1">最高資産額</p>
-                    <p className="text-lg font-bold text-up font-mono">¥{Math.max(...history.map((h) => h.totalAsset)).toLocaleString()}</p>
-                  </div>
-                  <div className="bg-accent-cyan/10 border border-accent-cyan/20 rounded-lg p-3">
-                    <p className="text-xs text-text-secondary mb-1">通算騰落率</p>
-                    <p className={`text-lg font-bold font-mono ${performanceStats.portfolioTotal >= 0 ? 'text-up' : 'text-down'}`}>
-                      {performanceStats.portfolioTotal >= 0 ? '+' : ''}{performanceStats.portfolioTotal.toFixed(2)}%
-                    </p>
-                  </div>
-                  <div className="bg-accent-gold/10 border border-accent-gold/20 rounded-lg p-3">
-                    <p className="text-xs text-text-secondary mb-1">対日経平均</p>
-                    <p className={`text-lg font-bold font-mono ${performanceStats.vsNikkei >= 0 ? 'text-up' : 'text-down'}`}>
-                      {performanceStats.vsNikkei >= 0 ? '+' : ''}{performanceStats.vsNikkei.toFixed(2)}%
-                    </p>
-                  </div>
-                  <div className="bg-bg-primary/30 rounded-lg p-3">
-                    <p className="text-xs text-text-secondary mb-1">記録日数</p>
-                    <p className="text-lg font-bold text-text-primary font-mono">{history.length} <span className="text-xs">日間</span></p>
-                  </div>
-                </div>
-              )}
-
-              {/* Performance chart */}
-              <div className="h-[300px] bg-bg-primary/30 rounded-lg p-3">
-                {comparisonHistory.length > 0 ? (
-                  <ResponsiveContainer>
-                    <LineChart data={comparisonHistory}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
-                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} domain={['auto', 'auto']} />
-                      <Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#e2e8f0' }} />
-                      <Legend verticalAlign="top" height={30} />
-                      <Line type="monotone" dataKey="portfolioNorm" name="MY資産" stroke="#22d3ee" strokeWidth={2.5} dot={{ r: 3, fill: '#22d3ee' }} />
-                      {indexData[history[0]?.date] && (
-                        <>
-                          <Line type="monotone" dataKey="n225Norm" name="日経平均" stroke="#3b82f6" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
-                          <Line type="monotone" dataKey="topixNorm" name="TOPIX" stroke="#22c55e" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
-                        </>
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-text-secondary/50 text-sm italic">
-                    履歴がありません。CSVをアップロードして「記録を保存」してください。
-                  </div>
-                )}
-              </div>
-
-              {/* History table */}
-              {comparisonHistory.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="text-text-secondary text-xs border-b border-border">
-                      <tr>
-                        <th className="pb-2 px-3">日付</th>
-                        <th className="pb-2 px-3 text-right">総資産</th>
-                        <th className="pb-2 px-3 text-right">前日比</th>
-                        <th className="pb-2 px-3 text-center">操作</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border font-mono">
-                      {[...comparisonHistory].reverse().map((h, i) => (
-                        <tr key={i} className="hover:bg-bg-primary/30">
-                          <td className="py-2.5 px-3 text-text-secondary">{h.date}</td>
-                          <td className="py-2.5 px-3 text-right font-bold text-text-primary">¥{h.totalAsset.toLocaleString()}</td>
-                          <td className={`py-2.5 px-3 text-right ${h.dailyChange >= 0 ? 'text-up' : 'text-down'}`}>
-                            {h.dailyChange >= 0 ? '+' : ''}{h.dailyChange.toLocaleString()}
-                            <span className="text-xs ml-1">({h.dailyChangePercent >= 0 ? '+' : ''}{h.dailyChangePercent.toFixed(2)}%)</span>
-                          </td>
-                          <td className="py-2.5 px-3 text-center">
-                            <button onClick={() => handleDeleteSnapshot(h.date)} className="text-text-secondary/40 hover:text-down">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            <ComparisonTab
+              history={history}
+              indexData={indexData}
+              onDeleteSnapshot={handleDeleteSnapshot}
+            />
           )}
 
           {/* Empty state */}

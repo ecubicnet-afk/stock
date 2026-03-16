@@ -10,6 +10,10 @@ export interface DailySnapshot {
   totalAsset: number;
   totalProfit: number;
   timestamp: number;
+  // Asset mix breakdown (optional, for stacked area chart)
+  cashAmount?: number;
+  spotAmount?: number;
+  marginAmount?: number;
 }
 
 // Firebase is loaded dynamically to avoid bundle size when not used
