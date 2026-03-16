@@ -190,11 +190,16 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
       const useStorage = !!settings;
       const uploadPromises = toProcess.map(async (file) => {
         const { dataUrl, blob } = await compressImage(file, useStorage);
-        let finalUrl = dataUrl;
         if (settings) {
-          try { finalUrl = await uploadImage(settings, blob); } catch { /* fallback to base64 */ }
+          try {
+            return await uploadImage(settings, blob);
+          } catch {
+            // Firebase upload failed: re-compress at high quality for base64 fallback
+            const fallback = await compressImage(file, false);
+            return fallback.dataUrl;
+          }
         }
-        return finalUrl;
+        return dataUrl;
       });
       const newUrls = await Promise.all(uploadPromises);
       setImages((prev) => {
@@ -322,7 +327,7 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
           >
             {/* Main large image */}
             <div
-              className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer border border-border"
+              className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer border border-border group/main"
               onClick={() => setLightboxIdx(currentImageIdx)}
             >
               <img
@@ -330,6 +335,16 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
                 alt={`チャート${currentImageIdx + 1}`}
                 className="w-full max-h-[50vh] object-contain"
               />
+              {/* Delete button on main image */}
+              <button
+                onClick={(e) => { e.stopPropagation(); handleRemoveImage(currentImageIdx); }}
+                className="absolute top-1 left-1 w-7 h-7 bg-black/60 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover/main:opacity-100 transition-all text-sm"
+                title="この画像を削除"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
               {/* Navigation arrows for multiple images */}
               {images.length > 1 && (
                 <>
