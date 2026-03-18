@@ -42,6 +42,17 @@ export function isFirebaseConfigured(settings: Settings): boolean {
   return !!(settings.firebaseProjectId && settings.firebaseApiKey && settings.firebaseAppId);
 }
 
+/**
+ * Returns the effective user ID for Firestore/Storage paths.
+ * If syncId is set in settings, use it (enables cross-device sync).
+ * Otherwise, fall back to the anonymous auth UID.
+ */
+export function getEffectiveUserId(settings: Settings, auth: any): string | null {
+  const syncId = settings.syncId?.trim();
+  if (syncId) return syncId;
+  return auth.currentUser?.uid || null;
+}
+
 function getConfigKey(settings: Settings): string {
   return `${settings.firebaseProjectId}|${settings.firebaseApiKey}|${settings.firebaseAppId}`;
 }
@@ -130,7 +141,7 @@ export async function testFirebaseConnection(
     lastConfigKey = '';
     initPromise = null;
     const { db, auth } = await initFirebase(settings);
-    const uid = auth.currentUser?.uid;
+    const uid = getEffectiveUserId(settings, auth);
     if (!uid) {
       return { success: false, error: '匿名認証に失敗しました。Firebaseコンソールで匿名認証を有効にしてください。' };
     }
@@ -139,7 +150,7 @@ export async function testFirebaseConnection(
     try {
       const { doc, setDoc, deleteDoc } = await import('firebase/firestore');
       const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
-      const testRef = doc(db, 'artifacts', appId, 'users', uid, 'sync', '__connection_test__');
+      const testRef = doc(db, 'artifacts', appId, 'users', uid, 'sync', 'connection_test');
       const fsTimeout = <T>(p: Promise<T>) => Promise.race([
         p,
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Firestoreへの接続がタイムアウトしました（10秒）')), 10000)),
@@ -232,7 +243,7 @@ export async function saveSnapshot(
     try {
       const { db, auth } = await initFirebase(settings);
       const { doc, setDoc } = await import('firebase/firestore');
-      const uid = auth.currentUser?.uid;
+      const uid = getEffectiveUserId(settings, auth);
       if (uid) {
         const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
         await setDoc(
@@ -255,7 +266,7 @@ export async function loadSnapshots(settings: Settings): Promise<DailySnapshot[]
     try {
       const { db, auth } = await initFirebase(settings);
       const { collection, getDocs } = await import('firebase/firestore');
-      const uid = auth.currentUser?.uid;
+      const uid = getEffectiveUserId(settings, auth);
       if (uid) {
         const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
         const snap = await getDocs(
@@ -290,7 +301,7 @@ export async function deleteSnapshot(
     try {
       const { db, auth } = await initFirebase(settings);
       const { doc, deleteDoc } = await import('firebase/firestore');
-      const uid = auth.currentUser?.uid;
+      const uid = getEffectiveUserId(settings, auth);
       if (uid) {
         const appId = settings.firebaseAppId || 'rakuten-asset-tracker-v4';
         await deleteDoc(

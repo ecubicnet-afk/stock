@@ -4,7 +4,7 @@
  */
 
 import type { Settings } from '../types';
-import { initFirebase, isFirebaseConfigured } from './firebase';
+import { initFirebase, isFirebaseConfigured, getEffectiveUserId } from './firebase';
 
 // Firestore path: artifacts/{appId}/users/{uid}/sync/{key}
 
@@ -30,7 +30,7 @@ export async function syncToFirestore(
 
   const { db, auth } = await initFirebase(settings);
   const { doc, setDoc } = await import('firebase/firestore');
-  const uid = auth.currentUser?.uid;
+  const uid = getEffectiveUserId(settings, auth);
   if (!uid) {
     throw new Error('Firebase認証に失敗しました。匿名認証を有効にしてください。');
   }
@@ -59,7 +59,7 @@ export async function loadFromFirestore<T>(
 
   const { db, auth } = await initFirebase(settings);
   const { doc, getDoc } = await import('firebase/firestore');
-  const uid = auth.currentUser?.uid;
+  const uid = getEffectiveUserId(settings, auth);
   if (!uid) {
     throw new Error('Firebase認証に失敗しました。匿名認証を有効にしてください。');
   }
