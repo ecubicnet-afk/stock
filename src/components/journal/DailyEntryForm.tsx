@@ -4,6 +4,7 @@ import { RichTextEditor } from '../common/RichTextEditor';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { JournalEntry } from '../../types';
 import { callGemini } from '../../services/geminiApi';
+import { SafeImage } from '../common/SafeImage';
 
 interface SaveData {
   marketOutlook: string;
@@ -67,10 +68,11 @@ function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
       onClick={onClose}
     >
       <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-        <img
+        <SafeImage
           src={images[currentIdx]}
           alt="拡大表示"
           className="max-w-full max-h-[85vh] object-contain rounded-lg"
+          placeholderClassName="max-w-full max-h-[85vh]"
         />
         <button
           onClick={onClose}
@@ -330,10 +332,11 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
               className="relative bg-black/20 rounded-lg overflow-hidden cursor-pointer border border-border group/main"
               onClick={() => setLightboxIdx(currentImageIdx)}
             >
-              <img
+              <SafeImage
                 src={images[currentImageIdx]}
                 alt={`チャート${currentImageIdx + 1}`}
                 className="w-full max-h-[50vh] object-contain"
+                placeholderClassName="w-full max-h-[50vh]"
               />
               {/* Delete button on main image */}
               <button
@@ -371,12 +374,13 @@ export function DailyEntryForm({ date, entry, onSave, onDelete }: Props) {
             <div className="flex items-center gap-1.5">
               {images.map((img, i) => (
                 <div key={i} className="relative group shrink-0">
-                  <img
+                  <SafeImage
                     src={img}
                     alt={`サムネイル${i + 1}`}
                     className={`w-12 h-12 rounded object-cover cursor-pointer border-2 transition-colors ${
                       i === currentImageIdx ? 'border-accent-cyan' : 'border-border hover:border-accent-cyan/50'
                     }`}
+                    placeholderClassName="w-12 h-12"
                     onClick={() => setCurrentImageIdx(i)}
                   />
                   <button

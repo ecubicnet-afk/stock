@@ -6,6 +6,7 @@ import { useSchedule } from '@/src/hooks/useSchedule';
 import { StrategyCanvas } from '@/src/components/strategy/StrategyCanvas';
 import { RichTextEditor } from '@/src/components/common/RichTextEditor';
 import { callGemini } from '@/src/services/geminiApi';
+import { SafeImage } from '@/src/components/common/SafeImage';
 import type { StrategyNoteRegion, StrategyNoteDirection } from '@/src/types';
 
 const REGION_OPTIONS: { value: StrategyNoteRegion; label: string; emoji: string }[] = [
@@ -325,7 +326,7 @@ ${notesText}
                   </div>
                   {/* Image with zoom */}
                   <div className="relative group flex-1 overflow-auto rounded-lg border border-primary/10 bg-black/20">
-                    <img
+                    <SafeImage
                       src={desc.imageDataUrl}
                       alt="scenario"
                       style={{ width: `${zoom}%`, maxWidth: 'none', transformOrigin: 'top left' }}

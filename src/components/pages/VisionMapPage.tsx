@@ -4,6 +4,7 @@ import { useVisionMap } from '@/src/hooks/useVisionMap';
 import { Card, CardHeader } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
+import { SafeImage } from '@/src/components/common/SafeImage';
 
 const CATEGORIES = [
   { value: 'investment', label: '投資', color: 'cyan' as const },
@@ -245,7 +246,7 @@ export function VisionMapPage() {
               <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
                 {data.images.map((img) => (
                   <div key={img.id} className="break-inside-avoid group relative rounded-lg overflow-hidden border border-border bg-bg-primary">
-                    <img src={img.dataUrl} alt={img.caption || 'Vision board image'} className="w-full object-cover" loading="lazy" decoding="async" />
+                    <SafeImage src={img.dataUrl} alt={img.caption || 'Vision board image'} className="w-full object-cover" loading="lazy" decoding="async" />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6">
                       {editingCaptionId === img.id ? (
                         <input
