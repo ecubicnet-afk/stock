@@ -1,11 +1,13 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useSyncActions } from '../../hooks/useSyncActions';
+import { useSettings } from '../../hooks/useSettings';
 
 export function CloudSyncDropdown() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { syncStatus, saveAll, loadAll, isConfigured } = useSyncActions();
+  const { settings } = useSettings();
 
   useEffect(() => {
     if (!open) return;
@@ -61,6 +63,11 @@ export function CloudSyncDropdown() {
               />
               クラウド同期
             </div>
+            {settings.syncId?.trim() && (
+              <div className="text-[10px] text-accent-cyan/70 truncate">
+                同期ID: {settings.syncId.trim().length > 12 ? settings.syncId.trim().slice(0, 12) + '...' : settings.syncId.trim()}
+              </div>
+            )}
           </div>
 
           <div className="p-3 space-y-2">

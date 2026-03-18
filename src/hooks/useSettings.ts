@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS: Settings = {
   firebaseProjectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
   firebaseApiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
   firebaseAppId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+  syncId: '',
 };
 
 export function useSettings() {

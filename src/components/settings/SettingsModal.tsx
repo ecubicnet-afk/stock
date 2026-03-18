@@ -217,6 +217,32 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">
+                      同期ID（Sync ID）
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.syncId || ''}
+                      onChange={(e) => {
+                        updateSettings({ syncId: e.target.value });
+                        setFirebaseTestResult(null);
+                      }}
+                      onBlur={(e) => updateSettings({ syncId: e.target.value.trim() })}
+                      placeholder="複数デバイスで同じIDを入力（空欄＝このデバイスのみ）"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                    <p className="text-xs text-text-secondary/60 mt-1">
+                      複数デバイスで同じ同期IDを設定すると、デバイス間でデータを共有できます。
+                      空欄の場合はこのブラウザ固有のIDが使用されます。
+                    </p>
+                    {settings.syncId?.trim() && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        注意: 同期IDを知っている人はデータにアクセスできます。推測されにくいIDを使用してください。
+                      </p>
+                    )}
+                  </div>
+
                   {hasFirebaseConfig && (
                     <div>
                       <button

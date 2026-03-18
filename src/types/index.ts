@@ -95,6 +95,8 @@ export interface Settings {
   firebaseProjectId: string;
   firebaseApiKey: string;
   firebaseAppId: string;
+  // Cross-device sync: when set, used as Firestore path ID instead of anonymous UID
+  syncId?: string;
 }
 
 // Journal

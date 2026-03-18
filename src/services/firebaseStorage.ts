@@ -4,7 +4,7 @@
  */
 
 import type { Settings } from '../types';
-import { initFirebase, isFirebaseConfigured } from './firebase';
+import { initFirebase, isFirebaseConfigured, getEffectiveUserId } from './firebase';
 
 // Cache dynamic imports for parallel upload performance
 let storageModuleCache: {
@@ -42,7 +42,7 @@ export async function uploadImage(
   }
 
   const { storage, auth } = await initFirebase(settings);
-  const uid = auth.currentUser?.uid;
+  const uid = getEffectiveUserId(settings, auth);
   if (!uid) {
     throw new Error('Firebase認証に失敗しました');
   }
