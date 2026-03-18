@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { uploadImage } from '../../services/firebaseStorage';
 import { isFirebaseConfigured } from '../../services/firebase';
-import { isUploadingPlaceholder } from '../../services/storageMigration';
+import { SafeImage } from './SafeImage';
 import type { Settings } from '../../types';
 
 // High-quality settings for base64 fallback (when Firebase Storage is not available)
@@ -89,10 +89,11 @@ function LightboxModal({ images, currentIdx, onClose, onNavigate }: {
       onClick={onClose}
     >
       <div className="relative max-w-4xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-        <img
+        <SafeImage
           src={images[currentIdx]}
           alt="拡大表示"
           className="max-w-full max-h-[85vh] object-contain rounded-lg"
+          placeholderClassName="max-w-full max-h-[85vh]"
         />
         <button
           onClick={onClose}
@@ -173,25 +174,17 @@ export function ImageAttachment({ images, onChange, maxImages = 5 }: Props) {
           <div className="flex flex-col gap-1">
             {images.map((img, i) => (
               <div key={i} className="relative group" style={{ width: 48, height: 48 }}>
-                {isUploadingPlaceholder(img) ? (
-                  <div className="w-12 h-12 rounded border border-border bg-bg-secondary flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                  </div>
-                ) : (
-                  <img
-                    src={img}
-                    alt={`添付${i + 1}`}
-                    width={48}
-                    height={48}
-                    loading="lazy"
-                    decoding="async"
-                    className="rounded object-cover cursor-pointer border border-border"
-                    onClick={() => setLightboxIdx(i)}
-                  />
-                )}
+                <SafeImage
+                  src={img}
+                  alt={`添付${i + 1}`}
+                  width={48}
+                  height={48}
+                  loading="lazy"
+                  decoding="async"
+                  className="rounded object-cover cursor-pointer border border-border"
+                  placeholderClassName="w-12 h-12"
+                  onClick={() => setLightboxIdx(i)}
+                />
                 <button
                   onClick={() => handleRemove(i)}
                   className="absolute top-0 right-0 w-4 h-4 bg-black/70 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-bl"
@@ -261,26 +254,18 @@ export function ImageThumbnails({ images }: { images?: string[] }) {
     <>
       <div className="flex flex-wrap gap-1.5 mt-1.5">
         {images.map((img, i) => (
-          isUploadingPlaceholder(img) ? (
-            <div key={i} className="w-12 h-12 rounded border border-border bg-bg-secondary flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 animate-spin text-text-secondary" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            </div>
-          ) : (
-            <img
-              key={i}
-              src={img}
-              alt={`添付${i + 1}`}
-              width={48}
-              height={48}
-              loading="lazy"
-              decoding="async"
-              className="w-12 h-12 rounded object-cover cursor-pointer border border-border hover:border-accent-cyan/50 transition-colors"
-              onClick={() => setLightboxIdx(i)}
-            />
-          )
+          <SafeImage
+            key={i}
+            src={img}
+            alt={`添付${i + 1}`}
+            width={48}
+            height={48}
+            loading="lazy"
+            decoding="async"
+            className="w-12 h-12 rounded object-cover cursor-pointer border border-border hover:border-accent-cyan/50 transition-colors"
+            placeholderClassName="w-12 h-12"
+            onClick={() => setLightboxIdx(i)}
+          />
         ))}
       </div>
       {lightboxIdx !== null && (
