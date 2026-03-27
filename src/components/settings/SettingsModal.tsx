@@ -1,6 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { useSettings } from '../../hooks/useSettings';
+import { useStrategy } from '../../hooks/useStrategy';
+import { useMemos } from '../../hooks/useMemos';
+import { useSchedule } from '../../hooks/useSchedule';
+import { useJournal } from '../../hooks/useJournal';
+import { useTrades } from '../../hooks/useTrades';
+import { usePortfolio } from '../../hooks/usePortfolio';
+import { useNotionExport } from '../../hooks/useNotionExport';
 import { testFmpConnection } from '../../services/api';
 import { testFirebaseConnection, isFirebaseConfigured } from '../../services/firebase';
 import type { FmpTestResult } from '../../services/api';
@@ -17,6 +24,26 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [isTesting, setIsTesting] = useState(false);
   const [firebaseTestResult, setFirebaseTestResult] = useState<{ success: boolean; error?: string } | null>(null);
   const [isFirebaseTesting, setIsFirebaseTesting] = useState(false);
+
+  // Notion export
+  const { data: strategyData } = useStrategy();
+  const { memos } = useMemos();
+  const { events } = useSchedule();
+  const { entries: journalEntries } = useJournal();
+  const { trades } = useTrades();
+  const { holdings } = usePortfolio();
+  const {
+    isConfigured: isNotionConfigured,
+    isExporting,
+    exportProgress,
+    lastExportResults,
+    testConnection: testNotionConn,
+    exportAll,
+    cancelExport,
+    resetExportHistory,
+  } = useNotionExport();
+  const [notionTestResult, setNotionTestResult] = useState<{ success: boolean; error?: string; botName?: string } | null>(null);
+  const [isNotionTesting, setIsNotionTesting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -41,6 +68,38 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleNotionTest = async () => {
+    setIsNotionTesting(true);
+    setNotionTestResult(null);
+    const result = await testNotionConn();
+    setNotionTestResult(result);
+    setIsNotionTesting(false);
+  };
+
+  const handleNotionExport = async () => {
+    await exportAll({
+      strategies: strategyData,
+      memos,
+      schedule: events,
+      journal: journalEntries,
+      trades,
+      holdings,
+    });
+  };
+
+  const totalExported = lastExportResults?.reduce((sum, r) => sum + r.result.created + r.result.updated, 0) ?? 0;
+  const totalSkipped = lastExportResults?.reduce((sum, r) => sum + r.result.skipped, 0) ?? 0;
+  const totalErrors = lastExportResults?.reduce((sum, r) => sum + r.result.errors.length, 0) ?? 0;
+
+  const DATA_TYPE_LABELS: Record<string, string> = {
+    strategies: '戦略',
+    memos: 'メモ',
+    schedule: 'スケジュール',
+    journal: 'ジャーナル',
+    trades: 'トレード',
+    portfolio: 'ポートフォリオ',
   };
 
   return (
@@ -266,6 +325,152 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   <p className="text-xs text-text-secondary/60">
                     Firebase設定は環境変数（NEXT_PUBLIC_FIREBASE_*）で管理できます。
                     上記に入力すると環境変数より優先されます。
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Notion エクスポート設定 */}
+            <div className="pt-3 border-t border-border">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Notion エクスポート</h3>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-bg-primary/30 border border-border/50 rounded-lg space-y-3">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">
+                      Notion APIキー（Integration Token）
+                      {isNotionConfigured && (
+                        <span className="ml-2 inline-flex items-center gap-1">
+                          {notionTestResult?.success ? (
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                          ) : notionTestResult && !notionTestResult.success ? (
+                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                          ) : (
+                            <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />
+                          )}
+                          <span className="text-xs">
+                            {notionTestResult?.success ? '接続済み' : notionTestResult ? 'エラー' : '未テスト'}
+                          </span>
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="password"
+                      value={settings.notionApiKey}
+                      onChange={(e) => {
+                        updateSettings({ notionApiKey: e.target.value });
+                        setNotionTestResult(null);
+                      }}
+                      onBlur={(e) => updateSettings({ notionApiKey: e.target.value.trim() })}
+                      placeholder="ntn_xxxxx... または secret_xxxxx..."
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-1">親ページID</label>
+                    <input
+                      type="text"
+                      value={settings.notionParentPageId}
+                      onChange={(e) => updateSettings({ notionParentPageId: e.target.value })}
+                      onBlur={(e) => updateSettings({ notionParentPageId: e.target.value.trim().replace(/-/g, '') })}
+                      placeholder="エクスポート先のNotionページID（32文字の英数字）"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/50"
+                    />
+                    <p className="text-xs text-text-secondary/60 mt-1">
+                      NotionページのURLの末尾32文字がページIDです。Integrationにページの共有を忘れずに。
+                    </p>
+                  </div>
+
+                  {isNotionConfigured && (
+                    <>
+                      <button
+                        onClick={handleNotionTest}
+                        disabled={isNotionTesting}
+                        className="w-full py-1.5 bg-accent-cyan/10 text-accent-cyan text-xs rounded-lg hover:bg-accent-cyan/20 transition-colors disabled:opacity-50"
+                      >
+                        {isNotionTesting ? 'テスト中...' : 'Notion接続テスト'}
+                      </button>
+
+                      {notionTestResult && (
+                        <div className={`mt-2 p-2 rounded text-xs ${notionTestResult.success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                          {notionTestResult.success
+                            ? `接続成功 - Bot: ${notionTestResult.botName || 'OK'}`
+                            : notionTestResult.error || '接続に失敗しました'}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={isExporting ? cancelExport : handleNotionExport}
+                        disabled={isNotionTesting}
+                        className={`w-full py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
+                          isExporting
+                            ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                            : 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
+                        }`}
+                      >
+                        {isExporting ? 'エクスポートを中止' : 'Notionへ全データをエクスポート'}
+                      </button>
+
+                      {/* Progress bar */}
+                      {isExporting && exportProgress && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-text-secondary">
+                            <span>{DATA_TYPE_LABELS[exportProgress.currentType] || exportProgress.currentType}: {exportProgress.label}</span>
+                            <span>{exportProgress.current}/{exportProgress.total}</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-bg-primary/50 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-purple-500 rounded-full transition-all duration-300"
+                              style={{ width: `${exportProgress.total > 0 ? (exportProgress.current / exportProgress.total) * 100 : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Export results */}
+                      {lastExportResults && !isExporting && (
+                        <div className="p-2 rounded text-xs bg-bg-primary/50 space-y-1">
+                          <p className="font-semibold text-text-primary">
+                            エクスポート完了: {totalExported}件作成/更新, {totalSkipped}件スキップ
+                            {totalErrors > 0 && <span className="text-red-400"> ({totalErrors}件エラー)</span>}
+                          </p>
+                          {lastExportResults.map((r) => (
+                            <div key={r.type} className="text-text-secondary">
+                              {DATA_TYPE_LABELS[r.type]}: +{r.result.created} 更新{r.result.updated} スキップ{r.result.skipped}
+                              {r.result.errors.length > 0 && (
+                                <span className="text-red-400"> エラー{r.result.errors.length}</span>
+                              )}
+                            </div>
+                          ))}
+                          {totalErrors > 0 && (
+                            <details className="mt-1">
+                              <summary className="text-red-400 cursor-pointer">エラー詳細</summary>
+                              <div className="mt-1 space-y-0.5">
+                                {lastExportResults.flatMap((r) =>
+                                  r.result.errors.map((e, i) => (
+                                    <p key={`${r.type}-${i}`} className="text-red-400 text-[10px]">{e}</p>
+                                  ))
+                                )}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={resetExportHistory}
+                        disabled={isExporting}
+                        className="w-full py-1 text-[10px] text-text-secondary/60 hover:text-text-secondary transition-colors disabled:opacity-50"
+                      >
+                        エクスポート履歴をリセット（次回は全データ再エクスポート）
+                      </button>
+                    </>
+                  )}
+
+                  <p className="text-xs text-text-secondary/60">
+                    Notion Integrationは <span className="underline">notion.so/my-integrations</span> で作成できます。
+                    Internal Integration Token を取得し、エクスポート先のページにIntegrationを共有してください。
                   </p>
                 </div>
               </div>
