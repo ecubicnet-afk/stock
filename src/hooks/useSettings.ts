@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS: Settings = {
   firebaseApiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
   firebaseAppId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
   syncId: '',
+  notionApiKey: '',
+  notionParentPageId: '',
 };
 
 export function useSettings() {

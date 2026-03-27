@@ -97,6 +97,29 @@ export interface Settings {
   firebaseAppId: string;
   // Cross-device sync: when set, used as Firestore path ID instead of anonymous UID
   syncId?: string;
+  // Notion export config
+  notionApiKey: string;
+  notionParentPageId: string;
+}
+
+// Notion Export
+export type NotionDataType = 'strategies' | 'memos' | 'schedule' | 'journal' | 'trades' | 'portfolio';
+
+export interface NotionExportEntry {
+  notionPageId: string;
+  exportedAt: string;
+  updatedAt: string;
+}
+
+export type NotionExportMap = Record<NotionDataType, Record<string, NotionExportEntry>>;
+
+export interface NotionDatabaseIds {
+  strategies?: string;
+  memos?: string;
+  schedule?: string;
+  journal?: string;
+  trades?: string;
+  portfolio?: string;
 }
 
 // Journal
